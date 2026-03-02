@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="D:/LEFP/Proyectos/ControlAlquileres/GestionDeAlquileres/Aplicacion/Aplicacion.csproj" />
+  <Project Path="D:/LEFP/Proyectos/ControlAlquileres/GestionDeAlquileres/Dominio/Dominio.csproj" />
+  <Project Path="D:/LEFP/Proyectos/ControlAlquileres/GestionDeAlquileres/GestionAlquileres/GestionAlquileres.csproj" />
+  <Project Path="D:/LEFP/Proyectos/ControlAlquileres/GestionDeAlquileres/Infraestructura/Infraestructura.csproj" />
+</Solution>
