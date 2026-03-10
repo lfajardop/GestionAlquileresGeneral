@@ -1,11 +1,11 @@
-﻿using Microsoft.Data.SqlClient;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient;
 
-namespace Infraestructura
+namespace Infraestructura.Helper
 {
     public class SqlReaderHelper
     {
@@ -18,7 +18,7 @@ namespace Infraestructura
             }
             return reader.GetBoolean(ordinal);
         }
-        public static byte[] ValorReaderBytes(SqlDataReader reader, string nombreCampo)
+        public static byte[]? ValorReaderBytes(SqlDataReader reader, string nombreCampo)
         {
             int ordinal = reader.GetOrdinal(nombreCampo);
             if (reader.IsDBNull(ordinal))
