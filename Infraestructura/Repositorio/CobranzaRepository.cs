@@ -24,7 +24,7 @@ namespace Infraestructura.Repositorio
             _logger = logger;
         }
 
-        public async Task<CobranzaResumenDto?> ObtenerResumenAsync(CancellationToken cancellationToken)
+        public async Task<CobranzaResumenDto?>  ObtenerResumenAsync(CancellationToken cancellationToken)
         {
             try
             {

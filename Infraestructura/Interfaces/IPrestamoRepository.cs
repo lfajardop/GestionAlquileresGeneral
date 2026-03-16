@@ -1,0 +1,21 @@
+﻿using Dominio.DTO.Common;
+using Dominio.DTO.Prestamo;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Infraestructura.Interfaces
+{
+    public interface IPrestamoRepository
+    {
+        Task<List<PrestamoListDto>> ListarAsync(CancellationToken cancellationToken);
+        Task<DbActionResult> GuardarAsync(PrestamoCreateRequestDto request, string usuario, CancellationToken cancellationToken);
+
+        Task<List<ClienteAnexoSelectDto>> BuscarClientesAsync(string texto, CancellationToken cancellationToken);
+        Task<PrestamoSimulacionDto?> SimularAsync(PrestamoSimulacionRequestDto request, CancellationToken cancellationToken);
+        Task<List<AlmacenSelectDto>> ListarAlmacenesAsync(CancellationToken cancellationToken);
+
+    }
+}

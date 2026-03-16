@@ -1,0 +1,132 @@
+﻿@{
+    ViewData["Title"] = "Panel de Cobranza";
+    Layout = "~/Views/Shared/_LayoutGAP.cshtml";
+}
+
+<div class="container-fluid py-3">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h3 class="fw-bold mb-0">Panel de Cobranza</h3>
+            <small class="text-muted">Resumen de préstamos, alquileres y rentas por vencer.</small>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm rounded-4">
+                <div class="card-body">
+                    <div class="text-muted small">Total por cobrar</div>
+                    <div id="lblTotalPorCobrar" class="fs-3 fw-bold">S/ 0.00</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm rounded-4 border-danger">
+                <div class="card-body">
+                    <div class="text-muted small">Total vencido</div>
+                    <div id="lblTotalVencido" class="fs-3 fw-bold text-danger">S/ 0.00</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm rounded-4 border-warning">
+                <div class="card-body">
+                    <div class="text-muted small">Vence en 14 días</div>
+                    <div id="lblTotalPorVencer" class="fs-3 fw-bold text-warning">S/ 0.00</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <ul class="nav nav-tabs mb-3" id="tabCobranza" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="prest-tab" data-bs-toggle="tab" data-bs-target="#prestamosPane" type="button">
+                Préstamos
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="alq-tab" data-bs-toggle="tab" data-bs-target="#alquileresPane" type="button">
+                Alquileres
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="rent-tab" data-bs-toggle="tab" data-bs-target="#rentasPane" type="button">
+                Rentas por vencer
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="prestamosPane">
+            <div class="card shadow-sm rounded-4">
+                <div class="card-body">
+                    <table id="tblPrestamos" class="table table-bordered table-striped align-middle w-100">
+                        <thead>
+                            <tr>
+                                <th>Nro Cobranza</th>
+                                <th>Cliente</th>
+                                <th>Documento</th>
+                                <th>Vencimiento</th>
+                                <th>Cuota</th>
+                                <th>Cancelado</th>
+                                <th>Saldo</th>
+                                <th>Días atraso</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="alquileresPane">
+            <div class="card shadow-sm rounded-4">
+                <div class="card-body">
+                    <table id="tblAlquileres" class="table table-bordered table-striped align-middle w-100">
+                        <thead>
+                            <tr>
+                                <th>Nro Cobranza</th>
+                                <th>Tipo</th>
+                                <th>Cliente</th>
+                                <th>Documento</th>
+                                <th>Vencimiento</th>
+                                <th>Saldo</th>
+                                <th>Días atraso</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="rentasPane">
+            <div class="card shadow-sm rounded-4">
+                <div class="card-body">
+                    <table id="tblRentas" class="table table-bordered table-striped align-middle w-100">
+                        <thead>
+                            <tr>
+                                <th>Nro Cobranza</th>
+                                <th>Cliente</th>
+                                <th>Documento</th>
+                                <th>Vencimiento</th>
+                                <th>Saldo</th>
+                                <th>Días</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/cobranza/cobranza-dashboard.js"></script>
+}

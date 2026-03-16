@@ -1,4 +1,5 @@
 using Infraestructura.Data;
+using Aplicacion;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -6,7 +7,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 builder.Services.Configure<SqlConfig>(builder.Configuration.GetSection("SqlConfig"));
-//builder.Services.AddConfigAplicacionDI();
+builder.Services.AddConfigAplicacionDI();
+
 
 var app = builder.Build();
 

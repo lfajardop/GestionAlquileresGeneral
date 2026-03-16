@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace Dominio.DTO.Common
+namespace Aplicacion.Common
 {
     public class JsonResponse<T>
     {

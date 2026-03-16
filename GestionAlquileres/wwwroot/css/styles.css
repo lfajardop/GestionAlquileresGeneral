@@ -1,0 +1,581 @@
+﻿@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Inter", sans-serif;
+}
+
+body {
+    background-color: #f4f6f9;
+    color: #333;
+    font-size: 13px;
+}
+
+.main-header {
+    background-color: #1e429f;
+    color: white;
+    height: 70px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 25px;
+    border-bottom: 5px solid #16347a;
+}
+
+.logo-section {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.logo-icon {
+    background: white;
+    color: #009fe3;
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 24px;
+    height: 45px;
+    width: 45px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.logo-text {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.divider {
+    width: 1px;
+    height: 40px;
+    background-color: rgba(255,255,255,0.3);
+    margin: 0 5px;
+}
+
+.system-title {
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.user-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.user-info {
+    text-align: right;
+    line-height: 1.2;
+}
+
+.user-name {
+    display: block;
+    font-weight: 700;
+    font-size: 13px;
+}
+
+.user-role {
+    font-size: 11px;
+    opacity: 0.9;
+}
+
+.user-avatar {
+    background-color: #ddd;
+    color: #555;
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+.container {
+    background-color: white;
+    margin: 20px;
+    padding: 25px 30px;
+    border-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    min-height: calc(100vh - 120px);
+}
+
+.page-title {
+    color: #204592;
+    font-size: 20px;
+    margin-bottom: 30px;
+    font-weight: 700;
+}
+
+.filters-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 80px;
+    margin-bottom: 30px;
+}
+
+.filter-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.form-group {
+    display: flex;
+    align-items: center;
+}
+
+    .form-group label {
+        width: 150px;
+        font-weight: 600;
+        color: #444;
+        font-size: 13px;
+    }
+
+    .form-group select,
+    .form-group input {
+        flex: 1;
+        padding: 8px 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        background-color: #f7f7f7;
+        font-size: 13px;
+        color: #333;
+    }
+
+.button-group {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 5px;
+}
+
+.btn {
+    border: none;
+    padding: 9px 25px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 12px;
+    transition: background 0.2s;
+}
+
+.btn-primary {
+    background-color: #00a0df;
+    color: white;
+}
+
+    .btn-primary:hover {
+        background-color: #008cc3;
+    }
+
+.action-bar {
+    border-top: 1px solid #eee;
+    padding-top: 25px;
+    padding-bottom: 25px;
+    display: flex;
+    gap: 15px;
+}
+
+.action-pill {
+    background-color: #00a0df;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+    .action-pill i {
+        font-size: 14px;
+    }
+
+.table-container {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+thead th {
+    background-color: #274e9b;
+    color: white;
+    padding: 12px 5px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 11px;
+    border: 1px solid #274e9b;
+}
+
+tbody td {
+    padding: 10px 5px;
+    text-align: center;
+    border: 1px solid #e0e0e0;
+    color: #333;
+}
+
+    tbody td:nth-child(3) {
+        text-align: left;
+        padding-left: 10px;
+    }
+
+tbody tr:hover {
+    background-color: #f9f9f9;
+}
+
+
+.row-error {
+    background-color: #ffdadb !important;
+}
+
+
+.icon-blue {
+    color: #00a0df;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.icon-green {
+    color: #28a745;
+    font-size: 16px;
+}
+
+.icon-orange {
+    color: #ffc107;
+    font-size: 16px;
+}
+
+.icon-red {
+    color: #dc3545;
+    font-size: 16px;
+}
+
+
+table a {
+    color: #00a0df;
+    text-decoration: underline;
+    font-size: 11px;
+}
+
+
+.pagination-area {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    font-size: 12px;
+}
+
+.results-text {
+    color: #333;
+    font-weight: 500;
+}
+
+.pagination-buttons {
+    display: flex;
+    gap: 5px;
+}
+
+.page-btn {
+    border: 1px solid #ddd;
+    background: white;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #555;
+    min-width: 32px;
+}
+
+    .page-btn.btn-blue {
+        background-color: #00a0df;
+        color: white;
+        border-color: #00a0df;
+    }
+/* menus*/
+/* Pega ESTO al final de tu ~/css/sirce/styles.css (solo menús del layout) */
+
+/* Menú dentro del header (estilo “chico”) */
+.sirce-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: 18px;
+}
+
+.sirce-nav-link {
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 12px;
+    padding: 8px 10px;
+    border-radius: 4px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+    .sirce-nav-link:hover {
+        background: rgba(255,255,255,0.12);
+        color: #fff;
+    }
+
+/* Botón que parece link */
+.sirce-nav-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+/* Dropdown */
+.sirce-nav-dd {
+    position: relative;
+}
+
+    .sirce-nav-dd .sirce-nav-menu {
+        display: none;
+        position: absolute;
+        top: 38px;
+        left: 0;
+        min-width: 190px;
+        background: #fff;
+        border: 1px solid #e6e6e6;
+        border-radius: 6px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+        overflow: hidden;
+        z-index: 9999;
+    }
+
+    .sirce-nav-dd.open .sirce-nav-menu {
+        display: block;
+    }
+
+.sirce-nav-menu a {
+    display: block;
+    padding: 10px 12px;
+    text-decoration: none;
+    color: #333;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+    .sirce-nav-menu a:hover {
+        background: #f4f6f9;
+    }
+
+/* Logout icon button */
+.sirce-logout {
+    margin: 0;
+}
+
+.sirce-logout-btn {
+    width: 38px;
+    height: 38px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    background: rgba(255,255,255,0.18);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .sirce-logout-btn:hover {
+        background: rgba(255,255,255,0.28);
+    }
+
+/* ancho panatalla */
+.sirce-main {
+    width: 100%;
+    max-width: clamp(1200px, 94vw, 1680px);
+    margin: 0 auto;
+
+    padding-left: 24px;
+    padding-right: 24px;
+    padding-top: 18px;
+    padding-bottom: 24px;
+}
+
+/* En pantallas grandes, que no se vaya "full full", sino elegante */
+@media (min-width: 1400px) {
+    .sirce-main {
+        padding-left: 40px;
+        padding-right: 40px;
+    }
+}
+
+/* para el SPINER OVERLAY */
+.app-spinner {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+}
+
+.app-spinner__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,.25);
+}
+
+.app-spinner__box {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%,-50%);
+    background: #fff;
+    border-radius: 14px;
+    padding: 18px 22px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,.2);
+}
+
+.app-spinner__text {
+    font-size: 14px;
+}
+
+
+/* DataTables*/
+
+.table-container {
+    overflow-x: auto;
+}
+
+:root {
+    --dt-primary: #274e9b;
+    --dt-primary-contrast: #ffffff;
+    --dt-border: #e0e0e0;
+    --dt-row-hover: #f9f9f9;
+    --dt-row-error: #ffdadb;
+    --dt-text: #333333;
+    --dt-font-size: 12px;
+    --dt-th-font-size: 11px;
+    --dt-link: #00a0df;
+}
+
+
+table.datatable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--dt-font-size);
+    color: var(--dt-text);
+}
+
+
+    /* Encabezados */
+    table.datatable thead th {
+        background-color: var(--dt-primary);
+        color: var(--dt-primary-contrast);
+        padding: 12px 5px;
+        text-align: center;
+        font-weight: 600;
+        font-size: var(--dt-th-font-size);
+        border: 1px solid var(--dt-primary);
+        white-space: nowrap;
+    }
+
+    /* Celdas */
+    table.datatable tbody td {
+        padding: 10px 6px;
+        text-align: center;
+        border: 1px solid var(--dt-border);
+        vertical-align: middle;
+    }
+
+        /* Alinear una columna específica a la izquierda (ver utilidades abajo) */
+        /* Ejemplo: cuarta columna a la izquierda */
+        table.datatable tbody td:nth-child(4).text-left-col,
+        table.datatable tbody td.text-left {
+            text-align: left;
+            padding-left: 10px;
+        }
+
+    /* Hover de fila */
+    table.datatable tbody tr:hover {
+        background-color: var(--dt-row-hover);
+    }
+
+    /* Fila con error (aplica la clase .row-error en tu render) */
+    table.datatable tbody tr.row-error td {
+        background-color: var(--dt-row-error) !important;
+    }
+
+    /* Enlaces más pequeños dentro de la tabla */
+    table.datatable a {
+        color: var(--dt-link);
+        text-decoration: underline;
+        font-size: 11px;
+    }
+
+/* ---------- DataTables: paginación a la derecha ---------- */
+div.dataTables_wrapper div.dataTables_paginate {
+    text-align: right !important;
+}
+
+    div.dataTables_wrapper div.dataTables_paginate ul.pagination {
+        justify-content: flex-end !important;
+    }
+
+/* ---------- Utilidades opcionales ---------- */
+/* Alineaciones rápidas por celda o columna */
+.text-left {
+    text-align: left !important;
+}
+
+.text-center {
+    text-align: center !important;
+}
+
+.text-right {
+    text-align: right !important;
+}
+
+/* Tamaños de fuente */
+.text-xs {
+    font-size: 10px !important;
+}
+
+.text-sm {
+    font-size: 12px !important;
+}
+
+.text-md {
+    font-size: 14px !important;
+}
+
+/* Estados */
+.row-error td {
+    background-color: var(--dt-row-error) !important;
+}
+
+/* Tema oscuro (opcional) */
+.dark table.datatable thead th {
+    background-color: #1f2a44;
+    border-color: #1f2a44;
+}
+
+.dark table.datatable,
+.dark table.datatable tbody td {
+    color: #e6e6e6;
+    border-color: #3a3a3a;
+}
+
+    .dark table.datatable tbody tr:hover {
+        background-color: #2a2a2a;
+    }

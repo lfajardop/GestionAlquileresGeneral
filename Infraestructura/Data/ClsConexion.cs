@@ -21,7 +21,7 @@ namespace Infraestructura.Data
             if (string.IsNullOrEmpty(config.sConnect) || string.IsNullOrEmpty(config.ConexionDBOAuth))
                 throw new Exception("Faltan cadenas de conexión en la configuración.");
 
-            _connectionStringMain = Criptografia.Desencriptar(config.sConnect);
+            _connectionStringMain = config.sConnect; //Criptografia.Desencriptar(config.sConnect);
             _connectionStringAuth = Criptografia.Desencriptar(config.ConexionDBOAuth);
         }
 
