@@ -90,7 +90,7 @@ namespace Aplicacion.CasosUso
 
                 res.Success = false;
                 res.Mensaje = $"Ocurrió un error al obtener {modulo}. ErrorId: {errorId}";
-                res.Errors.Add(ex.Message);
+                res.Errors.Add("Nro error:"+errorId);
             }
 
             return res;

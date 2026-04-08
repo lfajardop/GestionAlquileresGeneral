@@ -1,0 +1,8 @@
+﻿
+#tblPrestamos thead th,
+#tblPagosPrestamo thead th {
+    background-color: #f8f9fa !important;
+    color: #212529 !important;
+    font-weight: 600;
+    white-space: nowrap;
+}

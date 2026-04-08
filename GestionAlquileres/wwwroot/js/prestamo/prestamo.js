@@ -6,7 +6,14 @@
     const $msg = $("#frmPrestamoMsg");
     const $cliente = $("#Cod_Anxo");
 
+    const $mdlPagosPrestamo = $("#mdlPagosPrestamo");
+    const $mdlGenerarPago = $("#mdlGenerarPago");
+    const $frmGenerarPago = $("#frmGenerarPago");
+    const $msgPago = $("#frmGenerarPagoMsg");
+    const $btnGuardarPagoPrestamo = $("#btnGuardarPagoPrestamo");
+
     let dtPrestamos = null;
+    let dtPagosPrestamo = null;
     let simulacionOk = false;
 
     function money(v) {
@@ -35,6 +42,7 @@
         $("#simTeaReferencial").text("0.0000 %");
         $("#simCuotaInteres").text("S/ 0.00");
         $("#simUltimaCuota").text("S/ 0.00");
+        $("#numCuotasComp").text("0");
     }
 
     function pintarSimulacion(d) {
@@ -47,6 +55,8 @@
         $("#simImporteCuota").text(money(d?.importeCuota ?? d?.ImporteCuota));
         $("#simCuotaInteres").text(money(d?.importeCuotaInteres ?? d?.ImporteCuotaInteres));
         $("#simUltimaCuota").text(money(d?.importeUltimaCuota ?? d?.ImporteUltimaCuota));
+        $("#numCuotasComp").text(d?.nroCuotasCompletas ?? d?.NroCuotasCompletas ?? 0);
+        
 
         const tea = parseFloat(d?.teaReferencial ?? d?.TeaReferencial ?? 0);
         $("#simTeaReferencial").text(tea.toFixed(4) + " %");
@@ -134,16 +144,7 @@
         });
     }
 
-        $cliente.off("select2:select").on("select2:select", function (e) {
-            const item = e.params.data;
-            $("#Cod_TipAnex").val(item.codTipAnex || "C");
-        });
-
-        $cliente.off("select2:clear").on("select2:clear", function () {
-            $("#Cod_TipAnex").val("C");
-        });
-
-
+        
     function initDataTable() {
         dtPrestamos = $("#tblPrestamos").DataTable({
             paging: true,
@@ -162,10 +163,51 @@
                 { data: "total_Programado", render: money, className: "text-end" },
                 { data: "total_Pagado", render: money, className: "text-end" },
                 { data: "saldo_Pendiente", render: money, className: "text-end" },
-                { data: "estado", className: "text-center" }
+                { data: "estado", className: "text-center" },
+                {
+                    data: null,
+                    orderable: false,
+                    searchable: false,
+                    className: "text-center",
+                    render: function (data, type, row) {
+                        return `
+                        <button type="button"
+                                class="btn btn-sm btn-outline-primary js-ver-pagos"
+                                data-idprestamo="${row.id_Prestamo || ''}"
+                                data-nrocobranza="${row.nroCobranza || row.NroCobranza || ''}"
+                                data-cliente="${row.cliente || ''}"
+                                data-documento="${row.documento || ''}"
+                                data-deudatotal="${row.total_Programado || 0}"
+                                data-pagadototal="${row.total_Pagado || 0}"
+                                data-saldopendiente="${row.saldo_Pendiente || 0}">
+                            Pagos
+                        </button>`;
+                    }
+                }
+            ]
+        });
+
+        dtPagosPrestamo = $("#tblPagosPrestamo").DataTable({
+            paging: true,
+            searching: false,
+            ordering: true,
+            pageLength: 5,
+            autoWidth: false,
+            language: { url: "https://cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json" },
+            columns: [
+                { data: "numCuota", className: "text-center" },
+                { data: "fecPago", render: fecha },
+                { data: "formaPago" },
+                { data: "cajaBanco" },
+                { data: "importe", render: money, className: "text-end" },
+                { data: "deuda", render: money, className: "text-end" },
+                { data: "saldo", render: money, className: "text-end" },
+                { data: "glosa" }
             ]
         });
     }
+
+
 
     function actualizarResumen(rows) {
         const totalPrestamos = rows.length;
@@ -190,6 +232,139 @@
                 WebApp.Forms.showToast(false, "Error al listar préstamos.");
             });
     }
+
+    function cargarCajasPorFormaPago(formaPago) {
+        let esBanco = formaPago === "BANCARIO" ? "S" : "N";
+
+        $.getJSON("/Caja/ListarPorTipo", { esBanco })
+            .done(function (r) {
+                let html = "";
+                (r.data || []).forEach(x => {
+                    html += `<option value="${x.cod_CajaChica}">${x.des_CajaChica}</option>`;
+                });
+                $("#CodCajaChica").html(html);
+            });
+    }
+
+    function cargarFormaPago() {
+        $.getJSON("/FormaPago/Listar")
+            .done(function (r) {
+                let html = "";
+                (r.data || []).forEach(x => {
+                    html += `<option value="${x.idFormaPago}">${x.descripcion}</option>`;
+                });
+                $("#FormaPago").html(html);
+            });
+    }
+
+    function abrirModalPagos(data) {
+        $("#hidPagoIdPrestamo").val(data.idPrestamo || "");
+        $("#hidPagoNroCobranza").val(data.nroCobranza || "");
+        $("#txtPagoIdPrestamo").text(data.idPrestamo || "");
+        $("#txtPagoNroCobranza").text(data.nroCobranza || "");
+        $("#txtPagoCliente").text(data.cliente || "");
+        $("#txtPagoDocumento").text(data.documento || "");
+        $("#lblPagoDeudaTotal").text(money(data.deudaTotal || 0));
+        $("#lblPagoPagadoTotal").text(money(data.pagadoTotal || 0));
+        $("#lblPagoSaldoPendiente").text(money(data.saldoPendiente || 0));
+
+        dtPagosPrestamo.clear().draw();
+        $mdlPagosPrestamo.modal("show");
+
+        // luego conectaremos backend real
+        // cargarHistorialPagos(data.nroCobranza);
+        // cargarResumenPagos(data.nroCobranza);
+    }
+
+    //function abrirModalGenerarPago() {
+    //    WebApp.Forms.hideMsg($msgPago);
+    //    WebApp.Forms.clearErrors($frmGenerarPago);
+
+    //    $("#FecPago").val(new Date().toISOString().substring(0, 10));
+    //    $("#FormaPago").val("EFECTIVO");
+    //    $("#CodCajaChica").html("");
+    //    $("#ImportePago").val($("#lblPagoSaldoPendiente").text().replace("S/", "").trim());
+    //    $("#GlosaPago").val("");
+    //    $("#PermitirExcedente").prop("checked", false);
+
+    //    $mdlGenerarPago.modal("show");
+    //    cargarCajasPorFormaPago("EFECTIVO");
+    //}
+
+    function abrirModalPagos(data) {
+        $("#hidPagoIdPrestamo").val(data.idPrestamo || "");
+        $("#hidPagoNroCobranza").val(data.nroCobranza || "");
+        $("#txtPagoIdPrestamo").text(data.idPrestamo || "");
+        $("#txtPagoNroCobranza").text(data.nroCobranza || "");
+        $("#txtPagoCliente").text(data.cliente || "");
+        $("#txtPagoDocumento").text(data.documento || "");
+        $("#lblPagoDeudaTotal").text(money(data.deudaTotal || 0));
+        $("#lblPagoPagadoTotal").text(money(data.pagadoTotal || 0));
+        $("#lblPagoSaldoPendiente").text(money(data.saldoPendiente || 0));
+
+        dtPagosPrestamo.clear().draw();
+        $mdlPagosPrestamo.modal("show");
+
+        // luego conectaremos backend real
+        // cargarHistorialPagos(data.nroCobranza);
+        // cargarResumenPagos(data.nroCobranza);
+    }
+
+    function abrirModalPagos(data) {
+        $("#hidPagoIdPrestamo").val(data.idPrestamo || "");
+        $("#hidPagoNroCobranza").val(data.nroCobranza || "");
+        $("#txtPagoIdPrestamo").text(data.idPrestamo || "");
+        $("#txtPagoNroCobranza").text(data.nroCobranza || "");
+        $("#txtPagoCliente").text(data.cliente || "");
+        $("#txtPagoDocumento").text(data.documento || "");
+        $("#lblPagoDeudaTotal").text(money(data.deudaTotal || 0));
+        $("#lblPagoPagadoTotal").text(money(data.pagadoTotal || 0));
+        $("#lblPagoSaldoPendiente").text(money(data.saldoPendiente || 0));
+
+        dtPagosPrestamo.clear().draw();
+        $mdlPagosPrestamo.modal("show");
+
+        // luego conectaremos backend real
+        // cargarHistorialPagos(data.nroCobranza);
+        // cargarResumenPagos(data.nroCobranza);
+    }
+
+    function abrirModalPagos(data) {
+        $("#hidPagoIdPrestamo").val(data.idPrestamo || "");
+        $("#hidPagoNroCobranza").val(data.nroCobranza || "");
+        $("#txtPagoIdPrestamo").text(data.idPrestamo || "");
+        $("#txtPagoNroCobranza").text(data.nroCobranza || "");
+        $("#txtPagoCliente").text(data.cliente || "");
+        $("#txtPagoDocumento").text(data.documento || "");
+        $("#lblPagoDeudaTotal").text(money(data.deudaTotal || 0));
+        $("#lblPagoPagadoTotal").text(money(data.pagadoTotal || 0));
+        $("#lblPagoSaldoPendiente").text(money(data.saldoPendiente || 0));
+
+        dtPagosPrestamo.clear().draw();
+        $mdlPagosPrestamo.modal("show");
+
+        // luego conectaremos backend real
+        // cargarHistorialPagos(data.nroCobranza);
+        // cargarResumenPagos(data.nroCobranza);
+    }
+
+    function abrirModalGenerarPago() {
+        WebApp.Forms.hideMsg($msgPago);
+        WebApp.Forms.clearErrors($frmGenerarPago);
+
+        $("#FecPago").val(new Date().toISOString().substring(0, 10));
+        $("#FormaPago").val("EFECTIVO");
+        $("#CodCajaChica").html("");
+        $("#ImportePago").val($("#lblPagoSaldoPendiente").text().replace("S/", "").trim());
+        $("#GlosaPago").val("");
+        $("#PermitirExcedente").prop("checked", false);
+
+        $mdlGenerarPago.modal("show");
+        cargarCajasPorFormaPago("EFECTIVO");
+    }
+
+
+
 
     function obtenerDataSimulacion() {
         return {
@@ -292,6 +467,26 @@
             .always(function () {
                 $btnGuardarPrestamo.prop("disabled", false).text("Guardar préstamo");
             });
+    });
+
+    $(document).on("click", ".js-ver-pagos", function () {
+        abrirModalPagos({
+            idPrestamo: $(this).data("idprestamo"),
+            nroCobranza: $(this).data("nrocobranza"),
+            cliente: $(this).data("cliente"),
+            documento: $(this).data("documento"),
+            deudaTotal: $(this).data("deudatotal"),
+            pagadoTotal: $(this).data("pagadototal"),
+            saldoPendiente: $(this).data("saldopendiente")
+        });
+    });
+
+    $("#btnAbrirGenerarPago").on("click", function () {
+        abrirModalGenerarPago();
+    });
+
+    $("#FormaPago").on("change", function () {
+        cargarCajasPorFormaPago($(this).val());
     });
 
 

@@ -1,4 +1,5 @@
-﻿using Dominio.DTO.Common;
+﻿using Dominio.DTO;
+using Dominio.DTO.Common;
 using Dominio.DTO.Prestamo;
 using System;
 using System.Collections.Generic;
@@ -16,6 +17,8 @@ namespace Infraestructura.Interfaces
         Task<List<ClienteAnexoSelectDto>> BuscarClientesAsync(string texto, CancellationToken cancellationToken);
         Task<PrestamoSimulacionDto?> SimularAsync(PrestamoSimulacionRequestDto request, CancellationToken cancellationToken);
         Task<List<AlmacenSelectDto>> ListarAlmacenesAsync(CancellationToken cancellationToken);
+      
+        Task<SpResultDto?> InsertarGarantiaAsync(PrestamoCreateRequestDto request, int idPrestamo, CancellationToken cancellationToken);
 
     }
 }

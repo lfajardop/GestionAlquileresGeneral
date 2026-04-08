@@ -122,59 +122,171 @@ namespace Aplicacion.CasosUso
             return res;
         }
 
-        public async Task<JsonResponse<DbActionResult>> GuardarAsync(PrestamoCreateRequestDto request, string usuario, CancellationToken cancellationToken)
+        //public async Task<JsonResponse<DbActionResult>> GuardarAsync(PrestamoCreateRequestDto request, string usuario, CancellationToken cancellationToken)
+        //{
+        //    var res = new JsonResponse<DbActionResult>();
+
+        //    try
+        //    {
+        //        if (string.IsNullOrWhiteSpace(request.Cod_Anxo))
+        //        {
+        //            res.Success = false;
+        //            res.Mensaje = "Debe seleccionar un cliente.";
+        //            res.Errors.Add("Cod_Anxo|Debe seleccionar un cliente.");
+        //            return res;
+        //        }
+
+        //        if (request.Capital <= 0)
+        //        {
+        //            res.Success = false;
+        //            res.Mensaje = "El capital debe ser mayor a cero.";
+        //            res.Errors.Add("Capital|El capital debe ser mayor a cero.");
+        //            return res;
+        //        }
+
+        //        if (request.FechaFinCobro < request.FechaInicioCobro)
+        //        {
+        //            res.Success = false;
+        //            res.Mensaje = "La fecha fin debe ser mayor o igual a la fecha inicio.";
+        //            res.Errors.Add("FechaFinCobro|La fecha fin debe ser mayor o igual a la fecha inicio.");
+        //            return res;
+        //        }
+
+        //        var result = await _repo.GuardarAsync(request, usuario, cancellationToken);
+
+        //        res.Success = result.Ok;
+        //        res.Mensaje = result.Mensaje;
+        //        res.Data = result;
+
+        //        if (!result.Ok)
+        //            res.Errors.Add(result.Mensaje);
+
+        //        _logger.LogInformation("Préstamo guardado correctamente. IdPrestamo: {IdPrestamo}", result.IdGenerado);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        var errorId = Guid.NewGuid();
+        //        _logger.LogError(ex, "ErrorId: {ErrorId} - Error al guardar préstamo", errorId);
+
+        //        res.Success = false;
+        //        res.Mensaje = $"Ocurrió un error al guardar el préstamo. ErrorId: {errorId}";
+        //        res.Errors.Add(ex.Message);
+        //    }
+
+        //    return res;
+        //}
+
+        public async Task<JsonResponse<DbActionResult>> GuardarAsync(
+    PrestamoCreateRequestDto request,
+    string usuario,
+    CancellationToken cancellationToken)
+{
+    var res = new JsonResponse<DbActionResult>();
+
+    try
+    {
+        if (string.IsNullOrWhiteSpace(request.Cod_Anxo))
         {
-            var res = new JsonResponse<DbActionResult>();
-
-            try
-            {
-                if (string.IsNullOrWhiteSpace(request.Cod_Anxo))
-                {
-                    res.Success = false;
-                    res.Mensaje = "Debe seleccionar un cliente.";
-                    res.Errors.Add("Cod_Anxo|Debe seleccionar un cliente.");
-                    return res;
-                }
-
-                if (request.Capital <= 0)
-                {
-                    res.Success = false;
-                    res.Mensaje = "El capital debe ser mayor a cero.";
-                    res.Errors.Add("Capital|El capital debe ser mayor a cero.");
-                    return res;
-                }
-
-                if (request.FechaFinCobro < request.FechaInicioCobro)
-                {
-                    res.Success = false;
-                    res.Mensaje = "La fecha fin debe ser mayor o igual a la fecha inicio.";
-                    res.Errors.Add("FechaFinCobro|La fecha fin debe ser mayor o igual a la fecha inicio.");
-                    return res;
-                }
-
-                var result = await _repo.GuardarAsync(request, usuario, cancellationToken);
-
-                res.Success = result.Ok;
-                res.Mensaje = result.Mensaje;
-                res.Data = result;
-
-                if (!result.Ok)
-                    res.Errors.Add(result.Mensaje);
-
-                _logger.LogInformation("Préstamo guardado correctamente. IdPrestamo: {IdPrestamo}", result.IdGenerado);
-            }
-            catch (Exception ex)
-            {
-                var errorId = Guid.NewGuid();
-                _logger.LogError(ex, "ErrorId: {ErrorId} - Error al guardar préstamo", errorId);
-
-                res.Success = false;
-                res.Mensaje = $"Ocurrió un error al guardar el préstamo. ErrorId: {errorId}";
-                res.Errors.Add(ex.Message);
-            }
-
+            res.Success = false;
+            res.Mensaje = "Debe seleccionar un cliente.";
+            res.Errors.Add("Cod_Anxo|Debe seleccionar un cliente.");
             return res;
         }
+
+        if (request.Capital <= 0)
+        {
+            res.Success = false;
+            res.Mensaje = "El capital debe ser mayor a cero.";
+            res.Errors.Add("Capital|El capital debe ser mayor a cero.");
+            return res;
+        }
+
+        if (request.FechaFinCobro < request.FechaInicioCobro)
+        {
+            res.Success = false;
+            res.Mensaje = "La fecha fin debe ser mayor o igual a la fecha inicio.";
+            res.Errors.Add("FechaFinCobro|La fecha fin debe ser mayor o igual a la fecha inicio.");
+            return res;
+        }
+
+        if (request.TieneGarantia && string.IsNullOrWhiteSpace(request.TipoGarantia))
+        {
+            res.Success = false;
+            res.Mensaje = "Debe indicar el tipo de garantía.";
+            res.Errors.Add("TipoGarantia|Debe indicar el tipo de garantía.");
+            return res;
+        }
+
+        var result = await _repo.GuardarAsync(request, usuario, cancellationToken);
+
+        if (result == null)
+        {
+            res.Success = false;
+            res.Mensaje = "No se obtuvo respuesta al guardar el préstamo.";
+            res.Errors.Add("No se obtuvo respuesta del SP principal.");
+            return res;
+        }
+
+        if (!result.Ok)
+        {
+            res.Success = false;
+            res.Mensaje = result.Mensaje;
+            res.Data = result;
+            res.Errors.Add(result.Mensaje);
+            return res;
+        }
+
+        // Si el préstamo se guardó bien y tiene garantía, registrar garantía
+        if (request.TieneGarantia &&Convert.ToInt32( result.IdGenerado) > 0)
+        {
+            var resultGarantia = await _repo.InsertarGarantiaAsync(
+                request,
+                result.IdGenerado??0,
+                cancellationToken);
+
+            if (resultGarantia == null)
+            {
+                res.Success = false;
+                res.Mensaje = "El préstamo se registró, pero no se obtuvo respuesta al registrar la garantía.";
+                res.Data = result;
+                res.Errors.Add("No se obtuvo respuesta del SP de garantía.");
+                return res;
+            }
+
+            if (!resultGarantia.Ok)
+            {
+                res.Success = false;
+                res.Mensaje = $"El préstamo se registró, pero ocurrió un problema al registrar la garantía: {resultGarantia.Mensaje}";
+                res.Data = result;
+                res.Errors.Add(resultGarantia.Mensaje);
+                return res;
+            }
+        }
+
+        res.Success = true;
+        res.Mensaje = request.TieneGarantia
+            ? "Préstamo y garantía registrados correctamente."
+            : result.Mensaje;
+
+        res.Data = result;
+
+        _logger.LogInformation(
+            "Préstamo guardado correctamente. IdPrestamo: {IdPrestamo}, TieneGarantia: {TieneGarantia}",
+            result.IdGenerado,
+            request.TieneGarantia);
+    }
+    catch (Exception ex)
+    {
+        var errorId = Guid.NewGuid();
+        _logger.LogError(ex, "ErrorId: {ErrorId} - Error al guardar préstamo", errorId);
+
+        res.Success = false;
+        res.Mensaje = $"Ocurrió un error al guardar el préstamo. ErrorId: {errorId}";
+        res.Errors.Add("Nro error:" + errorId);
+    }
+
+    return res;
+}
 
         public async Task<JsonResponse<List<AlmacenSelectDto>>> ListarAlmacenesAsync(CancellationToken cancellationToken)
         {
@@ -200,6 +312,8 @@ namespace Aplicacion.CasosUso
 
             return res;
         }
+
+
 
     }
 }

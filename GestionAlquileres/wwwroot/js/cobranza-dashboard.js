@@ -17,6 +17,16 @@
         const anio = d.getFullYear();
         return `${dia}/${mes}/${anio}`;
     }
+    function abrirModalPagos(nroCobranza, cliente, documento) {
+        $("#txtPagoNroCobranza").text(nroCobranza || "");
+        $("#txtPagoCliente").text(cliente || "");
+        $("#txtPagoDocumento").text(documento || "");
+        $("#mdlPagosPrestamo").modal("show");
+
+        // luego aquí llamaremos al backend real
+        // cargarResumenPago(nroCobranza);
+        // cargarHistorialPagos(nroCobranza);
+    }
 
     function badgeEstado(estado) {
         const e = String(estado || "").toUpperCase();
@@ -42,7 +52,23 @@
                 { data: "importeCancelado", render: money, className: "text-end" },
                 { data: "saldo", render: money, className: "text-end" },
                 { data: "diasAtraso", className: "text-center" },
-                { data: "estado", render: badgeEstado, className: "text-center" }
+                { data: "estado", render: badgeEstado, className: "text-center" },
+                {
+                    data: null,
+                    orderable: false,
+                    searchable: false,
+                    className: "text-center",
+                    render: function (data, type, row) {
+                        return `
+                    <button type="button"
+                            class="btn btn-sm btn-outline-primary js-ver-pagos"
+                            data-nrocobranza="${row.nroCobranza || ''}"
+                            data-cliente="${row.cliente || ''}"
+                            data-documento="${row.documento || ''}">
+                        Pagos
+                    </button>`;
+                    }
+                }
             ]
         });
 
@@ -157,6 +183,14 @@
                 WebApp.Forms.showToast(false, "Error al cargar rentas por vencer.");
             });
     }
+
+    $(document).on("click", ".js-ver-pagos", function () {
+        const nroCobranza = $(this).data("nrocobranza");
+        const cliente = $(this).data("cliente");
+        const documento = $(this).data("documento");
+
+        abrirModalPagos(nroCobranza, cliente, documento);
+    });
 
     $(function () {
         initTables();

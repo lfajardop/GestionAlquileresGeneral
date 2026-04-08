@@ -15,6 +15,7 @@ namespace Dominio.DTO.Prestamo
         public decimal Capital { get; set; }
 
         public string TipoInteres { get; set; } = "M";      // N / M
+        public string TipoModalidad { get; set; } = "M";      // C=Cuotas normales, I=Interés+capital final, F=Todo al final
         public decimal PorcInteresMensual { get; set; }
 
         public string FrecuenciaPago { get; set; } = "M";   // D / S / M
@@ -23,5 +24,17 @@ namespace Dominio.DTO.Prestamo
 
         public string Observacion { get; set; } = string.Empty;
         public string Cod_Almacen { get; set; } = "1";
+        //Para Garantia
+        public bool TieneGarantia { get; set; }
+
+        public string? TipoGarantia { get; set; }
+        public string? DescripcionGarantia { get; set; }
+        public string? MarcaGarantia { get; set; }
+        public string? ModeloGarantia { get; set; }
+        public string? SerieGarantia { get; set; }
+        public string? EstadoGarantia { get; set; }
+        public decimal? ValorGarantia { get; set; }
+        public string? ObservacionGarantia { get; set; }
+
     }
 }

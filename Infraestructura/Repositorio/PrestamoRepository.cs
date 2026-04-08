@@ -1,4 +1,5 @@
-﻿using Dominio.DTO.Common;
+﻿using Dominio.DTO;
+using Dominio.DTO.Common;
 using Dominio.DTO.Prestamo;
 using Infraestructura.Data;
 using Infraestructura.Interfaces;
@@ -91,6 +92,7 @@ namespace Infraestructura.Repositorio
                 cmd.Parameters.AddWithValue("@FrecuenciaPago", request.FrecuenciaPago);
                 cmd.Parameters.AddWithValue("@FechaInicioCobro", request.FechaInicioCobro);
                 cmd.Parameters.AddWithValue("@FechaFinCobro", request.FechaFinCobro);
+                cmd.Parameters.Add("@TipoModalidad", SqlDbType.Char, 1).Value =(object?)request.TipoModalidad ?? DBNull.Value;
                 cmd.Parameters.AddWithValue("@Observacion", (object?)request.Observacion ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@Usu", (object?)usuario ?? DBNull.Value);
 
@@ -190,7 +192,9 @@ namespace Infraestructura.Repositorio
                         InteresTotal = SqlReaderHelper.ValorReaderDecimal(dr, "InteresTotal"),
                         TotalCobrar = SqlReaderHelper.ValorReaderDecimal(dr, "TotalCobrar"),
                         ImporteCuota = SqlReaderHelper.ValorReaderDecimal(dr, "ImporteCuota"),
-                        Mensaje = SqlReaderHelper.ValorReaderString(dr, "Mensaje")
+                        Mensaje = SqlReaderHelper.ValorReaderString(dr, "Mensaje"),
+                        TeaReferencial = SqlReaderHelper.ValorReaderDecimal(dr, "TeaReferencial"),
+                        NroCuotasCompletas= SqlReaderHelper.ValorReaderInt(dr, "NroCuotasCompletas"),
                     };
                 }
 
@@ -234,5 +238,48 @@ namespace Infraestructura.Repositorio
             }
         }
 
+        public async Task<SpResultDto?> InsertarGarantiaAsync(PrestamoCreateRequestDto request, int idPrestamo, CancellationToken cancellationToken)
+        {
+            try
+            {
+                SpResultDto? item = null;
+
+                using var cn = new SqlConnection(GetConnectionString());
+                using var cmd = new SqlCommand("prest.p_prestamo_garantia_ins", cn);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.AddWithValue("@Id_Prestamo", idPrestamo);
+                cmd.Parameters.AddWithValue("@Tipo_Garantia", (object?)request.TipoGarantia ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@Descripcion", (object?)request.DescripcionGarantia ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@Marca", (object?)request.MarcaGarantia ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@Modelo", (object?)request.ModeloGarantia ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@Serie", (object?)request.SerieGarantia ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@Estado_Articulo", (object?)request.EstadoGarantia ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@Valor_Referencial", (object?)request.ValorGarantia ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@Fecha_Recepcion", DBNull.Value);
+                cmd.Parameters.AddWithValue("@Observacion", (object?)request.ObservacionGarantia ?? DBNull.Value);
+
+                await cn.OpenAsync(cancellationToken);
+                using var dr = await cmd.ExecuteReaderAsync(cancellationToken);
+
+                if (await dr.ReadAsync(cancellationToken))
+                {
+                    item = new SpResultDto
+                    {
+                        Ok = SqlReaderHelper.ValorReaderBool(dr, "Ok"),
+                        RowsAffected = SqlReaderHelper.ValorReaderInt(dr, "RowsAffected"),
+                        Mensaje = SqlReaderHelper.ValorReaderString(dr, "Mensaje"),
+                        IdGenerado = SqlReaderHelper.ValorReaderInt(dr, "IdGenerado")
+                    };
+                }
+
+                return item;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en PrestamoRepository.InsertarGarantiaAsync");
+                throw;
+            }
+        }
     }
 }
