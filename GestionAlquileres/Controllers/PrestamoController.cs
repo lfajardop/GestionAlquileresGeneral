@@ -88,5 +88,53 @@ namespace GestionAlquileres.Controllers
             var result = await _prestamoService.ListarAlmacenesAsync(cancellationToken);
             return Json(result);
         }
+
+        [HttpGet]
+        public async Task<IActionResult> ListarDesembolsos(int idPrestamo, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var data = await _prestamoService.ListarDesembolsosAsync(idPrestamo, cancellationToken);
+                return Json(new JsonResponse<object>
+                {
+                    Success = true,
+                    Data = data
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al listar desembolsos");
+                return Json(new JsonResponse<object>
+                {
+                    Success = false,
+                    Mensaje = "No se pudo listar los desembolsos.",
+                    Errors = new List<string> { ex.Message }
+                });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RegistrarDesembolso([FromForm] PrestamoRegistrarDesembolsoRequestDto request, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var usuario = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0";
+                var estacion = HttpContext.Connection.RemoteIpAddress?.ToString();
+
+                var result = await _prestamoService.RegistrarDesembolsoAsync(request, usuario, estacion, cancellationToken);
+                return Json(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al registrar desembolso");
+                return Json(new JsonResponse<object>
+                {
+                    Success = false,
+                    Mensaje = "No se pudo registrar el desembolso.",
+                    Errors = new List<string> { ex.Message }
+                });
+            }
+        }
     }
 }

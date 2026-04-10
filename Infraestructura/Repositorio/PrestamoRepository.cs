@@ -281,5 +281,102 @@ namespace Infraestructura.Repositorio
                 throw;
             }
         }
+
+        public async Task<DbActionResult> RegistrarDesembolsoAsync(
+    PrestamoRegistrarDesembolsoRequestDto request,
+    string usuario,
+    string? estacion,
+    CancellationToken cancellationToken)
+        {
+            try
+            {
+                var result = new DbActionResult();
+
+                using var cn = new SqlConnection(GetConnectionString());
+                using var cmd = new SqlCommand("prest.p_prestamo_registrar_desembolso", cn);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.AddWithValue("@Id_Prestamo", request.IdPrestamo);
+                cmd.Parameters.AddWithValue("@Cod_CajaChica", (object?)request.CodCajaChicaDesembolso ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@Importe", request.ImpDesembolso);
+                cmd.Parameters.AddWithValue("@Fec_Desembolso", request.FecDesembolso);
+                cmd.Parameters.AddWithValue("@Cod_TipDoc", (object?)request.CodTipDocDesembolso ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@Ser_docum", (object?)request.SerDocDesembolso ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@Num_Docum", (object?)request.NumDocDesembolso ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@Glosa", (object?)request.GlosaDesembolso ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@CodUsuario", Convert.ToInt32(usuario));
+                cmd.Parameters.AddWithValue("@CodEstacion", (object?)estacion ?? DBNull.Value);
+
+                await cn.OpenAsync(cancellationToken);
+                using var dr = await cmd.ExecuteReaderAsync(cancellationToken);
+
+                if (await dr.ReadAsync(cancellationToken))
+                {
+                    result.Ok = SqlReaderHelper.ValorReaderBool(dr, "Ok");
+                    result.Mensaje = SqlReaderHelper.ValorReaderString(dr, "Mensaje");
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en PrestamoRepository.RegistrarDesembolsoAsync");
+                throw;
+            }
+        }
+
+        public async Task<List<PrestamoDesembolsoListadoDto>> ListarDesembolsosAsync(
+    int idPrestamo,
+    CancellationToken cancellationToken)
+        {
+            try
+            {
+                var lista = new List<PrestamoDesembolsoListadoDto>();
+
+                using var cn = new SqlConnection(GetConnectionString());
+                using var cmd = new SqlCommand("prest.p_prestamo_desembolso_listar", cn);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.AddWithValue("@Id_Prestamo", idPrestamo);
+
+                await cn.OpenAsync(cancellationToken);
+                using var dr = await cmd.ExecuteReaderAsync(cancellationToken);
+
+                while (await dr.ReadAsync(cancellationToken))
+                {
+                    lista.Add(new PrestamoDesembolsoListadoDto
+                    {
+                        IdDesembolso = dr["Id_Desembolso"] == DBNull.Value ? 0 : Convert.ToInt32(dr["Id_Desembolso"]),
+                        IdPrestamo = dr["Id_Prestamo"] == DBNull.Value ? 0 : Convert.ToInt32(dr["Id_Prestamo"]),
+                        Secuencia = dr["Secuencia"] == DBNull.Value ? 0 : Convert.ToInt32(dr["Secuencia"]),
+                        FecDesembolso = dr["Fec_Desembolso"] == DBNull.Value ? DateTime.MinValue : Convert.ToDateTime(dr["Fec_Desembolso"]),
+                        CodCajaChica = dr["Cod_CajaChica"] == DBNull.Value ? "" : dr["Cod_CajaChica"].ToString()!,
+                        DesCajaChica = dr["DesCajaChica"] == DBNull.Value ? "" : dr["DesCajaChica"].ToString()!,
+                        Importe = dr["Importe"] == DBNull.Value ? 0 : Convert.ToDecimal(dr["Importe"]),
+                        CodTipDoc = dr["Cod_TipDoc"] == DBNull.Value ? "" : dr["Cod_TipDoc"].ToString()!,
+                        SerDocum = dr["Ser_docum"] == DBNull.Value ? "" : dr["Ser_docum"].ToString()!,
+                        NumDocum = dr["Num_Docum"] == DBNull.Value ? "" : dr["Num_Docum"].ToString()!,
+                        Documento = dr["Documento"] == DBNull.Value ? "" : dr["Documento"].ToString()!,
+                        Glosa = dr["Glosa"] == DBNull.Value ? "" : dr["Glosa"].ToString()!,
+                        NroCobranza = dr["NroCobranza"] == DBNull.Value ? "" : dr["NroCobranza"].ToString()!,
+                        NumCuota = dr["NumCuota"] == DBNull.Value ? (int?)null : Convert.ToInt32(dr["NumCuota"]),
+                        CodAlmacen = dr["Cod_Almacen"] == DBNull.Value ? "" : dr["Cod_Almacen"].ToString()!,
+                        NumMovstk = dr["Num_Movstk"] == DBNull.Value ? (int?)null : Convert.ToInt32(dr["Num_Movstk"]),
+                        NumTransaccion = dr["Num_Transaccion"] == DBNull.Value ? (int?)null : Convert.ToInt32(dr["Num_Transaccion"]),
+                        SecMovimiento = dr["Sec_Movimiento"] == DBNull.Value ? (int?)null : Convert.ToInt32(dr["Sec_Movimiento"]),
+                        CodUsuarioCreacion = dr["Cod_Usuario_Creacion"] == DBNull.Value ? (int?)null : Convert.ToInt32(dr["Cod_Usuario_Creacion"]),
+                        FecCreacion = dr["Fec_Creacion"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["Fec_Creacion"]),
+                        CodEstacion = dr["Cod_Estacion"] == DBNull.Value ? "" : dr["Cod_Estacion"].ToString()!
+                    });
+                }
+
+                return lista;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en PrestamoRepository.ListarDesembolsosAsync");
+                throw;
+            }
+        }
     }
 }

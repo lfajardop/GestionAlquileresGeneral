@@ -12,8 +12,17 @@
     const $msgPago = $("#frmGenerarPagoMsg");
     const $btnGuardarPagoPrestamo = $("#btnGuardarPagoPrestamo");
 
+    const $mdlDesembolsoPrestamo = $("#mdlDesembolsoPrestamo");
+    const $mdlRegistrarDesembolso = $("#mdlRegistrarDesembolso");
+    const $frmRegistrarDesembolso = $("#frmRegistrarDesembolso");
+    const $msgDesembolso = $("#frmRegistrarDesembolsoMsg");
+    const $btnGuardarDesembolso = $("#btnGuardarDesembolso");
+
+
+
     let dtPrestamos = null;
     let dtPagosPrestamo = null;
+    let dtDesembolsosPrestamo = null;
     let simulacionOk = false;
 
     function money(v) {
@@ -170,18 +179,39 @@
                     searchable: false,
                     className: "text-center",
                     render: function (data, type, row) {
+                        const flgDes = (row.flg_Desembolsado || row.Flg_Desembolsado || "N");
+                        const totalDes = parseFloat(row.imp_Desembolsado || row.Imp_Desembolsado || 0);
+
+                        let btnDesembolsar = "";
+                        if (flgDes === "N" || flgDes === "P") {
+                            btnDesembolsar = `
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-success js-ver-desembolso"
+                                    data-idprestamo="${row.id_Prestamo || ''}"
+                                    data-nrocobranza="${row.nroCobranza || row.NroCobranza || ''}"
+                                    data-cliente="${row.cliente || ''}"
+                                    data-documento="${row.documento || ''}"
+                                    data-capital="${row.capital || 0}"
+                                    data-desembolsado="${totalDes}">
+                                Desembolsar
+                            </button>`;
+                        }
+
                         return `
-                        <button type="button"
-                                class="btn btn-sm btn-outline-primary js-ver-pagos"
-                                data-idprestamo="${row.id_Prestamo || ''}"
-                                data-nrocobranza="${row.nroCobranza || row.NroCobranza || ''}"
-                                data-cliente="${row.cliente || ''}"
-                                data-documento="${row.documento || ''}"
-                                data-deudatotal="${row.total_Programado || 0}"
-                                data-pagadototal="${row.total_Pagado || 0}"
-                                data-saldopendiente="${row.saldo_Pendiente || 0}">
-                            Pagos
-                        </button>`;
+                        <div class="d-flex gap-1 justify-content-center">
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-primary js-ver-pagos"
+                                    data-idprestamo="${row.id_Prestamo || ''}"
+                                    data-nrocobranza="${row.nroCobranza || row.NroCobranza || ''}"
+                                    data-cliente="${row.cliente || ''}"
+                                    data-documento="${row.documento || ''}"
+                                    data-deudatotal="${row.total_Programado || 0}"
+                                    data-pagadototal="${row.total_Pagado || 0}"
+                                    data-saldopendiente="${row.saldo_Pendiente || 0}">
+                                Pagos
+                            </button>
+                            ${btnDesembolsar}
+                        </div>`;
                     }
                 }
             ]
@@ -205,8 +235,25 @@
                 { data: "glosa" }
             ]
         });
-    }
 
+        dtDesembolsosPrestamo = $("#tblDesembolsosPrestamo").DataTable({
+            paging: true,
+            searching: false,
+            ordering: true,
+            pageLength: 5,
+            autoWidth: false,
+            language: { url: "https://cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json" },
+            columns: [
+                { data: "secuencia", className: "text-center" },
+                { data: "fecDesembolso", render: fecha },
+                { data: "desCajaChica" },
+                { data: "importe", render: money, className: "text-end" },
+                { data: "documento" },
+                { data: "glosa" },
+                { data: "secMovimiento", className: "text-center" }
+            ]
+        });
+    }
 
 
     function actualizarResumen(rows) {
@@ -257,24 +304,7 @@
             });
     }
 
-    function abrirModalPagos(data) {
-        $("#hidPagoIdPrestamo").val(data.idPrestamo || "");
-        $("#hidPagoNroCobranza").val(data.nroCobranza || "");
-        $("#txtPagoIdPrestamo").text(data.idPrestamo || "");
-        $("#txtPagoNroCobranza").text(data.nroCobranza || "");
-        $("#txtPagoCliente").text(data.cliente || "");
-        $("#txtPagoDocumento").text(data.documento || "");
-        $("#lblPagoDeudaTotal").text(money(data.deudaTotal || 0));
-        $("#lblPagoPagadoTotal").text(money(data.pagadoTotal || 0));
-        $("#lblPagoSaldoPendiente").text(money(data.saldoPendiente || 0));
 
-        dtPagosPrestamo.clear().draw();
-        $mdlPagosPrestamo.modal("show");
-
-        // luego conectaremos backend real
-        // cargarHistorialPagos(data.nroCobranza);
-        // cargarResumenPagos(data.nroCobranza);
-    }
 
     //function abrirModalGenerarPago() {
     //    WebApp.Forms.hideMsg($msgPago);
@@ -291,24 +321,9 @@
     //    cargarCajasPorFormaPago("EFECTIVO");
     //}
 
-    function abrirModalPagos(data) {
-        $("#hidPagoIdPrestamo").val(data.idPrestamo || "");
-        $("#hidPagoNroCobranza").val(data.nroCobranza || "");
-        $("#txtPagoIdPrestamo").text(data.idPrestamo || "");
-        $("#txtPagoNroCobranza").text(data.nroCobranza || "");
-        $("#txtPagoCliente").text(data.cliente || "");
-        $("#txtPagoDocumento").text(data.documento || "");
-        $("#lblPagoDeudaTotal").text(money(data.deudaTotal || 0));
-        $("#lblPagoPagadoTotal").text(money(data.pagadoTotal || 0));
-        $("#lblPagoSaldoPendiente").text(money(data.saldoPendiente || 0));
 
-        dtPagosPrestamo.clear().draw();
-        $mdlPagosPrestamo.modal("show");
 
-        // luego conectaremos backend real
-        // cargarHistorialPagos(data.nroCobranza);
-        // cargarResumenPagos(data.nroCobranza);
-    }
+
 
     function abrirModalPagos(data) {
         $("#hidPagoIdPrestamo").val(data.idPrestamo || "");
@@ -329,24 +344,108 @@
         // cargarResumenPagos(data.nroCobranza);
     }
 
-    function abrirModalPagos(data) {
-        $("#hidPagoIdPrestamo").val(data.idPrestamo || "");
-        $("#hidPagoNroCobranza").val(data.nroCobranza || "");
-        $("#txtPagoIdPrestamo").text(data.idPrestamo || "");
-        $("#txtPagoNroCobranza").text(data.nroCobranza || "");
-        $("#txtPagoCliente").text(data.cliente || "");
-        $("#txtPagoDocumento").text(data.documento || "");
-        $("#lblPagoDeudaTotal").text(money(data.deudaTotal || 0));
-        $("#lblPagoPagadoTotal").text(money(data.pagadoTotal || 0));
-        $("#lblPagoSaldoPendiente").text(money(data.saldoPendiente || 0));
+    function abrirModalDesembolso(data) {
+    $("#hidDesIdPrestamo").val(data.idPrestamo || "");
+    $("#hidDesNroCobranza").val(data.nroCobranza || "");
+    $("#txtDesIdPrestamo").text(data.idPrestamo || "");
+    $("#txtDesNroCobranza").text(data.nroCobranza || "");
+    $("#txtDesCliente").text(data.cliente || "");
+    $("#txtDesDocumento").text(data.documento || "");
+    $("#lblDesCapital").text(money(data.capital || 0));
+    $("#lblDesTotalDesembolsado").text(money(data.desembolsado || 0));
+    $("#lblDesSaldoPendiente").text(money((parseFloat(data.capital || 0) - parseFloat(data.desembolsado || 0)) || 0));
 
-        dtPagosPrestamo.clear().draw();
-        $mdlPagosPrestamo.modal("show");
+    dtDesembolsosPrestamo.clear().draw();
+    $mdlDesembolsoPrestamo.modal("show");
 
-        // luego conectaremos backend real
-        // cargarHistorialPagos(data.nroCobranza);
-        // cargarResumenPagos(data.nroCobranza);
+    // luego backend real
+    // cargarHistorialDesembolsos(data.idPrestamo);
+    // cargarResumenDesembolso(data.idPrestamo);
+}
+    /* Nuevos*/
+    function abrirModalDesembolso(data) {
+        $("#hidDesIdPrestamo").val(data.idPrestamo || "");
+        $("#hidDesNroCobranza").val(data.nroCobranza || "");
+        $("#txtDesIdPrestamo").text(data.idPrestamo || "");
+        $("#txtDesNroCobranza").text(data.nroCobranza || "");
+        $("#txtDesCliente").text(data.cliente || "");
+        $("#txtDesDocumento").text(data.documento || "");
+        $("#lblDesCapital").text(money(data.capital || 0));
+        $("#lblDesTotalDesembolsado").text(money(data.desembolsado || 0));
+        $("#lblDesSaldoPendiente").text(money((parseFloat(data.capital || 0) - parseFloat(data.desembolsado || 0)) || 0));
+
+        dtDesembolsosPrestamo.clear().draw();
+        $mdlDesembolsoPrestamo.modal("show");
+
+        // luego backend real
+        // cargarHistorialDesembolsos(data.idPrestamo);
+        // cargarResumenDesembolso(data.idPrestamo);
     }
+
+    function abrirModalRegistrarDesembolso() {
+        WebApp.Forms.hideMsg($msgDesembolso);
+        WebApp.Forms.clearErrors($frmRegistrarDesembolso);
+
+        $("#FecDesembolso").val(new Date().toISOString().substring(0, 10));
+        $("#ImpDesembolso").val($("#lblDesSaldoPendiente").text().replace("S/", "").trim());
+        $("#GlosaDesembolso").val("");
+        $("#CodTipDocDesembolso").val("20");
+        $("#SerDocDesembolso").val("");
+        $("#NumDocDesembolso").val("");
+
+        $("#CodCajaChicaDesembolso").html("");
+        cargarCajasDesembolso();
+
+        $mdlRegistrarDesembolso.modal("show");
+    }
+
+    function cargarCajasDesembolso() {
+        $.getJSON("/Caja/ListarPorTipo", { esBanco: "" })
+            .done(function (r) {
+                let html = "";
+                (r.data || r.Data || []).forEach(x => {
+                    html += `<option value="${x.cod_CajaChica || x.Cod_CajaChica}">${x.des_CajaChica || x.Des_CajaChica}</option>`;
+                });
+                $("#CodCajaChicaDesembolso").html(html);
+            })
+            .fail(function () {
+                WebApp.Forms.showToast(false, "No se pudo cargar las cajas de desembolso.");
+            });
+    }
+
+    /* Fin Modal*/
+function abrirModalRegistrarDesembolso() {
+    WebApp.Forms.hideMsg($msgDesembolso);
+    WebApp.Forms.clearErrors($frmRegistrarDesembolso);
+
+    $("#FecDesembolso").val(new Date().toISOString().substring(0, 10));
+    $("#ImpDesembolso").val($("#lblDesSaldoPendiente").text().replace("S/", "").trim());
+    $("#GlosaDesembolso").val("");
+    $("#CodTipDocDesembolso").val("20");
+    $("#SerDocDesembolso").val("");
+    $("#NumDocDesembolso").val("");
+
+    $("#CodCajaChicaDesembolso").html("");
+    cargarCajasDesembolso();
+
+    $mdlRegistrarDesembolso.modal("show");
+}
+
+function cargarCajasDesembolso() {
+    $.getJSON("/Caja/ListarPorTipo", { esBanco: "" })
+        .done(function (r) {
+            let html = "";
+            (r.data || []).forEach(x => {
+                html += `<option value="${x.cod_CajaChica}">${x.des_CajaChica}</option>`;
+            });
+            $("#CodCajaChicaDesembolso").html(html);
+        })
+        .fail(function () {
+            WebApp.Forms.showToast(false, "No se pudo cargar cajas para desembolso.");
+        });
+    }
+
+    /* Fin */
 
     function abrirModalGenerarPago() {
         WebApp.Forms.hideMsg($msgPago);
@@ -467,8 +566,68 @@
             .always(function () {
                 $btnGuardarPrestamo.prop("disabled", false).text("Guardar préstamo");
             });
-    });
+    }); 
 
+    $btnGuardarDesembolso.on("click", function () {
+        WebApp.Forms.hideMsg($msgDesembolso);
+        WebApp.Forms.clearErrors($frmRegistrarDesembolso);
+
+        const idPrestamo = $("#hidDesIdPrestamo").val();
+
+        const payload = {
+            IdPrestamo: idPrestamo,
+            CodCajaChicaDesembolso: $("#CodCajaChicaDesembolso").val(),
+            FecDesembolso: $("#FecDesembolso").val(),
+            ImpDesembolso: $("#ImpDesembolso").val(),
+            CodTipDocDesembolso: $("#CodTipDocDesembolso").val(),
+            SerDocDesembolso: $("#SerDocDesembolso").val(),
+            NumDocDesembolso: $("#NumDocDesembolso").val(),
+            GlosaDesembolso: $("#GlosaDesembolso").val(),
+            __RequestVerificationToken: $frmRegistrarDesembolso.find("input[name='__RequestVerificationToken']").val()
+        };
+
+        $btnGuardarDesembolso.prop("disabled", true).text("Guardando...");
+
+        WebApp.UI.withSpinner(() => $.ajax({
+            url: "/Prestamo/RegistrarDesembolso",
+            type: "POST",
+            data: payload
+        }), "Registrando desembolso...")
+            .done(function (r) {
+                if (r.success || r.Success || r.ok || r.Ok) {
+                    WebApp.Forms.showToast(true, r.message || r.Mensaje || "Desembolso registrado correctamente.");
+                    $mdlRegistrarDesembolso.modal("hide");
+                    cargarHistorialDesembolsos(idPrestamo);
+                    listarPrestamos();
+                    return;
+                }
+
+                WebApp.Forms.showMsg($msgDesembolso, false, r.message || r.Mensaje || "No se pudo registrar el desembolso.");
+            })
+            .fail(function () {
+                WebApp.Forms.showMsg($msgDesembolso, false, "Error inesperado al registrar desembolso.");
+            })
+            .always(function () {
+                $btnGuardarDesembolso.prop("disabled", false).text("Guardar desembolso");
+            });
+    });
+    function cargarHistorialDesembolsos(idPrestamo) {
+        return WebApp.UI.withSpinner(() => $.getJSON("/Prestamo/ListarDesembolsos", { idPrestamo }), "Cargando desembolsos...")
+            .done(function (r) {
+                if (!(r.success || r.Success)) {
+                    dtDesembolsosPrestamo.clear().draw();
+                    WebApp.Forms.showToast(false, r.message || r.Mensaje || "No se pudo cargar desembolsos.");
+                    return;
+                }
+
+                const rows = r.data || r.Data || [];
+                dtDesembolsosPrestamo.clear().rows.add(rows).draw();
+            })
+            .fail(function () {
+                dtDesembolsosPrestamo.clear().draw();
+                WebApp.Forms.showToast(false, "Error al cargar desembolsos.");
+            });
+    }
     $(document).on("click", ".js-ver-pagos", function () {
         abrirModalPagos({
             idPrestamo: $(this).data("idprestamo"),
@@ -479,6 +638,21 @@
             pagadoTotal: $(this).data("pagadototal"),
             saldoPendiente: $(this).data("saldopendiente")
         });
+    });
+
+    $(document).on("click", ".js-ver-desembolso", function () {
+        abrirModalDesembolso({
+            idPrestamo: $(this).data("idprestamo"),
+            nroCobranza: $(this).data("nrocobranza"),
+            cliente: $(this).data("cliente"),
+            documento: $(this).data("documento"),
+            capital: $(this).data("capital"),
+            desembolsado: $(this).data("desembolsado")
+        });
+    });
+
+    $("#btnAbrirRegistrarDesembolso").on("click", function () {
+        abrirModalRegistrarDesembolso();
     });
 
     $("#btnAbrirGenerarPago").on("click", function () {
@@ -504,6 +678,8 @@
         const checked = $("#TieneGarantia").is(":checked");
         $("#panelGarantia").toggleClass("d-none", !checked);
     }
+
+
 
     $(function () {
         initDataTable();

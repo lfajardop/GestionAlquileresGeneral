@@ -2,6 +2,7 @@
 using Dominio.DTO.Common;
 using Dominio.DTO.Prestamo;
 using Infraestructura.Interfaces;
+using Infraestructura.Repositorio;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -313,6 +314,67 @@ namespace Aplicacion.CasosUso
             return res;
         }
 
+
+        public async Task<List<PrestamoDesembolsoListadoDto>> ListarDesembolsosAsync(
+    int idPrestamo,
+    CancellationToken cancellationToken)
+        {
+            if (idPrestamo <= 0)
+                throw new ArgumentException("El Id del préstamo debe ser mayor a cero.", nameof(idPrestamo));
+
+            return await _repo.ListarDesembolsosAsync(idPrestamo, cancellationToken);
+        }
+
+
+public async Task<DbActionResult> RegistrarDesembolsoAsync(
+    PrestamoRegistrarDesembolsoRequestDto request,
+    string usuario,
+    string? estacion,
+    CancellationToken cancellationToken)
+        {
+            if (request is null)
+                throw new ArgumentNullException(nameof(request));
+
+            request.CodCajaChicaDesembolso = (request.CodCajaChicaDesembolso ?? string.Empty).Trim();
+            request.CodTipDocDesembolso = string.IsNullOrWhiteSpace(request.CodTipDocDesembolso)
+                ? "20"
+                : request.CodTipDocDesembolso.Trim();
+            request.SerDocDesembolso = (request.SerDocDesembolso ?? string.Empty).Trim();
+            request.NumDocDesembolso = (request.NumDocDesembolso ?? string.Empty).Trim();
+            request.GlosaDesembolso = (request.GlosaDesembolso ?? string.Empty).Trim();
+
+            var errores = new List<string>();
+
+            if (request.IdPrestamo <= 0)
+                errores.Add("El préstamo es obligatorio.");
+
+            if (string.IsNullOrWhiteSpace(request.CodCajaChicaDesembolso))
+                errores.Add("La caja origen es obligatoria.");
+
+            if (request.ImpDesembolso <= 0)
+                errores.Add("El importe de desembolso debe ser mayor a cero.");
+
+            if (request.FecDesembolso == default)
+                errores.Add("La fecha de desembolso es obligatoria.");
+
+            if (string.IsNullOrWhiteSpace(usuario))
+                errores.Add("No se pudo identificar el usuario.");
+
+            if (errores.Count > 0)
+            {
+                return new DbActionResult
+                {
+                    Ok = false,
+                    Mensaje = string.Join(" ", errores)
+                };
+            }
+
+            return await _repo.RegistrarDesembolsoAsync(
+                request,
+                usuario,
+                estacion,
+                cancellationToken);
+        }
 
 
     }

@@ -480,6 +480,163 @@
         </div>
     </div>
 </div>
+<!-- Nuevos-->
+<div class="modal fade" id="mdlDesembolsoPrestamo" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content rounded-4 shadow">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h5 class="modal-title fw-bold">Desembolso del préstamo</h5>
+                    <small class="text-muted">Registra uno o más tramos de desembolso desde caja.</small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <div class="modal-body pt-3">
+                <input type="hidden" id="hidDesIdPrestamo" />
+                <input type="hidden" id="hidDesNroCobranza" />
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Cliente</label>
+                        <div id="txtDesCliente" class="form-control bg-light"></div>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Documento</label>
+                        <div id="txtDesDocumento" class="form-control bg-light"></div>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">ID Préstamo</label>
+                        <div id="txtDesIdPrestamo" class="form-control bg-light"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Nro Cobranza</label>
+                        <div id="txtDesNroCobranza" class="form-control bg-light"></div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm rounded-4 h-100">
+                            <div class="card-body">
+                                <div class="text-muted small">Capital</div>
+                                <div id="lblDesCapital" class="fs-4 fw-bold">S/ 0.00</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm rounded-4 h-100">
+                            <div class="card-body">
+                                <div class="text-muted small">Desembolsado</div>
+                                <div id="lblDesTotalDesembolsado" class="fs-4 fw-bold text-success">S/ 0.00</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm rounded-4 h-100">
+                            <div class="card-body">
+                                <div class="text-muted small">Saldo por desembolsar</div>
+                                <div id="lblDesSaldoPendiente" class="fs-4 fw-bold text-danger">S/ 0.00</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="button" id="btnAbrirRegistrarDesembolso" class="btn btn-primary w-100 rounded-3">
+                            <i class="bi bi-box-arrow-up-right me-1"></i> Registrar desembolso
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table id="tblDesembolsosPrestamo" class="table table-striped table-hover align-middle w-100">
+                        <thead>
+                            <tr>
+                                <th>Sec.</th>
+                                <th>Fecha</th>
+                                <th>Caja</th>
+                                <th>Importe</th>
+                                <th>Documento</th>
+                                <th>Glosa</th>
+                                <th>Mov.</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="mdlRegistrarDesembolso" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content rounded-4 shadow">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h5 class="modal-title fw-bold">Registrar desembolso</h5>
+                    <small class="text-muted">Permite desembolso simple o mixto por varios tramos.</small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <div class="modal-body pt-3">
+                <form id="frmRegistrarDesembolso">
+                    @Html.AntiForgeryToken()
+
+                    <div id="frmRegistrarDesembolsoMsg" class="alert d-none"></div>
+
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Fecha desembolso</label>
+                            <input type="date" class="form-control" id="FecDesembolso" name="FecDesembolso" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Caja origen</label>
+                            <select class="form-select" id="CodCajaChicaDesembolso" name="CodCajaChicaDesembolso"></select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Importe</label>
+                            <input type="number" step="0.01" class="form-control" id="ImpDesembolso" name="ImpDesembolso" />
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label">Tipo doc.</label>
+                            <input type="text" class="form-control" id="CodTipDocDesembolso" name="CodTipDocDesembolso" value="20" />
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label">Serie</label>
+                            <input type="text" class="form-control" id="SerDocDesembolso" name="SerDocDesembolso" value="" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Número doc.</label>
+                            <input type="text" class="form-control" id="NumDocDesembolso" name="NumDocDesembolso" value="" />
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">Glosa</label>
+                            <input type="text" class="form-control" id="GlosaDesembolso" name="GlosaDesembolso" />
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-footer border-0">
+                <button type="button" id="btnGuardarDesembolso" class="btn btn-primary rounded-3">
+                    Guardar desembolso
+                </button>
+                <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
 @section Scripts {
 
     <script src="~/js/prestamo/prestamo.js"></script>

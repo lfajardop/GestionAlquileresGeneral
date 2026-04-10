@@ -15,5 +15,14 @@ namespace Aplicacion.Interfaces
         Task<JsonResponse<List<ClienteAnexoSelectDto>>> BuscarClientesAsync(string texto, CancellationToken cancellationToken);
         Task<JsonResponse<PrestamoSimulacionDto>> SimularAsync(PrestamoSimulacionRequestDto request, CancellationToken cancellationToken);
         Task<JsonResponse<List<AlmacenSelectDto>>> ListarAlmacenesAsync(CancellationToken cancellationToken);
+        Task<List<PrestamoDesembolsoListadoDto>> ListarDesembolsosAsync(
+    int idPrestamo,
+    CancellationToken cancellationToken);
+
+        Task<DbActionResult> RegistrarDesembolsoAsync(
+            PrestamoRegistrarDesembolsoRequestDto request,
+            string usuario,
+            string? estacion,
+            CancellationToken cancellationToken);
     }
 }
