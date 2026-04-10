@@ -1,4 +1,5 @@
-﻿using Aplicacion.Interfaces;
+﻿using Aplicacion.CasosUso;
+using Aplicacion.Interfaces;
 using Dominio.DTO.Common;
 using Dominio.DTO.Prestamo;
 using Microsoft.AspNetCore.Mvc;
@@ -9,13 +10,17 @@ namespace GestionAlquileres.Controllers
     public class PrestamoController : Controller
     {
         private readonly IPrestamoService _prestamoService;
+        private readonly IFormaPagoService _formaPagoService;
+        private readonly ICajaService _cajaService;
         private readonly ILogger<PrestamoController> _logger;
 
         public PrestamoController(
-            IPrestamoService prestamoService,
+            IPrestamoService prestamoService, IFormaPagoService formaPagoService, ICajaService cajaService,
             ILogger<PrestamoController> logger)
         {
             _prestamoService = prestamoService;
+            _formaPagoService = formaPagoService;
+            _cajaService = cajaService;
             _logger = logger;
         }
         public IActionResult Index()
@@ -132,6 +137,58 @@ namespace GestionAlquileres.Controllers
                 {
                     Success = false,
                     Mensaje = "No se pudo registrar el desembolso.",
+                    Errors = new List<string> { ex.Message }
+                });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ListarFormasPago(CancellationToken cancellationToken)
+        {
+            try
+            {
+                var data = await _formaPagoService.ListarFormasPagoAsync(cancellationToken);
+
+                return Json(new JsonResponse<object>
+                {
+                    Success = true,
+                    Data = data
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en PrestamoController.ListarFormasPago");
+
+                return Json(new JsonResponse<object>
+                {
+                    Success = false,
+                    Mensaje = "No se pudieron listar las formas de pago.",
+                    Errors = new List<string> { ex.Message }
+                });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ListarCajasPorBanco(string flgEsBanco, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var data = await _cajaService.ListarCajasPorBancoAsync(flgEsBanco, cancellationToken);
+
+                return Json(new JsonResponse<object>
+                {
+                    Success = true,
+                    Data = data
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en PrestamoController.ListarCajasPorBanco");
+
+                return Json(new JsonResponse<object>
+                {
+                    Success = false,
+                    Mensaje = "No se pudieron listar las cajas.",
                     Errors = new List<string> { ex.Message }
                 });
             }

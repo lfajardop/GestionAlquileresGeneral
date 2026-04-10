@@ -279,7 +279,64 @@
                 WebApp.Forms.showToast(false, "Error al listar préstamos.");
             });
     }
+    /*Nuevas Funciones */
+    function esFormaEfectivo(texto) {
+        return String(texto || "").trim().toUpperCase() === "EFECTIVO";
+    }
 
+    function cargarFormasPagoEnCombo($combo, selectedText = null) {
+        return $.getJSON("/Prestamo/ListarFormasPago")
+            .done(function (r) {
+                if (!(r.success || r.Success)) {
+                    WebApp.Forms.showToast(false, r.message || r.Mensaje || "No se pudieron cargar las formas de pago.");
+                    return;
+                }
+
+                const rows = r.data || r.Data || [];
+                let html = "";
+
+                rows.forEach(x => {
+                    const id = x.idFormaPago ?? x.IdFormaPago;
+                    const tipo = x.tipo ?? x.Tipo;
+                    const selected = selectedText && String(tipo).toUpperCase() === String(selectedText).toUpperCase()
+                        ? "selected"
+                        : "";
+                    html += `<option value="${id}" data-tipo="${tipo}" ${selected}>${tipo}</option>`;
+                });
+
+                $combo.html(html);
+            })
+            .fail(function () {
+                WebApp.Forms.showToast(false, "Error al cargar formas de pago.");
+            });
+    }
+
+    function cargarCajasPorFlagBanco($combo, flgEsBanco) {
+        return $.getJSON("/Prestamo/ListarCajasPorBanco", { flgEsBanco })
+            .done(function (r) {
+                if (!(r.success || r.Success)) {
+                    $combo.html("");
+                    WebApp.Forms.showToast(false, r.message || r.Mensaje || "No se pudieron cargar las cajas.");
+                    return;
+                }
+
+                const rows = r.data || r.Data || [];
+                let html = "";
+
+                rows.forEach(x => {
+                    const cod = x.codCajaChica ?? x.CodCajaChica;
+                    const des = x.desCajaChica ?? x.DesCajaChica;
+                    html += `<option value="${cod}">${des}</option>`;
+                });
+
+                $combo.html(html);
+            })
+            .fail(function () {
+                $combo.html("");
+                WebApp.Forms.showToast(false, "No se pudo cargar cajas.");
+            });
+    }
+    /*Fin Nuevas */
     function cargarCajasPorFormaPago(formaPago) {
         let esBanco = formaPago === "BANCARIO" ? "S" : "N";
 
@@ -293,17 +350,31 @@
             });
     }
 
-    function cargarFormaPago() {
-        $.getJSON("/FormaPago/Listar")
-            .done(function (r) {
-                let html = "";
-                (r.data || []).forEach(x => {
-                    html += `<option value="${x.idFormaPago}">${x.descripcion}</option>`;
-                });
-                $("#FormaPago").html(html);
+    function cargarFormaPagoPago() {
+        return cargarFormasPagoEnCombo($("#FormaPago"), "Efectivo")
+            .done(function () {
+                cambiarCajaSegunFormaPago();
             });
     }
 
+    function cambiarCajaSegunFormaPago() {
+        const textoSeleccionado = $("#FormaPago option:selected").data("tipo") || $("#FormaPago option:selected").text();
+        const flgEsBanco = esFormaEfectivo(textoSeleccionado) ? "N" : "S";
+        return cargarCajasPorFlagBanco($("#CodCajaChica"), flgEsBanco);
+    }
+
+    function cargarFormaPagoDesembolso() {
+        return cargarFormasPagoEnCombo($("#FormaPagoDesembolso"), "Efectivo")
+            .done(function () {
+                cambiarCajaSegunFormaPagoDesembolso();
+            });
+    }
+
+    function cambiarCajaSegunFormaPagoDesembolso() {
+        const textoSeleccionado = $("#FormaPagoDesembolso option:selected").data("tipo") || $("#FormaPagoDesembolso option:selected").text();
+        const flgEsBanco = esFormaEfectivo(textoSeleccionado) ? "N" : "S";
+        return cargarCajasPorFlagBanco($("#CodCajaChicaDesembolso"), flgEsBanco);
+    }
 
 
     //function abrirModalGenerarPago() {
