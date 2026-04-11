@@ -336,11 +336,8 @@ public async Task<DbActionResult> RegistrarDesembolsoAsync(
                 throw new ArgumentNullException(nameof(request));
 
             request.CodCajaChicaDesembolso = (request.CodCajaChicaDesembolso ?? string.Empty).Trim();
-            request.CodTipDocDesembolso = string.IsNullOrWhiteSpace(request.CodTipDocDesembolso)
-                ? "20"
-                : request.CodTipDocDesembolso.Trim();
-            request.SerDocDesembolso = (request.SerDocDesembolso ?? string.Empty).Trim();
-            request.NumDocDesembolso = (request.NumDocDesembolso ?? string.Empty).Trim();
+
+
             request.GlosaDesembolso = (request.GlosaDesembolso ?? string.Empty).Trim();
 
             var errores = new List<string>();
@@ -368,7 +365,7 @@ public async Task<DbActionResult> RegistrarDesembolsoAsync(
                     Mensaje = string.Join(" ", errores)
                 };
             }
-
+            
             return await _repo.RegistrarDesembolsoAsync(
                 request,
                 usuario,

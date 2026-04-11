@@ -20,6 +20,10 @@ namespace Aplicacion
             services.AddScoped<ICobranzaRepository, CobranzaRepository>();
             services.AddScoped<IPrestamoRepository, PrestamoRepository>();
             services.AddScoped<IPrestamoService, PrestamoService>();
+            services.AddScoped<IFormaPagoService, FormaPagoService>();
+            services.AddScoped<ICajaService, CajaService>();
+            services.AddScoped<ICajaRepository, CajaRepository>();
+            services.AddScoped<IFormaPagoRepository, FormaPagoRepository>();
             return services;
         }
     }

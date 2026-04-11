@@ -300,9 +300,6 @@ namespace Infraestructura.Repositorio
                 cmd.Parameters.AddWithValue("@Cod_CajaChica", (object?)request.CodCajaChicaDesembolso ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@Importe", request.ImpDesembolso);
                 cmd.Parameters.AddWithValue("@Fec_Desembolso", request.FecDesembolso);
-                cmd.Parameters.AddWithValue("@Cod_TipDoc", (object?)request.CodTipDocDesembolso ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@Ser_docum", (object?)request.SerDocDesembolso ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@Num_Docum", (object?)request.NumDocDesembolso ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@Glosa", (object?)request.GlosaDesembolso ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@CodUsuario", Convert.ToInt32(usuario));
                 cmd.Parameters.AddWithValue("@CodEstacion", (object?)estacion ?? DBNull.Value);

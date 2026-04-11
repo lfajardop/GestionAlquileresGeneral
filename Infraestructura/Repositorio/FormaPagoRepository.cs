@@ -31,7 +31,7 @@ namespace Infraestructura.Repositorio
                 var lista = new List<FormaPagoDto>();
 
                 using var cn = new SqlConnection(GetConnectionString());
-                using var cmd = new SqlCommand("dbo.FormaPago_Listar_Activos", cn);
+                using var cmd = new SqlCommand("dbo.forma_pago_list", cn);
                 cmd.CommandType = CommandType.StoredProcedure;
 
                 await cn.OpenAsync(cancellationToken);
