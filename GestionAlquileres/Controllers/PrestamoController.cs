@@ -193,5 +193,56 @@ namespace GestionAlquileres.Controllers
                 });
             }
         }
+
+        [HttpGet]
+        public async Task<IActionResult> ListarPagos(int idPrestamo, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var data = await _prestamoService.ListarPagosAsync(idPrestamo, cancellationToken);
+
+                return Json(new JsonResponse<object>
+                {
+                    Success = true,
+                    Data = data
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en PrestamoController.ListarPagos");
+
+                return Json(new JsonResponse<object>
+                {
+                    Success = false,
+                    Mensaje = "No se pudieron listar los pagos.",
+                    Errors = new List<string> { ex.Message }
+                });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RegistrarPago([FromForm] PrestamoRegistrarPagoRequestDto request, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var usuario = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0";
+                var estacion = HttpContext.Connection.RemoteIpAddress?.ToString();
+
+                var result = await _prestamoService.RegistrarPagoAsync(request, usuario, estacion, cancellationToken);
+                return Json(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al registrar pago");
+
+                return Json(new JsonResponse<object>
+                {
+                    Success = false,
+                    Mensaje = "No se pudo registrar el pago.",
+                    Errors = new List<string> { ex.Message }
+                });
+            }
+        }
     }
 }

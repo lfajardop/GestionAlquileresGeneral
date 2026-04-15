@@ -373,6 +373,55 @@ public async Task<DbActionResult> RegistrarDesembolsoAsync(
                 cancellationToken);
         }
 
+        public async Task<List<PrestamoPagoListadoDto>> ListarPagosAsync(
+    int idPrestamo,
+    CancellationToken cancellationToken)
+        {
+            if (idPrestamo <= 0)
+                throw new ArgumentException("El IdPrestamo es obligatorio.", nameof(idPrestamo));
 
+            return await _repo.ListarPagosAsync(idPrestamo, cancellationToken);
+        }
+
+        public async Task<DbActionResult> RegistrarPagoAsync(
+    PrestamoRegistrarPagoRequestDto request,
+    string usuario,
+    string? estacion,
+    CancellationToken cancellationToken)
+        {
+            if (request is null)
+                throw new ArgumentNullException(nameof(request));
+
+            var errores = new List<string>();
+
+            if (request.IdPrestamo <= 0)
+                errores.Add("El préstamo es obligatorio.");
+
+            //if (string.IsNullOrWhiteSpace(request.NroCobranza))
+            //    errores.Add("La cobranza es obligatoria.");
+
+            if (request.FecPago == default)
+                errores.Add("La fecha de pago es obligatoria.");
+
+            if (request.IdFormaPago <= 0)
+                errores.Add("La forma de pago es obligatoria.");
+
+            if (string.IsNullOrWhiteSpace(request.CodCajaChica))
+                errores.Add("La caja es obligatoria.");
+
+            if (request.ImportePago <= 0)
+                errores.Add("El importe de pago debe ser mayor a cero.");
+
+            if (errores.Count > 0)
+            {
+                return new DbActionResult
+                {
+                    Ok = false,
+                    Mensaje = string.Join(" ", errores)
+                };
+            }
+
+            return await _repo.RegistrarPagoAsync(request, usuario, estacion, cancellationToken);
+        }
     }
 }

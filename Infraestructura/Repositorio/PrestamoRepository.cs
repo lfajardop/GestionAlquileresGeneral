@@ -375,5 +375,107 @@ namespace Infraestructura.Repositorio
                 throw;
             }
         }
+        public async Task<List<PrestamoPagoListadoDto>> ListarPagosAsync(
+     int idPrestamo,
+    CancellationToken cancellationToken)
+        {
+            try
+            {
+                var lista = new List<PrestamoPagoListadoDto>();
+
+                using var cn = new SqlConnection(GetConnectionString());
+                using var cmd = new SqlCommand("prest.p_prestamo_pago_listar", cn);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.AddWithValue("@Id_Prestamo", idPrestamo);
+
+                await cn.OpenAsync(cancellationToken);
+                using var dr = await cmd.ExecuteReaderAsync(cancellationToken);
+
+                while (await dr.ReadAsync(cancellationToken))
+                {
+                    lista.Add(new PrestamoPagoListadoDto
+                    {
+                        NumCuota = dr["numCuota"] == DBNull.Value ? 0 : Convert.ToInt32(dr["numCuota"]),
+                        FecPago = dr["fecPago"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["fecPago"]),
+                        FormaPago = dr["formaPago"] == DBNull.Value ? "" : dr["formaPago"].ToString()!,
+                        CajaBanco = dr["cajaBanco"] == DBNull.Value ? "" : dr["cajaBanco"].ToString()!,
+                        Importe = dr["importe"] == DBNull.Value ? 0 : Convert.ToDecimal(dr["importe"]),
+                        Deuda = dr["deuda"] == DBNull.Value ? 0 : Convert.ToDecimal(dr["deuda"]),
+                        Saldo = dr["saldo"] == DBNull.Value ? 0 : Convert.ToDecimal(dr["saldo"]),
+                        Glosa = dr["glosa"] == DBNull.Value ? "" : dr["glosa"].ToString()!
+                    });
+                }
+
+                return lista;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en PrestamoRepository.ListarPagosAsync");
+                throw;
+            }
+        }
+
+        public async Task<DbActionResult> RegistrarPagoAsync(
+    PrestamoRegistrarPagoRequestDto request,
+    string usuario,
+    string? estacion,
+    CancellationToken cancellationToken)
+        {
+            try
+            {
+                var result = new DbActionResult();
+
+                using var cn = new SqlConnection(GetConnectionString());
+                using var cmd = new SqlCommand("dbo.FI_Cobranza_RegistrarPago_Prestamo", cn);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.AddWithValue("@prest_id", request.IdPrestamo);
+                cmd.Parameters.AddWithValue("@Cod_Almacen", "PR"); // luego podemos resolverlo real
+                cmd.Parameters.AddWithValue("@ImportePago", request.ImportePago);
+                cmd.Parameters.AddWithValue("@Fec_Pago", request.FecPago);
+                cmd.Parameters.AddWithValue("@IdFormaPago", request.IdFormaPago);
+                cmd.Parameters.AddWithValue("@Cod_CajaChica", request.CodCajaChica);
+                cmd.Parameters.AddWithValue("@BancoId", DBNull.Value);
+                cmd.Parameters.AddWithValue("@CuentaBancoId", DBNull.Value);
+                cmd.Parameters.AddWithValue("@Glosa", (object?)request.GlosaPago ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@CodUsuarioCreacion", Convert.ToInt32(usuario));
+                cmd.Parameters.AddWithValue("@CodEstacion", (object?)estacion ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@PermitirExcedente", request.PermitirExcedente);
+
+                // temporal: sacar del préstamo luego, por ahora valores base
+                //cmd.Parameters.AddWithValue("@Cod_TipAnex", "C");
+                //cmd.Parameters.AddWithValue("@Cod_Anxo", "000001");
+                //cmd.Parameters.AddWithValue("@Cod_TipDoc", "14");
+                //cmd.Parameters.AddWithValue("@Ser_docum", "");
+                //cmd.Parameters.AddWithValue("@Num_Docum", "");
+
+                var okParam = new SqlParameter("@Ok", SqlDbType.Bit)
+                {
+                    Direction = ParameterDirection.Output
+                };
+                cmd.Parameters.Add(okParam);
+
+                var msgParam = new SqlParameter("@Mensaje", SqlDbType.VarChar, 500)
+                {
+                    Direction = ParameterDirection.Output
+                };
+                cmd.Parameters.Add(msgParam);
+
+                await cn.OpenAsync(cancellationToken);
+                await cmd.ExecuteNonQueryAsync(cancellationToken);
+
+                result.Ok = okParam.Value != DBNull.Value && Convert.ToBoolean(okParam.Value);
+                result.Mensaje = msgParam.Value == DBNull.Value ? "" : msgParam.Value.ToString();
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en PrestamoRepository.RegistrarPagoAsync");
+                throw;
+            }
+        }
+
     }
 }
