@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Aplicacion.Common
 {
-    public class JsonResponse<T>
+    public class JsonResponseRequest<T>
     {
         [JsonPropertyName("success")]
         public bool Success { get; set; }

@@ -35,6 +35,7 @@ namespace Dominio.DTO.Prestamo
         public string? EstadoGarantia { get; set; }
         public decimal? ValorGarantia { get; set; }
         public string? ObservacionGarantia { get; set; }
+        public string Cod_Concepto { get; set; }
 
     }
 }

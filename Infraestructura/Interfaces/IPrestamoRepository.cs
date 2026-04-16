@@ -25,5 +25,9 @@ namespace Infraestructura.Interfaces
         Task<List<PrestamoPagoListadoDto>> ListarPagosAsync(int idPrestamo,CancellationToken cancellationToken);
 
         Task<DbActionResult> RegistrarPagoAsync(PrestamoRegistrarPagoRequestDto request, string usuario, string? estacion,CancellationToken cancellationToken);
+        Task<List<PrestamoConceptoDto>> ListarConceptosAsync(CancellationToken cancellationToken);
+       Task<PrestamoDetalleDto> ObtenerDetalleAsync(int idPrestamo, CancellationToken cancellationToken);
+
+
     }
 }

@@ -16,5 +16,7 @@ namespace Dominio.DTO.Prestamo
         public decimal ImportePago { get; set; }
         public string? GlosaPago { get; set; }
         public bool PermitirExcedente { get; set; }
+        public string Cod_Concepto { get; set; } = string.Empty;
+
     }
 }

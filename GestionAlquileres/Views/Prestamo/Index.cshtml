@@ -163,16 +163,24 @@
                                             <span class="field-error text-danger" data-valmsg-for="FrecuenciaPago"></span>
                                         </div>
 
-                                        <div class="col-md-6">
+                                        <div class="col-md-4">
                                             <label class="form-label">Fecha inicio cobro</label>
                                             <input type="date" class="form-control" id="FechaInicioCobro" name="FechaInicioCobro" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
                                             <span class="field-error text-danger" data-valmsg-for="FechaInicioCobro"></span>
                                         </div>
 
-                                        <div class="col-md-6">
+                                      
+
+                                        <div class="col-md-4">
                                             <label class="form-label">Fecha fin cobro</label>
                                             <input type="date" class="form-control" id="FechaFinCobro" name="FechaFinCobro" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
                                             <span class="field-error text-danger" data-valmsg-for="FechaFinCobro"></span>
+                                        </div>
+
+                                        <div class="col-md-4">
+                                            <label class="form-label">Concepto</label>
+                                            <select class="form-select" id="Cod_Concepto" name="Cod_Concepto"></select>
+                                            <span class="field-error text-danger" data-valmsg-for="Cod_Concepto"></span>
                                         </div>
                                         <div class="col-md-4">
                                             <label class="form-label d-block">Garantía / prenda</label>
@@ -182,6 +190,7 @@
                                             </div>
                                             <input type="hidden" name="TieneGarantia" value="false" />
                                         </div>
+
 
                                         <div class="col-12">
                                             <label class="form-label">Observación</label>
@@ -610,14 +619,11 @@
                             <input type="number" step="0.01" class="form-control" id="ImpDesembolso" name="ImpDesembolso" />
                         </div>
 
-
-                      <div class="col-md-8">
-    <label class="form-label">Glosa</label>
-    <input type="text" class="form-control" id="GlosaDesembolso" name="GlosaDesembolso" />
-</div>
-
-                    
-
+                        <div class="col-md-8">
+                            <label class="form-label">Glosa</label>
+                            <input type="text" class="form-control" id="GlosaDesembolso" name="GlosaDesembolso" />
+                        </div>
+                    </div>
                 </form>
             </div>
 
@@ -626,6 +632,90 @@
                     Guardar desembolso
                 </button>
                 <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="mdlDetallePrestamo" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content rounded-4 shadow">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h5 class="modal-title fw-bold">Detalle consolidado del préstamo</h5>
+                    <small class="text-muted">Resumen general, cuotas, pagos y desembolsos.</small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body pt-3">
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3"><b>ID:</b> <span id="detIdPrestamo"></span></div>
+                    <div class="col-md-3"><b>Fecha:</b> <span id="detFecha"></span></div>
+                    <div class="col-md-3"><b>Capital:</b> <span id="detCapital"></span></div>
+                    <div class="col-md-3"><b>Interés:</b> <span id="detInteres"></span></div>
+
+                    <div class="col-md-3"><b>Total cobrar:</b> <span id="detTotalCobrar"></span></div>
+                    <div class="col-md-3"><b>Total pagado:</b> <span id="detTotalPagado"></span></div>
+                    <div class="col-md-3"><b>Total desembolsado:</b> <span id="detTotalDesembolsado"></span></div>
+                    <div class="col-md-3"><b>Saldo:</b> <span id="detSaldoPendiente"></span></div>
+
+                    <div class="col-md-4"><b>Concepto:</b> <span id="detConcepto"></span></div>
+                    <div class="col-md-8"><b>Observación:</b> <span id="detObservacion"></span></div>
+                </div>
+
+                <h6 class="fw-bold">Cuotas</h6>
+                <div class="table-responsive mb-4">
+                    <table class="table table-sm table-striped" id="tblDetalleCuotas">
+                        <thead>
+                            <tr>
+                                <th>Cuota</th>
+                                <th>Vencimiento</th>
+                                <th>Base</th>
+                                <th>Interés</th>
+                                <th>Total</th>
+                                <th>Pagado</th>
+                                <th>Saldo</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+                <h6 class="fw-bold">Pagos</h6>
+                <div class="table-responsive mb-4">
+                    <table class="table table-sm table-striped" id="tblDetallePagos">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Importe</th>
+                                <th>Forma pago</th>
+                                <th>Glosa</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+                <h6 class="fw-bold">Desembolsos</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped" id="tblDetalleDesembolsos">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Importe</th>
+                                <th>Caja</th>
+                                <th>Glosa</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>

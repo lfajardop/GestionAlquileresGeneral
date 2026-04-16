@@ -99,6 +99,8 @@
         $("#ValorGarantia").val("");
         $("#DescripcionGarantia").val("");
 
+        $("#Cod_Concepto").val("");
+
         WebApp.Forms.hideMsg($msg);
         WebApp.Forms.clearErrors($frmPrestamo);
         limpiarSimulacion();
@@ -211,7 +213,15 @@
                                 Pagos
                             </button>
                             ${btnDesembolsar}
+
+
+                        <button type="button"
+                            class="btn btn-sm btn-outline-secondary js-ver-detalle"
+                            data-idprestamo="${row.id_Prestamo || ''}">
+                            Detalle
+                        </button>
                         </div>`;
+
                     }
                 }
             ]
@@ -805,6 +815,99 @@
         $mdlDesembolsoPrestamo.modal("show");
         cargarHistorialDesembolsos($("#hidDesIdPrestamo").val());
     }
+
+    function cargarConceptosPrestamo() {
+        return WebApp.UI.withSpinner(() => $.getJSON("/Prestamo/ListarConceptos"), "Cargando conceptos...")
+            .done(function (r) {
+                const rows = r.data || r.Data || [];
+                let html = '<option value="">Seleccione</option>';
+
+                rows.forEach(x => {
+                    const id = x.cod_Concepto ?? x.Cod_Concepto;
+                    const nombre = x.nombre ?? x.Nombre;
+
+
+                    html += `<option value="${id}" >${nombre}</option>`;
+                });
+
+                $("#Cod_Concepto").html(html);
+            })
+            .fail(function () {
+                WebApp.Forms.showToast(false, "Error al cargar conceptos del préstamo.");
+            });
+    }
+    function cargarDetallePrestamo(idPrestamo) {
+        return WebApp.UI.withSpinner(() => $.getJSON("/Prestamo/ObtenerDetalle", { idPrestamo }), "Cargando detalle...")
+            .done(function (r) {
+                if (!(r.success || r.Success)) {
+                    WebApp.Forms.showToast(false, r.message || r.Mensaje || "No se pudo cargar el detalle.");
+                    return;
+                }
+
+                const d = r.data || r.Data || {};
+                const cab = d.cabecera || d.Cabecera || {};
+                const cuotas = d.cuotas || d.Cuotas || [];
+                const pagos = d.pagos || d.Pagos || [];
+                const desembolsos = d.desembolsos || d.Desembolsos || [];
+
+                $("#detIdPrestamo").text(cab.idPrestamo || cab.IdPrestamo || "");
+                $("#detFecha").text(fecha(cab.fecha || cab.Fecha));
+                $("#detCapital").text(money(cab.capital || cab.Capital));
+                $("#detInteres").text((cab.porcInteresMensual || cab.PorcInteresMensual || 0) + " %");
+                $("#detTotalCobrar").text(money(cab.totalCobrar || cab.TotalCobrar));
+                $("#detTotalPagado").text(money(cab.totalPagado || cab.TotalPagado));
+                $("#detTotalDesembolsado").text(money(cab.totalDesembolsado || cab.TotalDesembolsado));
+                $("#detSaldoPendiente").text(money(cab.saldoPendiente || cab.SaldoPendiente));
+                $("#detConcepto").text(cab.codConcepto || cab.CodConcepto || "");
+                $("#detObservacion").text(cab.observacion || cab.Observacion || "");
+
+                let htmlCuotas = "";
+                cuotas.forEach(x => {
+                    htmlCuotas += `
+                    <tr>
+                        <td>${x.numCuota ?? x.NumCuota}</td>
+                        <td>${fecha(x.fecVenc ?? x.FecVenc)}</td>
+                        <td>${money(x.importeBase ?? x.ImporteBase)}</td>
+                        <td>${money(x.importeInteres ?? x.ImporteInteres)}</td>
+                        <td>${money(x.impCuota ?? x.ImpCuota)}</td>
+                        <td>${money(x.pagado ?? x.Pagado)}</td>
+                        <td>${money(x.saldo ?? x.Saldo)}</td>
+                        <td>${x.flgStatusPago ?? x.FlgStatusPago ?? ""}</td>
+                    </tr>`;
+                });
+                $("#tblDetalleCuotas tbody").html(htmlCuotas);
+
+                let htmlPagos = "";
+                pagos.forEach(x => {
+                    htmlPagos += `
+                    <tr>
+                        <td>${fecha(x.fecPago ?? x.FecPago)}</td>
+                        <td>${money(x.importe ?? x.Importe)}</td>
+                        <td>${x.formaPago ?? x.FormaPago ?? ""}</td>
+                        <td>${x.glosa ?? x.Glosa ?? ""}</td>
+                    </tr>`;
+                });
+                $("#tblDetallePagos tbody").html(htmlPagos);
+
+                let htmlDes = "";
+                desembolsos.forEach(x => {
+                    htmlDes += `
+                    <tr>
+                        <td>${fecha(x.fecDesembolso ?? x.FecDesembolso)}</td>
+                        <td>${money(x.importe ?? x.Importe)}</td>
+                        <td>${x.codCajaChica ?? x.CodCajaChica ?? ""}</td>
+                        <td>${x.glosa ?? x.Glosa ?? ""}</td>
+                    </tr>`;
+                });
+                $("#tblDetalleDesembolsos tbody").html(htmlDes);
+
+                $("#mdlDetallePrestamo").modal("show");
+            })
+            .fail(function () {
+                WebApp.Forms.showToast(false, "Error al cargar detalle del préstamo.");
+            });
+    }
+
     $(document).on("click", ".js-ver-pagos", function () {
         abrirModalPagos({
             idPrestamo: $(this).data("idprestamo"),
@@ -864,11 +967,16 @@
         cambiarCajaSegunFormaPagoDesembolso();
     });
 
+    $(document).on("click", ".js-ver-detalle", function () {
+        const idPrestamo = $(this).data("idprestamo");
+        cargarDetallePrestamo(idPrestamo);
+    });
 
     $(function () {
         initDataTable();
         initClienteSelect();
         cargarAlmacenes();
         listarPrestamos();
+        cargarConceptosPrestamo();
     });
 })();

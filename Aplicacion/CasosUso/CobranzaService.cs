@@ -24,9 +24,9 @@ namespace Aplicacion.CasosUso
             _logger = logger;
         }
 
-        public async Task<JsonResponse<CobranzaResumenDto>> ObtenerResumenAsync(CancellationToken cancellationToken)
+        public async Task<JsonResponseRequest<CobranzaResumenDto>> ObtenerResumenAsync(CancellationToken cancellationToken)
         {
-            var res = new JsonResponse<CobranzaResumenDto>();
+            var res = new JsonResponseRequest<CobranzaResumenDto>();
 
             try
             {
@@ -52,26 +52,26 @@ namespace Aplicacion.CasosUso
             return res;
         }
 
-        public async Task<JsonResponse<List<CobranzaPendienteDto>>> ListarPrestamosPendientesAsync(CancellationToken cancellationToken)
+        public async Task<JsonResponseRequest<List<CobranzaPendienteDto>>> ListarPrestamosPendientesAsync(CancellationToken cancellationToken)
         {
             return await EjecutarListaAsync(() => _repo.ListarPrestamosPendientesAsync(cancellationToken),"préstamos pendientes");
         }
 
-        public async Task<JsonResponse<List<CobranzaPendienteDto>>> ListarAlquileresPendientesAsync(CancellationToken cancellationToken)
+        public async Task<JsonResponseRequest<List<CobranzaPendienteDto>>> ListarAlquileresPendientesAsync(CancellationToken cancellationToken)
         {
             return await EjecutarListaAsync(() => _repo.ListarAlquileresPendientesAsync(cancellationToken),"alquileres pendientes");
         }
 
-        public async Task<JsonResponse<List<CobranzaPendienteDto>>> ListarRentasPorVencerAsync(CancellationToken cancellationToken)
+        public async Task<JsonResponseRequest<List<CobranzaPendienteDto>>> ListarRentasPorVencerAsync(CancellationToken cancellationToken)
         {
             return await EjecutarListaAsync(() => _repo.ListarRentasPorVencerAsync(cancellationToken),"rentas por vencer");
         }
 
-        private async Task<JsonResponse<List<CobranzaPendienteDto>>> EjecutarListaAsync(
+        private async Task<JsonResponseRequest<List<CobranzaPendienteDto>>> EjecutarListaAsync(
             Func<Task<List<CobranzaPendienteDto>>> accion,
             string modulo)
         {
-            var res = new JsonResponse<List<CobranzaPendienteDto>>();
+            var res = new JsonResponseRequest<List<CobranzaPendienteDto>>();
 
             try
             {

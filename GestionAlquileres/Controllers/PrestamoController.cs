@@ -244,5 +244,38 @@ namespace GestionAlquileres.Controllers
                 });
             }
         }
+
+        [HttpGet]
+        public async Task<IActionResult> ListarConceptos(CancellationToken cancellationToken)
+        {
+            try
+            {
+                var data = await _prestamoService.ListarConceptosAsync(cancellationToken);
+
+                return Json(new JsonResponse<object>
+                {
+                    Success = true,
+                    Data = data
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en PrestamoController.ListarConceptos");
+
+                return Json(new JsonResponse<object>
+                {
+                    Success = false,
+                    Mensaje = "No se pudieron listar los conceptos.",
+                    Errors = new List<string> { ex.Message }
+                });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ObtenerDetalle(int idPrestamo)
+        {
+            var result = await _prestamoService.ObtenerDetalleAsync(idPrestamo);
+            return Json(result);
+        }
     }
 }

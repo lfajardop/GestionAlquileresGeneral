@@ -95,7 +95,7 @@ namespace Infraestructura.Repositorio
                 cmd.Parameters.Add("@TipoModalidad", SqlDbType.Char, 1).Value =(object?)request.TipoModalidad ?? DBNull.Value;
                 cmd.Parameters.AddWithValue("@Observacion", (object?)request.Observacion ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@Usu", (object?)usuario ?? DBNull.Value);
-
+                cmd.Parameters.AddWithValue("@Cod_Concepto", (object?)request.Cod_Concepto ?? DBNull.Value);
                 var outId = new SqlParameter("@Id_PrestamoOut", SqlDbType.Int)
                 {
                     Direction = ParameterDirection.Output
@@ -475,6 +475,131 @@ namespace Infraestructura.Repositorio
                 _logger.LogError(ex, "Error en PrestamoRepository.RegistrarPagoAsync");
                 throw;
             }
+        }
+
+        public async Task<List<PrestamoConceptoDto>> ListarConceptosAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                var result = new List<PrestamoConceptoDto>();
+
+                using var cn = new SqlConnection(GetConnectionString());
+                using var cmd = new SqlCommand("prest.p_concepto_listar", cn);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                await cn.OpenAsync(cancellationToken);
+                using var dr = await cmd.ExecuteReaderAsync(cancellationToken);
+
+                while (await dr.ReadAsync(cancellationToken))
+                {
+                    result.Add(new PrestamoConceptoDto
+                    {
+                        Cod_Concepto = SqlReaderHelper.ValorReaderString(dr, "Cod_Concepto"),
+                        Nombre = SqlReaderHelper.ValorReaderString(dr, "Nombre"),
+                        Flag_Activo = SqlReaderHelper.ValorReaderString(dr, "Flag_Activo"),
+                        OrdenVisual = SqlReaderHelper.ValorReaderInt(dr, "OrdenVisual")
+                    });
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en PrestamoRepository.ListarConceptosAsync");
+                throw;
+            }
+        }
+
+        public async Task<PrestamoDetalleDto?> ObtenerDetalleAsync(int idPrestamo, CancellationToken cancellationToken)
+        {
+            using var cn = new SqlConnection(GetConnectionString());
+            using var cmd = new SqlCommand("prest.p_prestamo_detalle_consolidado", cn)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add("@Id_Prestamo", SqlDbType.Int).Value = idPrestamo;
+
+            await cn.OpenAsync(cancellationToken);
+            using var dr = await cmd.ExecuteReaderAsync(cancellationToken);
+
+            PrestamoDetalleDto? dto = null;
+
+            // Resultset 1: Cabecera
+            if (await dr.ReadAsync(cancellationToken))
+            {
+                dto = new PrestamoDetalleDto
+                {
+                    Cabecera = new PrestamoDetalleCabeceraDto
+                    {
+                        IdPrestamo = SqlReaderHelper.ValorReaderInt(dr, "Id_Prestamo"),
+                        Fecha = SqlReaderHelper.ValorReaderDateTime(dr, "Fecha"),
+                        Capital = SqlReaderHelper.ValorReaderDecimal(dr, "Capital"),
+                        NroCuotas = SqlReaderHelper.ValorReaderInt(dr, "Nro_Cuotas"),
+                        PorcInteresMensual = SqlReaderHelper.ValorReaderDecimal(dr, "PorcInteresMensual"),
+                        TotalCobrar = SqlReaderHelper.ValorReaderDecimal(dr, "TotalCobrar"),
+                        CodConcepto = SqlReaderHelper.ValorReaderString(dr, "Cod_Concepto"),
+                        Observacion = SqlReaderHelper.ValorReaderString(dr, "Observacion"),
+                        TotalDesembolsado = SqlReaderHelper.ValorReaderDecimal(dr, "TotalDesembolsado"),
+                        TotalPagado = SqlReaderHelper.ValorReaderDecimal(dr, "TotalPagado"),
+                        SaldoPendiente = SqlReaderHelper.ValorReaderDecimal(dr, "SaldoPendiente")
+                    }
+                };
+            }
+
+            if (dto == null)
+                return null;
+
+            // Resultset 2: Cuotas
+            if (await dr.NextResultAsync(cancellationToken))
+            {
+                while (await dr.ReadAsync(cancellationToken))
+                {
+                    dto.Cuotas.Add(new PrestamoDetalleCuotaDto
+                    {
+                        NumCuota = SqlReaderHelper.ValorReaderInt(dr, "NumCuota"),
+                        FecVenc = dr["Fec_Venc"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["Fec_Venc"]),
+                        ImporteBase = SqlReaderHelper.ValorReaderDecimal(dr, "ImporteBase"),
+                        ImporteInteres = SqlReaderHelper.ValorReaderDecimal(dr, "ImporteInteres"),
+                        ImpCuota = SqlReaderHelper.ValorReaderDecimal(dr, "ImpCuota"),
+                        Pagado = SqlReaderHelper.ValorReaderDecimal(dr, "Pagado"),
+                        Saldo = SqlReaderHelper.ValorReaderDecimal(dr, "Saldo"),
+                        FlgStatusPago = SqlReaderHelper.ValorReaderString(dr, "FlgStatusPago")
+                    });
+                }
+            }
+
+            // Resultset 3: Pagos
+            if (await dr.NextResultAsync(cancellationToken))
+            {
+                while (await dr.ReadAsync(cancellationToken))
+                {
+                    dto.Pagos.Add(new PrestamoDetallePagoDto
+                    {
+                        FecPago = dr["Fec_Pago"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["Fec_Pago"]),
+                        Importe = SqlReaderHelper.ValorReaderDecimal(dr, "Importe"),
+                        FormaPago = SqlReaderHelper.ValorReaderString(dr, "FormaPago"),
+                        Glosa = SqlReaderHelper.ValorReaderString(dr, "Glosa")
+                    });
+                }
+            }
+
+            // Resultset 4: Desembolsos
+            if (await dr.NextResultAsync(cancellationToken))
+            {
+                while (await dr.ReadAsync(cancellationToken))
+                {
+                    dto.Desembolsos.Add(new PrestamoDetalleDesembolsoDto
+                    {
+                        FecDesembolso = dr["Fec_Desembolso"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["Fec_Desembolso"]),
+                        Importe = SqlReaderHelper.ValorReaderDecimal(dr, "Importe"),
+                        CodCajaChica = SqlReaderHelper.ValorReaderString(dr, "Cod_CajaChica"),
+                        Glosa = SqlReaderHelper.ValorReaderString(dr, "Glosa")
+                    });
+                }
+            }
+
+            return dto;
         }
 
     }

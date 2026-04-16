@@ -1,4 +1,5 @@
-﻿using Dominio.DTO.Common;
+﻿using Aplicacion.Common;
+using Dominio.DTO.Common;
 using Dominio.DTO.Prestamo;
 using System;
 using System.Collections.Generic;
@@ -10,11 +11,11 @@ namespace Aplicacion.Interfaces
 {
     public interface IPrestamoService
     {
-        Task<JsonResponse<List<PrestamoListDto>>> ListarAsync(CancellationToken cancellationToken);
-        Task<JsonResponse<DbActionResult>> GuardarAsync(PrestamoCreateRequestDto request, string usuario, CancellationToken cancellationToken);
-        Task<JsonResponse<List<ClienteAnexoSelectDto>>> BuscarClientesAsync(string texto, CancellationToken cancellationToken);
-        Task<JsonResponse<PrestamoSimulacionDto>> SimularAsync(PrestamoSimulacionRequestDto request, CancellationToken cancellationToken);
-        Task<JsonResponse<List<AlmacenSelectDto>>> ListarAlmacenesAsync(CancellationToken cancellationToken);
+        Task<JsonResponseRequest<List<PrestamoListDto>>> ListarAsync(CancellationToken cancellationToken);
+        Task<JsonResponseRequest<DbActionResult>> GuardarAsync(PrestamoCreateRequestDto request, string usuario, CancellationToken cancellationToken);
+        Task<JsonResponseRequest<List<ClienteAnexoSelectDto>>> BuscarClientesAsync(string texto, CancellationToken cancellationToken);
+        Task<JsonResponseRequest<PrestamoSimulacionDto>> SimularAsync(PrestamoSimulacionRequestDto request, CancellationToken cancellationToken);
+        Task<JsonResponseRequest<List<AlmacenSelectDto>>> ListarAlmacenesAsync(CancellationToken cancellationToken);
         Task<List<PrestamoDesembolsoListadoDto>> ListarDesembolsosAsync(
     int idPrestamo,
     CancellationToken cancellationToken);
@@ -34,5 +35,10 @@ namespace Aplicacion.Interfaces
     string usuario,
     string? estacion,
     CancellationToken cancellationToken);
+
+        Task<List<PrestamoConceptoDto>> ListarConceptosAsync(CancellationToken cancellationToken);
+        Task<JsonResponseRequest<PrestamoDetalleDto>> ObtenerDetalleAsync(int idPrestamo);
     }
+
+
 }

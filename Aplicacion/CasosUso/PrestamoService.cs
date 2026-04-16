@@ -1,9 +1,11 @@
-﻿using Aplicacion.Interfaces;
+﻿using Aplicacion.Common;
+using Aplicacion.Interfaces;
 using Dominio.DTO.Common;
 using Dominio.DTO.Prestamo;
 using Infraestructura.Interfaces;
 using Infraestructura.Repositorio;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,9 +27,9 @@ namespace Aplicacion.CasosUso
             _logger = logger;
         }
 
-        public async Task<JsonResponse<List<PrestamoListDto>>> ListarAsync(CancellationToken cancellationToken)
+        public async Task<JsonResponseRequest<List<PrestamoListDto>>> ListarAsync(CancellationToken cancellationToken)
         {
-            var res = new JsonResponse<List<PrestamoListDto>>();
+            var res = new JsonResponseRequest<List<PrestamoListDto>>();
 
             try
             {
@@ -54,9 +56,9 @@ namespace Aplicacion.CasosUso
 
 
 
-        public async Task<JsonResponse<List<ClienteAnexoSelectDto>>> BuscarClientesAsync(string texto, CancellationToken cancellationToken)
+        public async Task<JsonResponseRequest<List<ClienteAnexoSelectDto>>> BuscarClientesAsync(string texto, CancellationToken cancellationToken)
         {
-            var res = new JsonResponse<List<ClienteAnexoSelectDto>>();
+            var res = new JsonResponseRequest<List<ClienteAnexoSelectDto>>();
 
             try
             {
@@ -79,9 +81,9 @@ namespace Aplicacion.CasosUso
             return res;
         }
 
-        public async Task<JsonResponse<PrestamoSimulacionDto>> SimularAsync(PrestamoSimulacionRequestDto request, CancellationToken cancellationToken)
+        public async Task<JsonResponseRequest<PrestamoSimulacionDto>> SimularAsync(PrestamoSimulacionRequestDto request, CancellationToken cancellationToken)
         {
-            var res = new JsonResponse<PrestamoSimulacionDto>();
+            var res = new JsonResponseRequest<PrestamoSimulacionDto>();
 
             try
             {
@@ -177,12 +179,12 @@ namespace Aplicacion.CasosUso
         //    return res;
         //}
 
-        public async Task<JsonResponse<DbActionResult>> GuardarAsync(
+        public async Task<JsonResponseRequest<DbActionResult>> GuardarAsync(
     PrestamoCreateRequestDto request,
     string usuario,
     CancellationToken cancellationToken)
 {
-    var res = new JsonResponse<DbActionResult>();
+    var res = new JsonResponseRequest<DbActionResult>();
 
     try
     {
@@ -201,8 +203,22 @@ namespace Aplicacion.CasosUso
             res.Errors.Add("Capital|El capital debe ser mayor a cero.");
             return res;
         }
+        if (string.IsNullOrWhiteSpace(request.Cod_Concepto))
+        {
+            res.Success = false;
+            res.Mensaje = "Debe indicar el concepto del préstamo.";
+            res.Errors.Add("Cod_Concepto|Debe indicar el concepto del préstamo.");
+            return res;
+        }
+        if (string.IsNullOrWhiteSpace(request.Observacion))
+        {
+            res.Success = false;
+            res.Mensaje = "Debe registrar las observaciones.";
+            res.Errors.Add("Observacion|Debe registrar las observaciones.");
+            return res;
+        }
 
-        if (request.FechaFinCobro < request.FechaInicioCobro)
+                if (request.FechaFinCobro < request.FechaInicioCobro)
         {
             res.Success = false;
             res.Mensaje = "La fecha fin debe ser mayor o igual a la fecha inicio.";
@@ -218,7 +234,8 @@ namespace Aplicacion.CasosUso
             return res;
         }
 
-        var result = await _repo.GuardarAsync(request, usuario, cancellationToken);
+
+                var result = await _repo.GuardarAsync(request, usuario, cancellationToken);
 
         if (result == null)
         {
@@ -289,9 +306,9 @@ namespace Aplicacion.CasosUso
     return res;
 }
 
-        public async Task<JsonResponse<List<AlmacenSelectDto>>> ListarAlmacenesAsync(CancellationToken cancellationToken)
+        public async Task<JsonResponseRequest<List<AlmacenSelectDto>>> ListarAlmacenesAsync(CancellationToken cancellationToken)
         {
-            var res = new JsonResponse<List<AlmacenSelectDto>>();
+            var res = new JsonResponseRequest<List<AlmacenSelectDto>>();
 
             try
             {
@@ -412,6 +429,8 @@ public async Task<DbActionResult> RegistrarDesembolsoAsync(
             if (request.ImportePago <= 0)
                 errores.Add("El importe de pago debe ser mayor a cero.");
 
+
+
             if (errores.Count > 0)
             {
                 return new DbActionResult
@@ -422,6 +441,56 @@ public async Task<DbActionResult> RegistrarDesembolsoAsync(
             }
 
             return await _repo.RegistrarPagoAsync(request, usuario, estacion, cancellationToken);
+        }
+
+        public async Task<List<PrestamoConceptoDto>> ListarConceptosAsync(CancellationToken cancellationToken)
+        {
+            return await _repo.ListarConceptosAsync(cancellationToken);
+        }
+        public async Task<JsonResponseRequest<PrestamoDetalleDto>> ObtenerDetalleAsync(int idPrestamo)
+        {
+            try
+            {
+                if (idPrestamo <= 0)
+                {
+                    return new JsonResponseRequest<PrestamoDetalleDto>
+                    {
+                        Success = false,
+                        Mensaje = "Id inválido.",
+                        Errors = new List<string> { "IdPrestamo|Id inválido." }
+                    };
+                }
+
+                var it = await _repo.ObtenerDetalleAsync(idPrestamo, CancellationToken.None);
+
+                if (it == null)
+                {
+                    return new JsonResponseRequest<PrestamoDetalleDto>
+                    {
+                        Success = false,
+                        Mensaje = "No existe el préstamo.",
+                        Errors = new List<string> { "IdPrestamo|No existe el préstamo." }
+                    };
+                }
+
+                return new JsonResponseRequest<PrestamoDetalleDto>
+                {
+                    Success = true,
+                    Data = it
+                };
+            }
+            catch (Exception ex)
+            {
+                Guid errorId = Guid.NewGuid();
+                _logger.LogError(ex, "Error ID: {ErrorId} - {Message}", errorId, ex.Message);
+
+                return new JsonResponseRequest<PrestamoDetalleDto>
+                {
+                    Success = false,
+                    Mensaje = $"Ocurrió un error al obtener el detalle. ErrorId: {errorId}",
+                    Errors = new List<string> { ex.Message }
+                };
+            }
         }
     }
 }
