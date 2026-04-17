@@ -542,7 +542,8 @@ namespace Infraestructura.Repositorio
                         Observacion = SqlReaderHelper.ValorReaderString(dr, "Observacion"),
                         TotalDesembolsado = SqlReaderHelper.ValorReaderDecimal(dr, "TotalDesembolsado"),
                         TotalPagado = SqlReaderHelper.ValorReaderDecimal(dr, "TotalPagado"),
-                        SaldoPendiente = SqlReaderHelper.ValorReaderDecimal(dr, "SaldoPendiente")
+                        SaldoPendiente = SqlReaderHelper.ValorReaderDecimal(dr, "SaldoPendiente"),
+                        ConceptoMostrar = SqlReaderHelper.ValorReaderString(dr, "ConceptoMostrar"),
                     }
                 };
             }
@@ -601,6 +602,53 @@ namespace Infraestructura.Repositorio
 
             return dto;
         }
+        public async Task<PrestamoEdicionDto?> ObtenerEdicionAsync(int idPrestamo, CancellationToken cancellationToken)
+        {
+            using var cn = new SqlConnection(GetConnectionString());
+            using var cmd = new SqlCommand("prest.p_prestamo_obtener_edicion", cn)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
 
+            cmd.Parameters.Add("@Id_Prestamo", SqlDbType.Int).Value = idPrestamo;
+
+            await cn.OpenAsync(cancellationToken);
+            using var dr = await cmd.ExecuteReaderAsync(cancellationToken);
+
+            if (!await dr.ReadAsync(cancellationToken))
+                return null;
+
+            return new PrestamoEdicionDto
+            {
+                Id_Prestamo = SqlReaderHelper.ValorReaderInt(dr, "Id_Prestamo"),
+                Cod_TipAnex = SqlReaderHelper.ValorReaderString(dr, "Cod_TipAnex"),
+                Cod_Anxo = SqlReaderHelper.ValorReaderString(dr, "Cod_Anxo"),
+                Fecha = SqlReaderHelper.ValorReaderDateTime(dr, "Fecha"),
+                Capital = SqlReaderHelper.ValorReaderDecimal(dr, "Capital"),
+                Nro_Cuotas = SqlReaderHelper.ValorReaderInt(dr, "Nro_Cuotas"),
+                Tipo_Modalidad = SqlReaderHelper.ValorReaderString(dr, "Tipo_Modalidad"),
+                TipoInteres = SqlReaderHelper.ValorReaderString(dr, "TipoInteres"),
+                PorcInteresMensual = SqlReaderHelper.ValorReaderDecimal(dr, "PorcInteresMensual"),
+                FrecuenciaPago = SqlReaderHelper.ValorReaderString(dr, "FrecuenciaPago"),
+                FechaInicioCobro = SqlReaderHelper.ValorReaderDateTime(dr, "FechaInicioCobro"),
+                FechaFinCobro = SqlReaderHelper.ValorReaderDateTime(dr, "FechaFinCobro"),
+                Cod_Concepto = SqlReaderHelper.ValorReaderString(dr, "Cod_Concepto"),
+                Observacion = SqlReaderHelper.ValorReaderString(dr, "Observacion"),
+
+                TieneGarantia = SqlReaderHelper.ValorReaderBool(dr, "TieneGarantia"),
+                Tipo_Garantia = SqlReaderHelper.ValorReaderString(dr, "Tipo_Garantia"),
+                Marca = SqlReaderHelper.ValorReaderString(dr, "Marca"),
+                Modelo = SqlReaderHelper.ValorReaderString(dr, "Modelo"),
+                Serie = SqlReaderHelper.ValorReaderString(dr, "Serie"),
+                Estado_Articulo = SqlReaderHelper.ValorReaderString(dr, "Estado_Articulo"),
+                Valor_Referencial = dr["Valor_Referencial"] == DBNull.Value ? (decimal?)null : Convert.ToDecimal(dr["Valor_Referencial"]),
+                DescripcionGarantia = SqlReaderHelper.ValorReaderString(dr, "DescripcionGarantia"),
+                ObservacionGarantia = SqlReaderHelper.ValorReaderString(dr, "ObservacionGarantia"),
+
+                TienePagos = SqlReaderHelper.ValorReaderBool(dr, "TienePagos"),
+                TieneDesembolsos = SqlReaderHelper.ValorReaderBool(dr, "TieneDesembolsos"),
+                PuedeEditar = SqlReaderHelper.ValorReaderBool(dr, "PuedeEditar")
+            };
+        }
     }
 }

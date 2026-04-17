@@ -220,7 +220,18 @@
                             data-idprestamo="${row.id_Prestamo || ''}">
                             Detalle
                         </button>
-                        </div>`;
+                        </div>
+
+                        <button type="button"
+                                class="btn btn-sm btn-outline-warning js-editar-prestamo"
+                                data-idprestamo="${row.id_Prestamo || ''}">
+                            Editar
+                        </button>
+
+                       
+
+                        `
+
 
                     }
                 }
@@ -264,7 +275,47 @@
             ]
         });
     }
+    function cargarEdicionPrestamo(idPrestamo) {
+        return WebApp.UI.withSpinner(() => $.getJSON("/Prestamo/ObtenerEdicion", { idPrestamo }), "Cargando préstamo...")
+            .done(function (r) {
+                if (!(r.success || r.Success)) {
+                    WebApp.Forms.showToast(false, r.message || r.Mensaje || "No se pudo cargar el préstamo para edición.");
+                    return;
+                }
 
+                const d = r.data || r.Data || {};
+
+                $("#Edit_Id_Prestamo").val(d.id_Prestamo ?? d.Id_Prestamo ?? 0);
+                $("#Edit_Fecha").val((d.fecha || d.Fecha || "").substring(0, 10));
+                $("#Edit_Capital").val(d.capital ?? d.Capital ?? 0);
+                $("#Edit_TipoModalidad").val(d.tipo_Modalidad ?? d.Tipo_Modalidad ?? "");
+                $("#Edit_TipoInteres").val(d.tipoInteres ?? d.TipoInteres ?? "");
+                $("#Edit_PorcInteresMensual").val(d.porcInteresMensual ?? d.PorcInteresMensual ?? 0);
+                $("#Edit_FrecuenciaPago").val(d.frecuenciaPago ?? d.FrecuenciaPago ?? "");
+                $("#Edit_FechaInicioCobro").val((d.fechaInicioCobro || d.FechaInicioCobro || "").substring(0, 10));
+                $("#Edit_FechaFinCobro").val((d.fechaFinCobro || d.FechaFinCobro || "").substring(0, 10));
+                $("#Edit_Cod_Concepto").val(d.cod_Concepto ?? d.Cod_Concepto ?? "");
+                $("#Edit_Observacion").val(d.observacion ?? d.Observacion ?? "");
+
+                const tieneGarantia = d.tieneGarantia ?? d.TieneGarantia ?? false;
+                $("#Edit_TieneGarantia").prop("checked", tieneGarantia);
+                $("#Edit_panelGarantia").toggleClass("d-none", !tieneGarantia);
+
+                $("#Edit_TipoGarantia").val(d.tipo_Garantia ?? d.Tipo_Garantia ?? "");
+                $("#Edit_MarcaGarantia").val(d.marca ?? d.Marca ?? "");
+                $("#Edit_ModeloGarantia").val(d.modelo ?? d.Modelo ?? "");
+                $("#Edit_SerieGarantia").val(d.serie ?? d.Serie ?? "");
+                $("#Edit_EstadoGarantia").val(d.estado_Articulo ?? d.Estado_Articulo ?? "");
+                $("#Edit_ValorGarantia").val(d.valor_Referencial ?? d.Valor_Referencial ?? "");
+                $("#Edit_DescripcionGarantia").val(d.descripcionGarantia ?? d.DescripcionGarantia ?? "");
+                $("#Edit_ObservacionGarantia").val(d.observacionGarantia ?? d.ObservacionGarantia ?? "");
+
+                $("#mdlEditarPrestamo").modal("show");
+            })
+            .fail(function () {
+                WebApp.Forms.showToast(false, "Error al cargar préstamo para edición.");
+            });
+    }
 
     function actualizarResumen(rows) {
         const totalPrestamos = rows.length;
@@ -858,7 +909,7 @@
                 $("#detTotalPagado").text(money(cab.totalPagado || cab.TotalPagado));
                 $("#detTotalDesembolsado").text(money(cab.totalDesembolsado || cab.TotalDesembolsado));
                 $("#detSaldoPendiente").text(money(cab.saldoPendiente || cab.SaldoPendiente));
-                $("#detConcepto").text(cab.codConcepto || cab.CodConcepto || "");
+                $("#detConcepto").text(cab.conceptoMostrar || cab.CodConcepto || "");
                 $("#detObservacion").text(cab.observacion || cab.Observacion || "");
 
                 let htmlCuotas = "";
@@ -970,6 +1021,14 @@
     $(document).on("click", ".js-ver-detalle", function () {
         const idPrestamo = $(this).data("idprestamo");
         cargarDetallePrestamo(idPrestamo);
+    });
+    $(document).on("click", ".js-editar-prestamo", function () {
+        const idPrestamo = $(this).data("idprestamo");
+        cargarEdicionPrestamo(idPrestamo);
+    });
+    $("#Edit_TieneGarantia").on("change", function () {
+        const checked = $(this).is(":checked");
+        $("#Edit_panelGarantia").toggleClass("d-none", !checked);
     });
 
     $(function () {

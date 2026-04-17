@@ -38,6 +38,7 @@ namespace Aplicacion.Interfaces
 
         Task<List<PrestamoConceptoDto>> ListarConceptosAsync(CancellationToken cancellationToken);
         Task<JsonResponseRequest<PrestamoDetalleDto>> ObtenerDetalleAsync(int idPrestamo);
+        Task<JsonResponseRequest<PrestamoEdicionDto>> ObtenerEdicionAsync(int idPrestamo);
     }
 
 

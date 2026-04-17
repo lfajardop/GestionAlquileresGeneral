@@ -277,5 +277,12 @@ namespace GestionAlquileres.Controllers
             var result = await _prestamoService.ObtenerDetalleAsync(idPrestamo);
             return Json(result);
         }
+
+        [HttpGet]
+        public async Task<IActionResult> ObtenerEdicion(int idPrestamo)
+        {
+            var result = await _prestamoService.ObtenerEdicionAsync(idPrestamo);
+            return Json(result);
+        }
     }
 }

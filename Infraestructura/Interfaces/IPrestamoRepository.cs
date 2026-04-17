@@ -28,6 +28,7 @@ namespace Infraestructura.Interfaces
         Task<List<PrestamoConceptoDto>> ListarConceptosAsync(CancellationToken cancellationToken);
        Task<PrestamoDetalleDto> ObtenerDetalleAsync(int idPrestamo, CancellationToken cancellationToken);
 
-
+        Task<PrestamoEdicionDto?> ObtenerEdicionAsync(int idPrestamo, CancellationToken cancellationToken);
+ 
     }
 }

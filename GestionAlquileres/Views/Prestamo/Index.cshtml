@@ -666,8 +666,8 @@
 
                 <h6 class="fw-bold">Cuotas</h6>
                 <div class="table-responsive mb-4">
-                    <table class="table table-sm table-striped" id="tblDetalleCuotas">
-                        <thead>
+                        <table  class="table table-sm table-striped table-bordered" id="tblDetalleCuotas">
+                        <thead class="table-light">
                             <tr>
                                 <th>Cuota</th>
                                 <th>Vencimiento</th>
@@ -716,6 +716,150 @@
 
             <div class="modal-footer border-0">
                 <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="mdlEditarPrestamo" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content rounded-4 shadow">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h5 class="modal-title fw-bold">Editar préstamo</h5>
+                    <small class="text-muted">Solo editable si aún no tiene pagos ni desembolsos.</small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body pt-3">
+                <form id="frmEditarPrestamo">
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden" id="Edit_Id_Prestamo" name="Id_Prestamo" />
+
+                    <div id="frmEditarPrestamoMsg" class="alert d-none"></div>
+
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Fecha préstamo</label>
+                            <input type="date" class="form-control" id="Edit_Fecha" name="Fecha" />
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Capital</label>
+                            <input type="number" step="0.01" class="form-control" id="Edit_Capital" name="Capital" />
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Modalidad</label>
+                            <select class="form-select" id="Edit_TipoModalidad" name="TipoModalidad">
+                                <option value="C">Cuotas normales</option>
+                                <option value="I">Interés mensual + capital final</option>
+                                <option value="F">Todo al final</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Tipo interés</label>
+                            <select class="form-select" id="Edit_TipoInteres" name="TipoInteres">
+                                <option value="M">Mensual fijo</option>
+                                <option value="N">Sin interés</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">% interés mensual</label>
+                            <input type="number" step="0.0001" class="form-control" id="Edit_PorcInteresMensual" name="PorcInteresMensual" />
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Frecuencia pago</label>
+                            <select class="form-select" id="Edit_FrecuenciaPago" name="FrecuenciaPago">
+                                <option value="D">Diario</option>
+                                <option value="S">Semanal</option>
+                                <option value="M">Mensual</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Fecha inicio cobro</label>
+                            <input type="date" class="form-control" id="Edit_FechaInicioCobro" name="FechaInicioCobro" />
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Fecha fin cobro</label>
+                            <input type="date" class="form-control" id="Edit_FechaFinCobro" name="FechaFinCobro" />
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Concepto</label>
+                            <select class="form-select" id="Edit_Cod_Concepto" name="Cod_Concepto"></select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label d-block">Garantía / prenda</label>
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" id="Edit_TieneGarantia" name="TieneGarantia" value="true" />
+                                <label class="form-check-label" for="Edit_TieneGarantia">Este préstamo tiene garantía</label>
+                            </div>
+                            <input type="hidden" name="TieneGarantia" value="false" />
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">Observación</label>
+                            <textarea class="form-control" id="Edit_Observacion" name="Observacion" rows="3"></textarea>
+                        </div>
+
+                        <div id="Edit_panelGarantia" class="row g-3 mt-1 d-none">
+                            <div class="col-md-4">
+                                <label class="form-label">Tipo garantía</label>
+                                <input type="text" class="form-control" id="Edit_TipoGarantia" name="TipoGarantia" />
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Marca</label>
+                                <input type="text" class="form-control" id="Edit_MarcaGarantia" name="MarcaGarantia" />
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Modelo</label>
+                                <input type="text" class="form-control" id="Edit_ModeloGarantia" name="ModeloGarantia" />
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Serie</label>
+                                <input type="text" class="form-control" id="Edit_SerieGarantia" name="SerieGarantia" />
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Estado artículo</label>
+                                <input type="text" class="form-control" id="Edit_EstadoGarantia" name="EstadoGarantia" />
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Valor referencial</label>
+                                <input type="number" step="0.01" class="form-control" id="Edit_ValorGarantia" name="ValorGarantia" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Descripción garantía</label>
+                                <textarea class="form-control" id="Edit_DescripcionGarantia" name="DescripcionGarantia" rows="2"></textarea>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Observación garantía</label>
+                                <textarea class="form-control" id="Edit_ObservacionGarantia" name="ObservacionGarantia" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-footer border-0">
+                <button type="button" id="btnGuardarEdicionPrestamo" class="btn btn-primary rounded-3">
+                    Guardar cambios
+                </button>
+                <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cancelar</button>
             </div>
         </div>
     </div>

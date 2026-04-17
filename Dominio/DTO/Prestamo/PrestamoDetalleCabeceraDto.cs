@@ -15,6 +15,8 @@ namespace Dominio.DTO.Prestamo
         public decimal PorcInteresMensual { get; set; }
         public decimal TotalCobrar { get; set; }
         public string CodConcepto { get; set; } = string.Empty;
+        public string NombreConcepto { get; set; } = string.Empty;
+        public string ConceptoMostrar { get; set; } = string.Empty;
         public string Observacion { get; set; } = string.Empty;
         public decimal TotalDesembolsado { get; set; }
         public decimal TotalPagado { get; set; }

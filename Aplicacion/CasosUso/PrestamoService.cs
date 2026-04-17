@@ -492,5 +492,61 @@ public async Task<DbActionResult> RegistrarDesembolsoAsync(
                 };
             }
         }
+
+        public async Task<JsonResponseRequest<PrestamoEdicionDto>> ObtenerEdicionAsync(int idPrestamo)
+        {
+            try
+            {
+                if (idPrestamo <= 0)
+                {
+                    return new JsonResponseRequest<PrestamoEdicionDto>
+                    {
+                        Success = false,
+                        Mensaje = "Id inválido.",
+                        Errors = new List<string> { "IdPrestamo|Id inválido." }
+                    };
+                }
+
+                var it = await _repo.ObtenerEdicionAsync(idPrestamo, CancellationToken.None);
+                if (it == null)
+                {
+                    return new JsonResponseRequest<PrestamoEdicionDto>
+                    {
+                        Success = false,
+                        Mensaje = "No existe el préstamo.",
+                        Errors = new List<string> { "IdPrestamo|No existe el préstamo." }
+                    };
+                }
+
+                if (!it.PuedeEditar)
+                {
+                    return new JsonResponseRequest<PrestamoEdicionDto>
+                    {
+                        Success = false,
+                        Mensaje = "El préstamo no se puede editar porque ya tiene pagos o desembolsos.",
+                        Errors = new List<string> { "IdPrestamo|El préstamo ya tiene movimientos." },
+                        Data = it
+                    };
+                }
+
+                return new JsonResponseRequest<PrestamoEdicionDto>
+                {
+                    Success = true,
+                    Data = it
+                };
+            }
+            catch (Exception ex)
+            {
+                Guid errorId = Guid.NewGuid();
+                _logger.LogError(ex, "Error ID: {ErrorId} - {Message}", errorId, ex.Message);
+
+                return new JsonResponseRequest<PrestamoEdicionDto>
+                {
+                    Success = false,
+                    Mensaje = $"Ocurrió un error al obtener el préstamo para edición. ErrorId: {errorId}",
+                    Errors = new List<string> { ex.Message }
+                };
+            }
+        }
     }
 }
