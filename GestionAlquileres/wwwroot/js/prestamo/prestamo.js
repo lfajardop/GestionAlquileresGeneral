@@ -200,37 +200,33 @@
                         }
 
                         return `
-                        <div class="d-flex gap-1 justify-content-center">
-                            <button type="button"
-                                    class="btn btn-sm btn-outline-primary js-ver-pagos"
-                                    data-idprestamo="${row.id_Prestamo || ''}"
-                                    data-nrocobranza="${row.nroCobranza || row.NroCobranza || ''}"
-                                    data-cliente="${row.cliente || ''}"
-                                    data-documento="${row.documento || ''}"
-                                    data-deudatotal="${row.total_Programado || 0}"
-                                    data-pagadototal="${row.total_Pagado || 0}"
-                                    data-saldopendiente="${row.saldo_Pendiente || 0}">
-                                Pagos
-                            </button>
-                            ${btnDesembolsar}
+                            <div class="d-flex gap-1 justify-content-center">
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-primary js-ver-pagos"
+                                        data-idprestamo="${row.id_Prestamo || ''}"
+                                        data-nrocobranza="${row.nroCobranza || row.NroCobranza || ''}"
+                                        data-cliente="${row.cliente || ''}"
+                                        data-documento="${row.documento || ''}"
+                                        data-deudatotal="${row.total_Programado || 0}"
+                                        data-pagadototal="${row.total_Pagado || 0}"
+                                        data-saldopendiente="${row.saldo_Pendiente || 0}">
+                                    Pagos
+                                </button>
 
+                                ${btnDesembolsar}
 
-                        <button type="button"
-                            class="btn btn-sm btn-outline-secondary js-ver-detalle"
-                            data-idprestamo="${row.id_Prestamo || ''}">
-                            Detalle
-                        </button>
-                        </div>
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-secondary js-ver-detalle"
+                                        data-idprestamo="${row.id_Prestamo || ''}">
+                                    Detalle
+                                </button>
 
-                        <button type="button"
-                                class="btn btn-sm btn-outline-warning js-editar-prestamo"
-                                data-idprestamo="${row.id_Prestamo || ''}">
-                            Editar
-                        </button>
-
-                       
-
-                        `
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-warning js-editar-prestamo"
+                                        data-idprestamo="${row.id_Prestamo || ''}">
+                                    Editar
+                                </button>
+                            </div>`;
 
 
                     }
@@ -286,15 +282,19 @@
                 const d = r.data || r.Data || {};
 
                 $("#Edit_Id_Prestamo").val(d.id_Prestamo ?? d.Id_Prestamo ?? 0);
-                $("#Edit_Fecha").val((d.fecha || d.Fecha || "").substring(0, 10));
+                $("#Edit_Fecha").val(fechaInput(d.fecha || d.Fecha));
                 $("#Edit_Capital").val(d.capital ?? d.Capital ?? 0);
                 $("#Edit_TipoModalidad").val(d.tipo_Modalidad ?? d.Tipo_Modalidad ?? "");
                 $("#Edit_TipoInteres").val(d.tipoInteres ?? d.TipoInteres ?? "");
                 $("#Edit_PorcInteresMensual").val(d.porcInteresMensual ?? d.PorcInteresMensual ?? 0);
                 $("#Edit_FrecuenciaPago").val(d.frecuenciaPago ?? d.FrecuenciaPago ?? "");
-                $("#Edit_FechaInicioCobro").val((d.fechaInicioCobro || d.FechaInicioCobro || "").substring(0, 10));
-                $("#Edit_FechaFinCobro").val((d.fechaFinCobro || d.FechaFinCobro || "").substring(0, 10));
-                $("#Edit_Cod_Concepto").val(d.cod_Concepto ?? d.Cod_Concepto ?? "");
+                $("#Edit_FechaInicioCobro").val(fechaInput(d.fechaInicioCobro || d.FechaInicioCobro));
+                $("#Edit_FechaFinCobro").val(fechaInput(d.fechaFinCobro || d.FechaFinCobro));
+
+
+                const codConcepto = (d.cod_Concepto ?? d.Cod_Concepto ?? "").toString().trim();
+                cargarConceptosPrestamo("", codConcepto);
+
                 $("#Edit_Observacion").val(d.observacion ?? d.Observacion ?? "");
 
                 const tieneGarantia = d.tieneGarantia ?? d.TieneGarantia ?? false;
@@ -743,6 +743,108 @@
                 $btnGuardarPagoPrestamo.prop("disabled", false).text("Guardar pago");
             });
     });
+    function fechaInput(v) {
+        if (!v) return "";
+        if (typeof v === "string") return v.substring(0, 10);
+
+        const d = new Date(v);
+        if (isNaN(d)) return "";
+
+        const anio = d.getFullYear();
+        const mes = String(d.getMonth() + 1).padStart(2, "0");
+        const dia = String(d.getDate()).padStart(2, "0");
+        return `${anio}-${mes}-${dia}`;
+    }
+
+    function obtenerDataSimulacionEdicion() {
+        return {
+            Id_Prestamo: $("#Edit_Id_Prestamo").val(),
+            Fecha: $("#Edit_Fecha").val(),
+            Capital: $("#Edit_Capital").val(),
+            TipoModalidad: $("#Edit_TipoModalidad").val(),
+            TipoInteres: $("#Edit_TipoInteres").val(),
+            PorcInteresMensual: $("#Edit_PorcInteresMensual").val(),
+            FrecuenciaPago: $("#Edit_FrecuenciaPago").val(),
+            FechaInicioCobro: $("#Edit_FechaInicioCobro").val(),
+            FechaFinCobro: $("#Edit_FechaFinCobro").val(),
+            Cod_Concepto: $("#Edit_Cod_Concepto").val(),
+            Observacion: $("#Edit_Observacion").val(),
+            TieneGarantia: $("#Edit_TieneGarantia").is(":checked"),
+            TipoGarantia: $("#Edit_TipoGarantia").val(),
+            MarcaGarantia: $("#Edit_MarcaGarantia").val(),
+            ModeloGarantia: $("#Edit_ModeloGarantia").val(),
+            SerieGarantia: $("#Edit_SerieGarantia").val(),
+            EstadoGarantia: $("#Edit_EstadoGarantia").val(),
+            ValorGarantia: $("#Edit_ValorGarantia").val(),
+            DescripcionGarantia: $("#Edit_DescripcionGarantia").val(),
+            ObservacionGarantia: $("#Edit_ObservacionGarantia").val()
+        };
+    }
+    function pintarSimulacionEdicion(d) {
+        $("#editSimNroCuotas").text(d?.nroCuotas ?? d?.NroCuotas ?? 0);
+        $("#editSimInteresMensual").text(money(d?.interesMensual ?? d?.InteresMensual));
+        $("#editSimInteresTotal").text(money(d?.interesTotal ?? d?.InteresTotal));
+        $("#editSimTotalCobrar").text(money(d?.totalCobrar ?? d?.TotalCobrar));
+        $("#editSimImporteCuota").text(money(d?.importeCuota ?? d?.ImporteCuota));
+        $("#editSimUltimaCuota").text(money(d?.importeUltimaCuota ?? d?.ImporteUltimaCuota));
+
+        const tea = parseFloat(d?.teaReferencial ?? d?.TeaReferencial ?? 0);
+        $("#editSimTeaReferencial").text(tea.toFixed(4) + " %");
+    }
+
+    function simularEdicionPrestamo() {
+        const $msgEdit = $("#frmEditarPrestamoMsg");
+        const $frmEdit = $("#frmEditarPrestamo");
+
+        WebApp.Forms.hideMsg($msgEdit);
+        WebApp.Forms.clearErrors($frmEdit);
+
+        return WebApp.UI.withSpinner(() => $.ajax({
+            url: "/Prestamo/SimularEdicion",
+            type: "POST",
+            data: $.param(obtenerDataSimulacionEdicion()) +
+                "&__RequestVerificationToken=" +
+                $frmEdit.find("input[name='__RequestVerificationToken']").val()
+        }), "Simulando cambios...")
+            .done(function (r) {
+                if (r.success || r.Success) {
+                    pintarSimulacionEdicion(r.data || r.Data);
+                    return;
+                }
+
+                const errores = r.errors || r.Errors || [];
+                WebApp.Forms.mapErrors($frmEdit, errores);
+                WebApp.Forms.showMsg($msgEdit, false, r.message || r.Mensaje || "No se pudo simular la edición.");
+            })
+            .fail(function () {
+                WebApp.Forms.showMsg($msgEdit, false, "Error inesperado al simular cambios.");
+            });
+    }
+
+    function obtenerDataGuardarEdicionPrestamo() {
+        return {
+            Id_Prestamo: $("#Edit_Id_Prestamo").val(),
+            Fecha: $("#Edit_Fecha").val(),
+            Capital: $("#Edit_Capital").val(),
+            TipoModalidad: $("#Edit_TipoModalidad").val(),
+            TipoInteres: $("#Edit_TipoInteres").val(),
+            PorcInteresMensual: $("#Edit_PorcInteresMensual").val(),
+            FrecuenciaPago: $("#Edit_FrecuenciaPago").val(),
+            FechaInicioCobro: $("#Edit_FechaInicioCobro").val(),
+            FechaFinCobro: $("#Edit_FechaFinCobro").val(),
+            Cod_Concepto: $("#Edit_Cod_Concepto").val(),
+            Observacion: $("#Edit_Observacion").val(),
+            TieneGarantia: $("#Edit_TieneGarantia").is(":checked"),
+            TipoGarantia: $("#Edit_TipoGarantia").val(),
+            MarcaGarantia: $("#Edit_MarcaGarantia").val(),
+            ModeloGarantia: $("#Edit_ModeloGarantia").val(),
+            SerieGarantia: $("#Edit_SerieGarantia").val(),
+            EstadoGarantia: $("#Edit_EstadoGarantia").val(),
+            ValorGarantia: $("#Edit_ValorGarantia").val(),
+            DescripcionGarantia: $("#Edit_DescripcionGarantia").val(),
+            ObservacionGarantia: $("#Edit_ObservacionGarantia").val()
+        };
+    }
     /* ===============================EVENTOS========================================= */
 
 
@@ -867,21 +969,28 @@
         cargarHistorialDesembolsos($("#hidDesIdPrestamo").val());
     }
 
-    function cargarConceptosPrestamo() {
+    function cargarConceptosPrestamo(selectedNuevo = "", selectedEdit = "") {
         return WebApp.UI.withSpinner(() => $.getJSON("/Prestamo/ListarConceptos"), "Cargando conceptos...")
             .done(function (r) {
                 const rows = r.data || r.Data || [];
                 let html = '<option value="">Seleccione</option>';
 
                 rows.forEach(x => {
-                    const id = x.cod_Concepto ?? x.Cod_Concepto;
-                    const nombre = x.nombre ?? x.Nombre;
-
-
-                    html += `<option value="${id}" >${nombre}</option>`;
+                    const id = (x.cod_Concepto ?? x.Cod_Concepto ?? "").toString().trim();
+                    const nombre = x.nombre ?? x.Nombre ?? "";
+                    html += `<option value="${id}">${nombre}</option>`;
                 });
 
                 $("#Cod_Concepto").html(html);
+                $("#Edit_Cod_Concepto").html(html);
+
+                if (selectedNuevo !== undefined && selectedNuevo !== null) {
+                    $("#Cod_Concepto").val(String(selectedNuevo).trim());
+                }
+
+                if (selectedEdit !== undefined && selectedEdit !== null) {
+                    $("#Edit_Cod_Concepto").val(String(selectedEdit).trim());
+                }
             })
             .fail(function () {
                 WebApp.Forms.showToast(false, "Error al cargar conceptos del préstamo.");
@@ -1029,6 +1138,47 @@
     $("#Edit_TieneGarantia").on("change", function () {
         const checked = $(this).is(":checked");
         $("#Edit_panelGarantia").toggleClass("d-none", !checked);
+    });
+
+    $("#btnSimularEdicionPrestamo").on("click", function () {
+        simularEdicionPrestamo();
+    });
+
+    $("#btnGuardarEdicionPrestamo").on("click", function () {
+        const $frmEdit = $("#frmEditarPrestamo");
+        const $msgEdit = $("#frmEditarPrestamoMsg");
+        const payload = obtenerDataGuardarEdicionPrestamo();
+
+        WebApp.Forms.hideMsg($msgEdit);
+        WebApp.Forms.clearErrors($frmEdit);
+
+        $("#btnGuardarEdicionPrestamo").prop("disabled", true).text("Guardando...");
+
+        WebApp.UI.withSpinner(() => $.ajax({
+            url: "/Prestamo/GuardarEdicion",
+            type: "POST",
+            data: $.param(payload) +
+                "&__RequestVerificationToken=" +
+                $frmEdit.find("input[name='__RequestVerificationToken']").val()
+        }), "Guardando edición...")
+            .done(function (r) {
+                if (r.success || r.Success) {
+                    WebApp.Forms.showToast(true, r.message || r.Mensaje || "Préstamo actualizado correctamente.");
+                    $("#mdlEditarPrestamo").modal("hide");
+                    listarPrestamos();
+                    return;
+                }
+
+                const errores = r.errors || r.Errors || [];
+                WebApp.Forms.mapErrors($frmEdit, errores);
+                WebApp.Forms.showMsg($msgEdit, false, r.message || r.Mensaje || "No se pudo guardar la edición.");
+            })
+            .fail(function () {
+                WebApp.Forms.showMsg($msgEdit, false, "Error inesperado al guardar la edición.");
+            })
+            .always(function () {
+                $("#btnGuardarEdicionPrestamo").prop("disabled", false).text("Guardar cambios");
+            });
     });
 
     $(function () {

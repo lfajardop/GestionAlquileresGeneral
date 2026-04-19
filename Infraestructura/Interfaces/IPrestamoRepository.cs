@@ -29,6 +29,16 @@ namespace Infraestructura.Interfaces
        Task<PrestamoDetalleDto> ObtenerDetalleAsync(int idPrestamo, CancellationToken cancellationToken);
 
         Task<PrestamoEdicionDto?> ObtenerEdicionAsync(int idPrestamo, CancellationToken cancellationToken);
- 
+        Task<PrestamoSimulacionDto?> SimularEdicionAsync(PrestamoEditarSimularRequestDto req, CancellationToken cancellationToken);
+        Task<DbActionResult> GuardarEdicionAsync(PrestamoEditarGuardarRequestDto request,string usuario, CancellationToken cancellationToken);
+
+        Task<PrestamoCtacteClienteResumenDto?> ObtenerCtacteClienteResumenAsync(string codTipAnex,string codAnxo,CancellationToken cancellationToken);
+
+        Task<List<PrestamoCtacteClienteDetalleDto>> ObtenerCtacteClienteDetalleAsync(string codTipAnex,string codAnxo,CancellationToken cancellationToken);
+
+        Task<PrestamoCtacteClienteCuotasResponseDto> ObtenerCtacteClienteCuotasAsync(string codTipAnex, string codAnxo,CancellationToken cancellationToken);
+
+        Task<PrestamoCtacteClientesResumenGeneralResponseDto> ObtenerCtacteClientesResumenGeneralAsync( CancellationToken cancellationToken);
+
     }
 }

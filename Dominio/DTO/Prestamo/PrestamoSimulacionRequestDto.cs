@@ -10,6 +10,8 @@ namespace Dominio.DTO.Prestamo
     {
         public decimal Capital { get; set; }
         public string TipoInteres { get; set; } = "M";
+        public string TipoModalidad { get; set; } = "C";
+     
         public decimal PorcInteresMensual { get; set; }
         public string FrecuenciaPago { get; set; } = "M";
         public DateTime FechaInicioCobro { get; set; }

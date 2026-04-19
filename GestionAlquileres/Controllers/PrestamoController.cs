@@ -27,6 +27,11 @@ namespace GestionAlquileres.Controllers
         {
             return View();
         }
+        [HttpGet]
+        public IActionResult CuentaCorriente()
+        {
+            return View();
+        }
 
         [HttpGet]
         public async Task<IActionResult> Listar(CancellationToken cancellationToken)
@@ -284,5 +289,49 @@ namespace GestionAlquileres.Controllers
             var result = await _prestamoService.ObtenerEdicionAsync(idPrestamo);
             return Json(result);
         }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SimularEdicion([FromForm] PrestamoEditarSimularRequestDto request)
+        {
+            var result = await _prestamoService.SimularEdicionAsync(request);
+            return Json(result);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> GuardarEdicion([FromForm] PrestamoEditarGuardarRequestDto request)
+        {
+            var usuario = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0";
+            var result = await _prestamoService.GuardarEdicionAsync(request, usuario);
+            return Json(result);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ObtenerCtacteClienteResumen(string codTipAnex, string codAnxo)
+        {
+            var result = await _prestamoService.ObtenerCtacteClienteResumenAsync(codTipAnex, codAnxo);
+            return Json(result);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ObtenerCtacteClienteDetalle(string codTipAnex, string codAnxo)
+        {
+            var result = await _prestamoService.ObtenerCtacteClienteDetalleAsync(codTipAnex, codAnxo);
+            return Json(result);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ObtenerCtacteClienteCuotas(string codTipAnex, string codAnxo)
+        {
+            var result = await _prestamoService.ObtenerCtacteClienteCuotasAsync(codTipAnex, codAnxo);
+            return Json(result);
+        }
+        [HttpGet]
+        public async Task<IActionResult> ObtenerCtacteClientesResumenGeneral()
+        {
+            var result = await _prestamoService.ObtenerCtacteClientesResumenGeneralAsync();
+            return Json(result);
+        }
+
     }
 }

@@ -16,6 +16,12 @@
         <button id="btnNuevoPrestamo" class="btn btn-primary rounded-3">
             <i class="bi bi-plus-circle me-1"></i> Nuevo préstamo
         </button>
+
+        <a asp-controller="Prestamo"
+           asp-action="CuentaCorriente"
+           class="btn btn-outline-secondary rounded-3">
+            <i class="bi bi-journal-text me-1"></i> Cuenta corriente
+        </a>
     </div>
 
     <div class="row g-3 mb-4">
@@ -67,6 +73,8 @@
             </table>
         </div>
     </div>
+
+
 </div>
 
 <div class="modal fade" id="mdlPrestamo" tabindex="-1" aria-hidden="true">
@@ -853,11 +861,67 @@
                         </div>
                     </div>
                 </form>
+                <hr />
+                <h6 class="fw-bold">Simulación nueva</h6>
+
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="border rounded-3 p-3 bg-light">
+                            <div class="small text-muted">Nro cuotas</div>
+                            <div id="editSimNroCuotas" class="fw-bold fs-5">0</div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="border rounded-3 p-3 bg-light">
+                            <div class="small text-muted">Interés mensual</div>
+                            <div id="editSimInteresMensual" class="fw-bold fs-5">S/ 0.00</div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="border rounded-3 p-3 bg-light">
+                            <div class="small text-muted">TEA referencial</div>
+                            <div id="editSimTeaReferencial" class="fw-bold fs-5">0.0000 %</div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="border rounded-3 p-3 bg-light">
+                            <div class="small text-muted">Interés total</div>
+                            <div id="editSimInteresTotal" class="fw-bold fs-5">S/ 0.00</div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="border rounded-3 p-3 bg-light">
+                            <div class="small text-muted">Importe cuota</div>
+                            <div id="editSimImporteCuota" class="fw-bold fs-5">S/ 0.00</div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="border rounded-3 p-3 bg-light">
+                            <div class="small text-muted">Última cuota</div>
+                            <div id="editSimUltimaCuota" class="fw-bold fs-5">S/ 0.00</div>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="border rounded-3 p-3 bg-light">
+                            <div class="small text-muted">Total a cobrar</div>
+                            <div id="editSimTotalCobrar" class="fw-bold fs-4 text-primary">S/ 0.00</div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="modal-footer border-0">
                 <button type="button" id="btnGuardarEdicionPrestamo" class="btn btn-primary rounded-3">
                     Guardar cambios
+                </button>
+                <button type="button" id="btnSimularEdicionPrestamo" class="btn btn-outline-primary rounded-3">
+                    Simular cambios
                 </button>
                 <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cancelar</button>
             </div>

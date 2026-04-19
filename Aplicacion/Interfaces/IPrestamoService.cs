@@ -39,6 +39,15 @@ namespace Aplicacion.Interfaces
         Task<List<PrestamoConceptoDto>> ListarConceptosAsync(CancellationToken cancellationToken);
         Task<JsonResponseRequest<PrestamoDetalleDto>> ObtenerDetalleAsync(int idPrestamo);
         Task<JsonResponseRequest<PrestamoEdicionDto>> ObtenerEdicionAsync(int idPrestamo);
+        Task<JsonResponseRequest<PrestamoSimulacionDto>> SimularEdicionAsync(PrestamoEditarSimularRequestDto req);
+        Task<JsonResponseRequest<int>> GuardarEdicionAsync(PrestamoEditarGuardarRequestDto request,string usuario);
+
+        Task<JsonResponseRequest<PrestamoCtacteClienteResumenDto>> ObtenerCtacteClienteResumenAsync(string codTipAnex, string codAnxo);
+
+        Task<JsonResponseRequest<List<PrestamoCtacteClienteDetalleDto>>> ObtenerCtacteClienteDetalleAsync(string codTipAnex, string codAnxo);
+
+        Task<JsonResponseRequest<PrestamoCtacteClienteCuotasResponseDto>> ObtenerCtacteClienteCuotasAsync(string codTipAnex, string codAnxo);
+        Task<JsonResponseRequest<PrestamoCtacteClientesResumenGeneralResponseDto>> ObtenerCtacteClientesResumenGeneralAsync();
     }
 
 

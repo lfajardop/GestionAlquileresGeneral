@@ -17,8 +17,10 @@ namespace Dominio.DTO.Prestamo
         public decimal InteresTotal { get; set; }
         public decimal TotalCobrar { get; set; }
         public decimal ImporteCuota { get; set; }
+        public decimal ImporteCuotaInteres { get; set; }
         public decimal ImporteUltimaCuota { get; set; }
         public decimal TeaReferencial { get; set; }
-        public string Mensaje { get; set; } = string.Empty;
+        public string Mensaje { get; set; }
+
     }
 }

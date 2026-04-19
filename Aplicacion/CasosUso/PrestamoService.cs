@@ -548,5 +548,338 @@ public async Task<DbActionResult> RegistrarDesembolsoAsync(
                 };
             }
         }
+        public async Task<JsonResponseRequest<PrestamoSimulacionDto>> SimularEdicionAsync(PrestamoEditarSimularRequestDto req)
+        {
+            try
+            {
+                var errors = new List<string>();
+
+                if (req.Id_Prestamo <= 0)
+                    errors.Add("Id_Prestamo|Id inválido.");
+
+                if (req.Capital <= 0)
+                    errors.Add("Capital|El capital debe ser mayor a cero.");
+
+                if (string.IsNullOrWhiteSpace(req.TipoInteres))
+                    errors.Add("TipoInteres|El tipo de interés es obligatorio.");
+
+                if (string.IsNullOrWhiteSpace(req.FrecuenciaPago))
+                    errors.Add("FrecuenciaPago|La frecuencia es obligatoria.");
+
+                if (req.FechaInicioCobro == default)
+                    errors.Add("FechaInicioCobro|La fecha inicio cobro es obligatoria.");
+
+                if (req.FechaFinCobro == default)
+                    errors.Add("FechaFinCobro|La fecha fin cobro es obligatoria.");
+
+                if (string.IsNullOrWhiteSpace(req.TipoModalidad))
+                    errors.Add("TipoModalidad|La modalidad es obligatoria.");
+
+                if (errors.Count > 0)
+                {
+                    return new JsonResponseRequest<PrestamoSimulacionDto>
+                    {
+                        Success = false,
+                        Mensaje = "Validación.",
+                        Errors = errors
+                    };
+                }
+
+                var sim = await _repo.SimularEdicionAsync(req, CancellationToken.None);
+
+                if (sim == null)
+                {
+                    return new JsonResponseRequest<PrestamoSimulacionDto>
+                    {
+                        Success = false,
+                        Mensaje = "No se pudo simular."
+                    };
+                }
+
+                if (!sim.Ok)
+                {
+                    return new JsonResponseRequest<PrestamoSimulacionDto>
+                    {
+                        Success = false,
+                        Mensaje = sim.Mensaje ?? "No se pudo simular."
+                    };
+                }
+
+                return new JsonResponseRequest<PrestamoSimulacionDto>
+                {
+                    Success = true,
+                    Data = sim
+                };
+            }
+            catch (Exception ex)
+            {
+                Guid errorId = Guid.NewGuid();
+                _logger.LogError(ex, "Error ID: {ErrorId} - {Message}", errorId, ex.Message);
+
+                return new JsonResponseRequest<PrestamoSimulacionDto>
+                {
+                    Success = false,
+                    Mensaje = $"Ocurrió un error al simular la edición. ErrorId: {errorId}",
+                    Errors = new List<string> { ex.Message }
+                };
+            }
+        }
+        public async Task<JsonResponseRequest<int>> GuardarEdicionAsync(
+    PrestamoEditarGuardarRequestDto request,
+    string usuario)
+        {
+            try
+            {
+                var errors = new List<string>();
+
+                if (request.Id_Prestamo <= 0)
+                    errors.Add("Id_Prestamo|Id inválido.");
+
+                if (request.Fecha == default)
+                    errors.Add("Fecha|La fecha del préstamo es obligatoria.");
+
+                if (request.Capital <= 0)
+                    errors.Add("Capital|El capital debe ser mayor a cero.");
+
+                if (string.IsNullOrWhiteSpace(request.TipoModalidad))
+                    errors.Add("TipoModalidad|La modalidad es obligatoria.");
+
+                if (string.IsNullOrWhiteSpace(request.TipoInteres))
+                    errors.Add("TipoInteres|El tipo de interés es obligatorio.");
+
+                if (string.IsNullOrWhiteSpace(request.FrecuenciaPago))
+                    errors.Add("FrecuenciaPago|La frecuencia de pago es obligatoria.");
+
+                if (request.FechaInicioCobro == default)
+                    errors.Add("FechaInicioCobro|La fecha de inicio de cobro es obligatoria.");
+
+                if (request.FechaFinCobro == default)
+                    errors.Add("FechaFinCobro|La fecha de fin de cobro es obligatoria.");
+
+                if (string.IsNullOrWhiteSpace(request.Cod_Concepto))
+                    errors.Add("Cod_Concepto|El concepto es obligatorio.");
+
+                if (errors.Count > 0)
+                {
+                    return new JsonResponseRequest<int>
+                    {
+                        Success = false,
+                        Mensaje = "Validación.",
+                        Errors = errors
+                    };
+                }
+
+                var db = await _repo.GuardarEdicionAsync(request, usuario, CancellationToken.None);
+
+                if (!db.Ok)
+                {
+                    return new JsonResponseRequest<int>
+                    {
+                        Success = false,
+                        Mensaje = db.Mensaje ?? "No se pudo actualizar el préstamo.",
+                        Errors = new List<string> { db.Mensaje ?? "Error." }
+                    };
+                }
+
+                return new JsonResponseRequest<int>
+                {
+                    Success = true,
+                    Mensaje = db.Mensaje ?? "Préstamo actualizado correctamente.",
+                    Data = request.Id_Prestamo
+                };
+            }
+            catch (Exception ex)
+            {
+                Guid errorId = Guid.NewGuid();
+                _logger.LogError(ex, "Error ID: {ErrorId} - {Message}", errorId, ex.Message);
+
+                return new JsonResponseRequest<int>
+                {
+                    Success = false,
+                    Mensaje = $"Ocurrió un error al guardar la edición. ErrorId: {errorId}",
+                    Errors = new List<string> { ex.Message }
+                };
+            }
+        }
+
+        public async Task<JsonResponseRequest<PrestamoCtacteClienteResumenDto>> ObtenerCtacteClienteResumenAsync(
+    string codTipAnex,
+    string codAnxo)
+        {
+            try
+            {
+                var errors = new List<string>();
+
+                codTipAnex = (codTipAnex ?? "").Trim();
+                codAnxo = (codAnxo ?? "").Trim();
+
+                if (string.IsNullOrWhiteSpace(codTipAnex))
+                    errors.Add("Cod_TipAnex|Tipo anexo requerido.");
+
+                if (string.IsNullOrWhiteSpace(codAnxo))
+                    errors.Add("Cod_Anxo|Cliente requerido.");
+
+                if (errors.Count > 0)
+                {
+                    return new JsonResponseRequest<PrestamoCtacteClienteResumenDto>
+                    {
+                        Success = false,
+                        Mensaje = "Validación.",
+                        Errors = errors
+                    };
+                }
+
+                var dto = await _repo.ObtenerCtacteClienteResumenAsync(codTipAnex, codAnxo, CancellationToken.None);
+
+                if (dto == null)
+                {
+                    return new JsonResponseRequest<PrestamoCtacteClienteResumenDto>
+                    {
+                        Success = false,
+                        Mensaje = "No se encontró información."
+                    };
+                }
+
+                return new JsonResponseRequest<PrestamoCtacteClienteResumenDto>
+                {
+                    Success = true,
+                    Data = dto
+                };
+            }
+            catch (Exception ex)
+            {
+                Guid errorId = Guid.NewGuid();
+                _logger.LogError(ex, "Error ID: {ErrorId} - {Message}", errorId, ex.Message);
+
+                return new JsonResponseRequest<PrestamoCtacteClienteResumenDto>
+                {
+                    Success = false,
+                    Mensaje = $"Ocurrió un error al obtener el resumen. ErrorId: {errorId}",
+                    Errors = new List<string> { ex.Message }
+                };
+            }
+        }
+        public async Task<JsonResponseRequest<List<PrestamoCtacteClienteDetalleDto>>> ObtenerCtacteClienteDetalleAsync(
+    string codTipAnex,
+    string codAnxo)
+        {
+            try
+            {
+                var errors = new List<string>();
+
+                codTipAnex = (codTipAnex ?? "").Trim();
+                codAnxo = (codAnxo ?? "").Trim();
+
+                if (string.IsNullOrWhiteSpace(codTipAnex))
+                    errors.Add("Cod_TipAnex|Tipo anexo requerido.");
+
+                if (string.IsNullOrWhiteSpace(codAnxo))
+                    errors.Add("Cod_Anxo|Cliente requerido.");
+
+                if (errors.Count > 0)
+                {
+                    return new JsonResponseRequest<List<PrestamoCtacteClienteDetalleDto>>
+                    {
+                        Success = false,
+                        Mensaje = "Validación.",
+                        Errors = errors
+                    };
+                }
+
+                var lista = await _repo.ObtenerCtacteClienteDetalleAsync(codTipAnex, codAnxo, CancellationToken.None);
+
+                return new JsonResponseRequest<List<PrestamoCtacteClienteDetalleDto>>
+                {
+                    Success = true,
+                    Data = lista
+                };
+            }
+            catch (Exception ex)
+            {
+                Guid errorId = Guid.NewGuid();
+                _logger.LogError(ex, "Error ID: {ErrorId} - {Message}", errorId, ex.Message);
+
+                return new JsonResponseRequest<List<PrestamoCtacteClienteDetalleDto>>
+                {
+                    Success = false,
+                    Mensaje = $"Ocurrió un error al obtener el detalle. ErrorId: {errorId}",
+                    Errors = new List<string> { ex.Message }
+                };
+            }
+        }
+        public async Task<JsonResponseRequest<PrestamoCtacteClienteCuotasResponseDto>> ObtenerCtacteClienteCuotasAsync(
+    string codTipAnex,
+    string codAnxo)
+        {
+            try
+            {
+                var errors = new List<string>();
+
+                codTipAnex = (codTipAnex ?? "").Trim();
+                codAnxo = (codAnxo ?? "").Trim();
+
+                if (string.IsNullOrWhiteSpace(codTipAnex))
+                    errors.Add("Cod_TipAnex|Tipo anexo requerido.");
+
+                if (string.IsNullOrWhiteSpace(codAnxo))
+                    errors.Add("Cod_Anxo|Cliente requerido.");
+
+                if (errors.Count > 0)
+                {
+                    return new JsonResponseRequest<PrestamoCtacteClienteCuotasResponseDto>
+                    {
+                        Success = false,
+                        Mensaje = "Validación.",
+                        Errors = errors
+                    };
+                }
+
+                var dto = await _repo.ObtenerCtacteClienteCuotasAsync(codTipAnex, codAnxo, CancellationToken.None);
+
+                return new JsonResponseRequest<PrestamoCtacteClienteCuotasResponseDto>
+                {
+                    Success = true,
+                    Data = dto
+                };
+            }
+            catch (Exception ex)
+            {
+                Guid errorId = Guid.NewGuid();
+                _logger.LogError(ex, "Error ID: {ErrorId} - {Message}", errorId, ex.Message);
+
+                return new JsonResponseRequest<PrestamoCtacteClienteCuotasResponseDto>
+                {
+                    Success = false,
+                    Mensaje = $"Ocurrió un error al obtener cuotas. ErrorId: {errorId}",
+                    Errors = new List<string> { ex.Message }
+                };
+            }
+        }
+        public async Task<JsonResponseRequest<PrestamoCtacteClientesResumenGeneralResponseDto>> ObtenerCtacteClientesResumenGeneralAsync()
+        {
+            try
+            {
+                var dto = await _repo.ObtenerCtacteClientesResumenGeneralAsync(CancellationToken.None);
+
+                return new JsonResponseRequest<PrestamoCtacteClientesResumenGeneralResponseDto>
+                {
+                    Success = true,
+                    Data = dto
+                };
+            }
+            catch (Exception ex)
+            {
+                Guid errorId = Guid.NewGuid();
+                _logger.LogError(ex, "Error ID: {ErrorId} - {Message}", errorId, ex.Message);
+
+                return new JsonResponseRequest<PrestamoCtacteClientesResumenGeneralResponseDto>
+                {
+                    Success = false,
+                    Mensaje = $"Ocurrió un error al obtener el resumen general. ErrorId: {errorId}",
+                    Errors = new List<string> { ex.Message }
+                };
+            }
+        }
+
     }
 }
