@@ -48,6 +48,7 @@ namespace Aplicacion.Interfaces
 
         Task<JsonResponseRequest<PrestamoCtacteClienteCuotasResponseDto>> ObtenerCtacteClienteCuotasAsync(string codTipAnex, string codAnxo);
         Task<JsonResponseRequest<PrestamoCtacteClientesResumenGeneralResponseDto>> ObtenerCtacteClientesResumenGeneralAsync();
+        Task<(byte[] Archivo, string NombreArchivo, string ContentType, string? MensajeError)> ExportarCtacteClienteDetalleExcelAsync(string codTipAnex, string codAnxo);
     }
 
 

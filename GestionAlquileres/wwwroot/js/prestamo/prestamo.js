@@ -1181,6 +1181,8 @@
             });
     });
 
+
+
     $(function () {
         initDataTable();
         initClienteSelect();

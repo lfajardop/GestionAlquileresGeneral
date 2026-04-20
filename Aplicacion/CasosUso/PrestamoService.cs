@@ -1,5 +1,6 @@
 ﻿using Aplicacion.Common;
 using Aplicacion.Interfaces;
+using ClosedXML.Excel;
 using Dominio.DTO.Common;
 using Dominio.DTO.Prestamo;
 using Infraestructura.Interfaces;
@@ -878,6 +879,155 @@ public async Task<DbActionResult> RegistrarDesembolsoAsync(
                     Mensaje = $"Ocurrió un error al obtener el resumen general. ErrorId: {errorId}",
                     Errors = new List<string> { ex.Message }
                 };
+            }
+        }
+        public async Task<(byte[] Archivo, string NombreArchivo, string ContentType, string? MensajeError)> ExportarCtacteClienteDetalleExcelAsync(
+    string codTipAnex,
+    string codAnxo)
+        {
+            try
+            {
+                codTipAnex = (codTipAnex ?? "").Trim();
+                codAnxo = (codAnxo ?? "").Trim();
+
+                if (string.IsNullOrWhiteSpace(codTipAnex) || string.IsNullOrWhiteSpace(codAnxo))
+                    return (Array.Empty<byte>(), "", "", "Debe seleccionar un cliente.");
+
+                var resumen = await _repo.ObtenerCtacteClienteResumenAsync(codTipAnex, codAnxo, CancellationToken.None);
+                var detalle = await _repo.ObtenerCtacteClienteDetalleAsync(codTipAnex, codAnxo, CancellationToken.None);
+
+                if (resumen == null || detalle == null || detalle.Count == 0)
+                    return (Array.Empty<byte>(), "", "", "No hay datos para exportar.");
+
+                using var wb = new XLWorkbook();
+                var ws = wb.Worksheets.Add("Detalle Cliente");
+
+                int fila = 1;
+
+                ws.Cell(fila, 1).Value = "ESTADO DE CUENTA DEL CLIENTE";
+                ws.Range(fila, 1, fila, 14).Merge();
+                ws.Range(fila, 1, fila, 14).Style.Font.Bold = true;
+                ws.Range(fila, 1, fila, 14).Style.Font.FontSize = 16;
+                ws.Range(fila, 1, fila, 14).Style.Fill.BackgroundColor = XLColor.FromHtml("#1F4E78");
+                ws.Range(fila, 1, fila, 14).Style.Font.FontColor = XLColor.White;
+                ws.Range(fila, 1, fila, 14).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                fila++;
+
+                ws.Cell(fila, 1).Value = "Código cliente:";
+                ws.Cell(fila, 2).Value = resumen.Cod_Anxo;
+                ws.Cell(fila, 4).Value = "Tipo:";
+                ws.Cell(fila, 5).Value = resumen.Cod_TipAnex;
+                fila++;
+
+                ws.Cell(fila, 1).Value = "Cant. préstamos:";
+                ws.Cell(fila, 2).Value = resumen.CantPrestamos;
+                ws.Cell(fila, 4).Value = "Total capital:";
+                ws.Cell(fila, 5).Value = resumen.TotalCapital;
+                ws.Cell(fila, 6).Style.NumberFormat.Format = "#,##0.00";
+                ws.Cell(fila, 8).Value = "Total programado:";
+                ws.Cell(fila, 9).Value = resumen.TotalProgramado;
+                ws.Cell(fila, 9).Style.NumberFormat.Format = "#,##0.00";
+                fila++;
+
+                ws.Cell(fila, 1).Value = "Total pagado:";
+                ws.Cell(fila, 2).Value = resumen.TotalPagado;
+                ws.Cell(fila, 2).Style.NumberFormat.Format = "#,##0.00";
+                ws.Cell(fila, 4).Value = "Saldo pendiente:";
+                ws.Cell(fila, 5).Value = resumen.SaldoPendiente;
+                ws.Cell(fila, 5).Style.NumberFormat.Format = "#,##0.00";
+                fila += 2;
+
+                var headers = new[]
+                {
+            "ID Préstamo",
+            "Fecha",
+            "Concepto",
+            "Capital",
+            "Nro Cuotas",
+            "% Interés",
+            "Total Programado",
+            "Total Pagado",
+            "Saldo Pendiente",
+            "Estado",
+            "Desembolso",
+            "Cuotas Vencidas",
+            "Días Atraso",
+            "Observación"
+        };
+
+                for (int i = 0; i < headers.Length; i++)
+                {
+                    ws.Cell(fila, i + 1).Value = headers[i];
+                }
+
+                var rangoHeader = ws.Range(fila, 1, fila, headers.Length);
+                rangoHeader.Style.Font.Bold = true;
+                rangoHeader.Style.Fill.BackgroundColor = XLColor.FromHtml("#2F75B5");
+                rangoHeader.Style.Font.FontColor = XLColor.White;
+                rangoHeader.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                rangoHeader.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                rangoHeader.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+
+                int filaInicioDatos = fila + 1;
+                fila++;
+
+                foreach (var item in detalle)
+                {
+                    ws.Cell(fila, 1).Value = item.Id_Prestamo;
+                    ws.Cell(fila, 2).Value = item.Fecha;
+                    ws.Cell(fila, 2).Style.DateFormat.Format = "dd/MM/yyyy";
+                    ws.Cell(fila, 3).Value = item.NombreConcepto;
+                    ws.Cell(fila, 4).Value = item.Capital;
+                    ws.Cell(fila, 5).Value = item.Nro_Cuotas;
+                    ws.Cell(fila, 6).Value = item.PorcInteresMensualTexto;
+                    ws.Cell(fila, 7).Value = item.TotalProgramado;
+                    ws.Cell(fila, 8).Value = item.TotalPagado;
+                    ws.Cell(fila, 9).Value = item.SaldoPendiente;
+                    ws.Cell(fila, 10).Value = item.EstadoTexto;
+                    ws.Cell(fila, 11).Value = item.DesembolsadoTexto;
+                    ws.Cell(fila, 12).Value = item.CuotasVencidas;
+                    ws.Cell(fila, 13).Value = item.DiasAtraso;
+                    ws.Cell(fila, 14).Value = item.Observacion;
+
+                    ws.Cell(fila, 4).Style.NumberFormat.Format = "#,##0.00";
+                    ws.Cell(fila, 7).Style.NumberFormat.Format = "#,##0.00";
+                    ws.Cell(fila, 8).Style.NumberFormat.Format = "#,##0.00";
+                    ws.Cell(fila, 9).Style.NumberFormat.Format = "#,##0.00";
+
+                    if (item.SaldoPendiente > 0)
+                    {
+                        ws.Cell(fila, 9).Style.Font.FontColor = XLColor.FromHtml("#C00000");
+                        ws.Cell(fila, 9).Style.Font.Bold = true;
+                    }
+
+                    if (item.CuotasVencidas > 0 || item.DiasAtraso > 0)
+                    {
+                        ws.Range(fila, 1, fila, 14).Style.Fill.BackgroundColor = XLColor.FromHtml("#FCE4D6");
+                    }
+
+                    fila++;
+                }
+
+                var rangoDatos = ws.Range(filaInicioDatos, 1, fila - 1, 14);
+                rangoDatos.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                rangoDatos.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+
+                ws.Columns().AdjustToContents();
+
+                ws.SheetView.FreezeRows(5);
+                ws.Range(5, 1, fila - 1, 14).SetAutoFilter();
+
+                using var ms = new MemoryStream();
+                wb.SaveAs(ms);
+
+                var nombreArchivo = $"DetalleCliente_{codTipAnex}_{codAnxo}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+                return (ms.ToArray(), nombreArchivo, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", null);
+            }
+            catch (Exception ex)
+            {
+                Guid errorId = Guid.NewGuid();
+                _logger.LogError(ex, "Error ID: {ErrorId} - {Message}", errorId, ex.Message);
+                return (Array.Empty<byte>(), "", "", $"Ocurrió un error al exportar. ErrorId: {errorId}");
             }
         }
 

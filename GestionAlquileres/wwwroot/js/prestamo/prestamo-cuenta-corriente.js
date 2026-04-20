@@ -86,7 +86,7 @@
                 {
                     data: null,
                     render: function (data, type, row) {
-                        return row.conceptoMostrar || row.ConceptoMostrar || row.nombreConcepto || row.NombreConcepto || row.cod_Concepto || row.Cod_Concepto || "";
+                        return row.nombreConcepto || "";
                     }
                 },
                 {
@@ -244,7 +244,11 @@
     $(document).on("click", ".js-ver-ctacte-cliente", function () {
         const codTipAnex = $(this).data("codtipanex");
         const codAnxo = $(this).data("codanxo");
-        cargarCuentaCorrienteCliente(codTipAnex, codAnxo);
+
+        cargarCuentaCorrienteCliente(codTipAnex, codAnxo)
+            .done(function () {
+                $("#btnExportarDetalleClienteExcel").prop("disabled", false);
+            });
     });
 
     $(document).on("click", ".js-ver-cuotas-ctacte", function () {
@@ -285,6 +289,19 @@
                 $("#lblPrestamoCuotasSeleccionado")
                     .text("Mostrando todas las cuotas del cliente");
             });
+    });
+
+    $("#btnExportarDetalleClienteExcel").on("click", function () {
+        const codTipAnex = $("#Cc_Cod_TipAnex").val();
+        const codAnxo = $("#Cc_Cod_Anxo").val();
+
+        if (!codTipAnex || !codAnxo) {
+            WebApp.Forms.showToast(false, "Primero selecciona un cliente desde el resumen general.");
+            return;
+        }
+
+        const url = `/Prestamo/ExportarCtacteClienteDetalleExcel?codTipAnex=${encodeURIComponent(codTipAnex)}&codAnxo=${encodeURIComponent(codAnxo)}`;
+        window.location.href = url;
     });
 
     $(function () {

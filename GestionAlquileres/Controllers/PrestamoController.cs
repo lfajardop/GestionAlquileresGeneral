@@ -333,5 +333,16 @@ namespace GestionAlquileres.Controllers
             return Json(result);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> ExportarCtacteClienteDetalleExcel(string codTipAnex, string codAnxo)
+        {
+            var result = await _prestamoService.ExportarCtacteClienteDetalleExcelAsync(codTipAnex, codAnxo);
+
+            if (!string.IsNullOrWhiteSpace(result.MensajeError))
+                return BadRequest(result.MensajeError);
+
+            return File(result.Archivo, result.ContentType, result.NombreArchivo);
+        }
+
     }
 }
