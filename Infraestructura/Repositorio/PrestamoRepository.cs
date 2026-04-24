@@ -467,7 +467,14 @@ namespace Infraestructura.Repositorio
                 await cmd.ExecuteNonQueryAsync(cancellationToken);
 
                 result.Ok = okParam.Value != DBNull.Value && Convert.ToBoolean(okParam.Value);
-                result.Mensaje = msgParam.Value == DBNull.Value ? "" : msgParam.Value.ToString();
+                if (msgParam.Value == DBNull.Value)
+                {
+                    result.Mensaje = "";
+                }
+                else
+                {
+                    result.Mensaje = msgParam.Value.ToString();
+                }
 
                 return result;
             }
@@ -956,6 +963,77 @@ namespace Infraestructura.Repositorio
             }
 
             return result;
+        }
+        // Método para Anular Pago
+        public async Task<DbActionResult> AnularPagoAsync(int idPrestamo, int idPago, string motivo, string usuario, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var result = new DbActionResult();
+                using var cn = new SqlConnection(GetConnectionString());
+                using var cmd = new SqlCommand("dbo.FI_Cobranza_AnularPago_Prestamo", cn);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.AddWithValue("@IdPrestamo", idPrestamo);
+                cmd.Parameters.AddWithValue("@IdPago", idPago);
+                cmd.Parameters.AddWithValue("@Motivo", motivo);
+                cmd.Parameters.AddWithValue("@CodUsuario", Convert.ToInt32(usuario));
+
+                var okParam = new SqlParameter("@Ok", SqlDbType.Bit) { Direction = ParameterDirection.Output };
+                var msgParam = new SqlParameter("@Mensaje", SqlDbType.VarChar, 500) { Direction = ParameterDirection.Output };
+                cmd.Parameters.Add(okParam);
+                cmd.Parameters.Add(msgParam);
+
+                await cn.OpenAsync(cancellationToken);
+                await cmd.ExecuteNonQueryAsync(cancellationToken);
+
+                result.Ok = okParam.Value != DBNull.Value && Convert.ToBoolean(okParam.Value);
+                result.Mensaje = msgParam.Value?.ToString() ?? "";
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en PrestamoRepository.AnularPagoAsync para el pago {IdPago}", idPago);
+                throw;
+            }
+        }
+
+        // Método para Editar Pago
+        public async Task<DbActionResult> EditarPagoAsync(PrestamoEditarPagoRequestDto request, string usuario, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var result = new DbActionResult();
+                using var cn = new SqlConnection(GetConnectionString());
+                using var cmd = new SqlCommand("dbo.FI_Cobranza_EditarPago_Prestamo", cn);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.AddWithValue("@IdPrestamo", request.IdPrestamo);
+                cmd.Parameters.AddWithValue("@IdPago", request.IdPago);
+                cmd.Parameters.AddWithValue("@NuevoImporte", request.Importe);
+                cmd.Parameters.AddWithValue("@NuevaFecha", request.FecPago);
+                cmd.Parameters.AddWithValue("@Glosa", (object?)request.Glosa ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@CodUsuario", Convert.ToInt32(usuario));
+
+                var okParam = new SqlParameter("@Ok", SqlDbType.Bit) { Direction = ParameterDirection.Output };
+                var msgParam = new SqlParameter("@Mensaje", SqlDbType.VarChar, 500) { Direction = ParameterDirection.Output };
+                cmd.Parameters.Add(okParam);
+                cmd.Parameters.Add(msgParam);
+
+                await cn.OpenAsync(cancellationToken);
+                await cmd.ExecuteNonQueryAsync(cancellationToken);
+
+                result.Ok = okParam.Value != DBNull.Value && Convert.ToBoolean(okParam.Value);
+                result.Mensaje = msgParam.Value?.ToString() ?? "";
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en PrestamoRepository.EditarPagoAsync para el pago {IdPago}", request.IdPago);
+                throw;
+            }
         }
     }
 }

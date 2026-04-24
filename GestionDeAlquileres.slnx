@@ -1,6 +1,6 @@
 <Solution>
-  <Project Path="E:/LEFP/Proyectos/ControlAlquileres/GestionDeAlquileres/Aplicacion/Aplicacion.csproj" />
-  <Project Path="E:/LEFP/Proyectos/ControlAlquileres/GestionDeAlquileres/Dominio/Dominio.csproj" />
-  <Project Path="E:/LEFP/Proyectos/ControlAlquileres/GestionDeAlquileres/GestionAlquileres/GestionAlquileres.csproj" />
-  <Project Path="E:/LEFP/Proyectos/ControlAlquileres/GestionDeAlquileres/Infraestructura/Infraestructura.csproj" />
+  <Project Path="Aplicacion/Aplicacion.csproj" />
+  <Project Path="Dominio/Dominio.csproj" />
+  <Project Path="GestionAlquileres/GestionAlquileres.csproj" />
+  <Project Path="Infraestructura/Infraestructura.csproj" />
 </Solution>
