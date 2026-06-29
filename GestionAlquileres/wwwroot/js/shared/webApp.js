@@ -56,9 +56,25 @@ WebApp.Forms = (function () {
     }
     let appToast = null;
     function showToast(ok, msg) {
+        const text = msg || (ok ? "OK" : "Ocurrió un error");
+
+        if (window.Swal && typeof window.Swal.fire === "function") {
+            window.Swal.fire({
+                toast: true,
+                position: "top-end",
+                icon: ok ? "success" : "error",
+                title: text,
+                showConfirmButton: false,
+                timer: ok ? 2600 : 5200,
+                timerProgressBar: true
+            });
+            return;
+        }
+
         const el = document.getElementById("appToast");
         const body = document.getElementById("appToastBody");
-        body.textContent = msg || (ok ? "OK" : "Ocurrió un error");
+        if (!el || !body) return;
+        body.textContent = text;
 
         el.classList.remove("text-bg-primary", "text-bg-success", "text-bg-danger", "text-bg-warning");
         el.classList.add(ok ? "text-bg-success" : "text-bg-danger");
@@ -154,14 +170,33 @@ WebApp.Forms = (function () {
         }
 
         WebApp.UI.confirm = function (opts) {
-            ensureConfirmModal();
-
             const o = opts || {};
             const title = o.title ?? "Confirmar";
             const message = o.message ?? "¿Deseas continuar?";
             const okText = o.okText ?? "Sí";
             const cancelText = o.cancelText ?? "Cancelar";
             const danger = !!o.danger;
+
+            if (window.Swal && typeof window.Swal.fire === "function") {
+                return window.Swal.fire({
+                    title: title,
+                    html: o.html ? message : undefined,
+                    text: o.html ? undefined : message,
+                    icon: danger ? "warning" : "question",
+                    showCancelButton: true,
+                    confirmButtonText: okText,
+                    cancelButtonText: cancelText,
+                    confirmButtonColor: danger ? "#dc3545" : "#185FA5",
+                    cancelButtonColor: "#6b7280",
+                    reverseButtons: true
+                }).then(function (r) {
+                    if (r.isConfirmed && typeof o.onOk === "function") o.onOk();
+                    if (!r.isConfirmed && typeof o.onCancel === "function") o.onCancel();
+                    return !!r.isConfirmed;
+                });
+            }
+
+            ensureConfirmModal();
 
             const $title = _confirmModalEl.querySelector("#waConfirmTitle");
             const $msg = _confirmModalEl.querySelector("#waConfirmMessage");

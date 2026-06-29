@@ -36,6 +36,31 @@ namespace Aplicacion.Interfaces
     string? estacion,
     CancellationToken cancellationToken);
 
+        Task<JsonResponseRequest<PagoGlobalSimulacionDto>> SimularPagoGlobalAsync(
+    PagoGlobalSimularRequestDto request,
+    CancellationToken cancellationToken);
+
+        Task<DbActionResult> AplicarPagoGlobalAsync(
+    PagoGlobalAplicarRequestDto request,
+    string usuario,
+    string? estacion,
+    CancellationToken cancellationToken);
+
+        Task<JsonResponseRequest<PrestamoContinuacionSimulacionDto>> SimularContinuacionAsync(
+    PrestamoContinuacionSimularRequestDto request,
+    CancellationToken cancellationToken);
+
+        Task<DbActionResult> AplicarContinuacionAsync(
+    PrestamoContinuacionAplicarRequestDto request,
+    string usuario,
+    CancellationToken cancellationToken);
+
+        Task<JsonResponseRequest<List<PrestamoContinuacionListadoDto>>> ListarContinuacionesAsync(CancellationToken cancellationToken);
+        Task<JsonResponseRequest<PrestamoContinuacionEdicionDto>> ObtenerContinuacionAsync(int idContinuacion, CancellationToken cancellationToken);
+        Task<JsonResponseRequest<PrestamoContinuacionSimulacionDto>> SimularEdicionContinuacionAsync(PrestamoContinuacionEditarSimularRequestDto request, CancellationToken cancellationToken);
+        Task<DbActionResult> GuardarEdicionContinuacionAsync(PrestamoContinuacionEditarGuardarRequestDto request, string usuario, CancellationToken cancellationToken);
+        Task<(byte[] Archivo, string NombreArchivo, string ContentType, string? MensajeError)> ExportarContinuacionPdfAsync(int idContinuacion, CancellationToken cancellationToken);
+
         Task<List<PrestamoConceptoDto>> ListarConceptosAsync(CancellationToken cancellationToken);
         Task<JsonResponseRequest<PrestamoDetalleDto>> ObtenerDetalleAsync(int idPrestamo);
         Task<JsonResponseRequest<PrestamoEdicionDto>> ObtenerEdicionAsync(int idPrestamo);

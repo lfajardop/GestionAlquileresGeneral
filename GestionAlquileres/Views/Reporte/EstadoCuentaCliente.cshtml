@@ -1,0 +1,85 @@
+@{
+    ViewData["Title"] = "Estado de cuenta por cliente";
+    Layout = "~/Views/Shared/_LayoutGAP.cshtml";
+}
+<link href="~/css/reporte/estado-cuenta-cliente.css" rel="stylesheet" asp-append-version="true" />
+
+<div class="ec-page">
+    <header class="ec-header">
+        <div>
+            <span class="ec-kicker"><i class="bi bi-file-earmark-person"></i> Reporte para el cliente</span>
+            <h2>Estado de cuenta</h2>
+            <p>Prestamos, intereses, pagos, compensaciones y saldo en un solo documento.</p>
+        </div>
+        <div class="ec-header-actions">
+            <button id="btnEcExcel" class="ec-btn ec-btn-excel" disabled title="Exportar estado de cuenta a Excel"><i class="bi bi-file-earmark-excel"></i> Excel</button>
+            <button id="btnEcPdf" class="ec-btn ec-btn-pdf" disabled title="Generar documento PDF"><i class="bi bi-file-earmark-pdf"></i> PDF</button>
+        </div>
+    </header>
+
+    <section class="ec-picker">
+        <div class="ec-picker-title">
+            <div><span>Paso 1</span><h5>Elige al cliente</h5></div>
+            <div class="ec-search"><i class="bi bi-search"></i><input id="txtEcBuscar" autocomplete="off" placeholder="Buscar por nombre..." /></div>
+        </div>
+        <div class="table-responsive">
+            <table id="tblEcClientes" class="table align-middle w-100 mb-0">
+                <thead><tr><th>Cliente</th><th>Prestamos</th><th class="text-end">Capital</th><th class="text-end">Pagado</th><th class="text-end">Saldo</th><th></th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </section>
+
+    <section id="ecWorkspace" class="d-none">
+        <div id="ecSelected" class="ec-selected">
+            <div class="ec-avatar"><i class="bi bi-person"></i></div>
+            <div><span>Estado de cuenta seleccionado</span><strong id="ecCliente">-</strong><small id="ecDocumento">-</small></div>
+            <div class="ec-selected-actions">
+                <a id="ecPagoGlobal" class="ec-action" href="#"><i class="bi bi-cash-coin"></i><span>Registrar pago<small>Ir a pago global</small></span><i class="bi bi-chevron-right"></i></a>
+                <a id="ecContinuacion" class="ec-action" href="#"><i class="bi bi-calendar-plus"></i><span>Continuar prestamo<small>Ampliar vencidos</small></span><i class="bi bi-chevron-right"></i></a>
+            </div>
+        </div>
+
+        <div class="ec-metrics">
+            <article><i class="bi bi-wallet2"></i><span>Capital prestado</span><strong id="ecCapital">S/.0.00</strong></article>
+            <article class="interest"><i class="bi bi-percent"></i><span>Interes programado</span><strong id="ecInteres">S/.0.00</strong></article>
+            <article class="paid"><i class="bi bi-cash-stack"></i><span>Pagos recibidos</span><strong id="ecPagosRecibidos">S/.0.00</strong></article>
+            <article class="offset"><i class="bi bi-arrow-left-right"></i><span>Compensaciones</span><strong id="ecCompensado">S/.0.00</strong></article>
+            <article class="applied"><i class="bi bi-check2-circle"></i><span>Total aplicado</span><strong id="ecPagado">S/.0.00</strong></article>
+            <article class="debt"><i class="bi bi-exclamation-circle"></i><span>Saldo actual</span><strong id="ecSaldo">S/.0.00</strong></article>
+        </div>
+
+        <div class="ec-alert-row">
+            <div><span>Saldo vencido</span><strong id="ecVencido">S/.0.00</strong></div>
+            <div><span>Cuotas vencidas</span><strong id="ecCuotasVencidas">0</strong></div>
+            <div><span>Mayor atraso</span><strong id="ecAtraso">0 dias</strong></div>
+            <div><span>Proximo vencimiento</span><strong id="ecProximo">-</strong></div>
+        </div>
+
+        <nav class="ec-tabs" role="tablist">
+            <button class="active" data-target="ecPrestamos"><i class="bi bi-journal-text"></i> Prestamos</button>
+            <button data-target="ecCuotas"><i class="bi bi-calendar3"></i> Cuotas</button>
+            <button data-target="ecPagos"><i class="bi bi-receipt"></i> Pagos</button>
+            <button data-target="ecCompensaciones"><i class="bi bi-arrow-left-right"></i> Compensaciones</button>
+        </nav>
+
+        <section id="ecPrestamos" class="ec-panel active">
+            <div class="ec-panel-head"><div><h5>Prestamos del cliente</h5><p>Totales, pagos aplicados y saldo por operacion.</p></div></div>
+            <div class="table-responsive"><table id="tblEcPrestamos" class="table align-middle w-100"><thead><tr><th>ID</th><th>Fecha</th><th>Concepto</th><th class="text-end">Capital</th><th class="text-end">Interes</th><th class="text-end">Pagado</th><th class="text-end">Saldo</th><th>Situacion</th></tr></thead><tbody></tbody></table></div>
+        </section>
+        <section id="ecCuotas" class="ec-panel">
+            <div class="ec-panel-head"><div><h5>Cronograma de cuotas</h5><p>Capital, interes y saldo pendiente por vencimiento.</p></div><select id="ecFiltroCuota" class="form-select"><option value="">Todas las cuotas</option><option value="VENCIDA">Solo vencidas</option><option value="PENDIENTE">Solo pendientes</option><option value="PAGADA">Solo pagadas</option></select></div>
+            <div class="table-responsive"><table id="tblEcCuotas" class="table align-middle w-100"><thead><tr><th>Prestamo</th><th>Cuota</th><th>Vencimiento</th><th class="text-end">Capital</th><th class="text-end">Interes</th><th class="text-end">Pagado</th><th class="text-end">Saldo</th><th>Estado</th></tr></thead><tbody></tbody></table></div>
+        </section>
+        <section id="ecPagos" class="ec-panel">
+            <div class="ec-panel-head"><div><h5>Pagos recibidos</h5><p>Ingresos registrados por caja, banco u otro medio de pago.</p></div></div>
+            <div class="table-responsive"><table id="tblEcPagos" class="table align-middle w-100"><thead><tr><th>Fecha</th><th>Prestamo</th><th>Cuota</th><th>Forma de pago</th><th>Caja / banco</th><th class="text-end">Importe</th><th>Glosa</th></tr></thead><tbody></tbody></table></div>
+        </section>
+        <section id="ecCompensaciones" class="ec-panel">
+            <div class="ec-panel-head"><div><h5>Compensaciones del cliente</h5><p>Importes aplicados sin movimiento de caja, con su concepto y estado.</p></div></div>
+            <div class="table-responsive"><table id="tblEcCompensaciones" class="table align-middle w-100"><thead><tr><th>Numero</th><th>Fecha</th><th>Concepto</th><th>Prestamos</th><th class="text-center">Cuotas</th><th class="text-end">Importe</th><th>Estado</th><th>Observacion</th></tr></thead><tbody></tbody></table></div>
+        </section>
+    </section>
+</div>
+
+@section Scripts { <script src="~/js/reporte/estado-cuenta-cliente.js" asp-append-version="true"></script> }

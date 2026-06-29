@@ -1,0 +1,79 @@
+@{
+    ViewData["Title"] = "Importación Yape";
+    Layout = "~/Views/Shared/_LayoutGAP.cshtml";
+}
+<link href="~/css/yape/yape-importacion.css" rel="stylesheet" asp-append-version="true" />
+
+<div class="yape-page">
+    <form id="frmYape">@Html.AntiForgeryToken()</form>
+    <header class="yp-hero">
+        <div>
+            <span class="yp-kicker"><i class="bi bi-phone"></i> Conciliación personal</span>
+            <h2>Importar movimientos Yape</h2>
+            <p>Completa tu caja con los movimientos faltantes. El periodo siempre lo determina la caja abierta.</p>
+        </div>
+        <div class="yp-period-pill" id="periodPill"><span>Periodo</span><strong>Selecciona una caja</strong></div>
+    </header>
+
+    <section class="yp-card yp-upload">
+        <div class="row g-4 align-items-end">
+            <div class="col-lg-5">
+                <label class="form-label">Caja Yape abierta</label>
+                <select id="cboCaja" class="form-select"><option value="">Cargando cajas...</option></select>
+                <div class="form-text" id="cajaHelp">La caja elegida define qué mes se extrae del Excel.</div>
+            </div>
+            <div class="col-lg-5">
+                <label class="form-label">Reporte exportado de Yape</label>
+                <label class="yp-file" for="archivoYape">
+                    <i class="bi bi-file-earmark-spreadsheet"></i>
+                    <span><strong id="fileName">Seleccionar archivo .xlsx</strong><small>Máximo 10 MB</small></span>
+                    <i class="bi bi-chevron-right ms-auto"></i>
+                </label>
+                <input id="archivoYape" type="file" accept=".xlsx" hidden />
+            </div>
+            <div class="col-lg-2 d-grid">
+                <button id="btnCargar" type="button" class="yp-btn yp-btn-primary"><i class="bi bi-cloud-arrow-up"></i> Cargar</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="workspace" class="d-none">
+        <div class="yp-metrics">
+            <article><span>Del periodo</span><strong id="mTotal">0</strong><i class="bi bi-calendar-check"></i></article>
+            <article class="ok"><span>Seleccionados</span><strong id="mSelected">0</strong><i class="bi bi-check2-circle"></i></article>
+            <article class="warn"><span>Por revisar</span><strong id="mReview">0</strong><i class="bi bi-exclamation-triangle"></i></article>
+            <article class="muted"><span>Ya registrados</span><strong id="mDuplicate">0</strong><i class="bi bi-files"></i></article>
+            <article><span>Total a insertar</span><strong id="mAmount">S/ 0.00</strong><i class="bi bi-wallet2"></i></article>
+        </div>
+
+        <section class="yp-card yp-review">
+            <div class="yp-toolbar">
+                <div>
+                    <h5>Revisa antes de confirmar</h5>
+                    <p id="loteInfo">Los ingresos vienen desmarcados para evitar duplicarlos.</p>
+                </div>
+                <div class="yp-filters">
+                    <div class="yp-search"><i class="bi bi-search"></i><input id="txtBuscar" placeholder="Buscar persona, mensaje..." /></div>
+                    <select id="filtroEstado" class="form-select"><option value="">Todos</option><option value="selected">Seleccionados</option><option value="review">Por revisar</option><option value="duplicate">Ya registrados</option><option value="entrada">Ingresos</option><option value="salida">Salidas</option></select>
+                </div>
+            </div>
+            <div class="yp-bulkbar">
+                <label><input type="checkbox" id="chkTodos" /> Seleccionar visibles</label>
+                <span id="saveState"><i class="bi bi-check-circle"></i> Cambios guardados</span>
+            </div>
+            <div class="yp-table-wrap">
+                <table class="table yp-table align-middle mb-0">
+                    <thead><tr><th></th><th>Fecha</th><th>Movimiento</th><th>Persona / mensaje</th><th class="text-end">Monto</th><th>Concepto de caja</th><th>Estado</th></tr></thead>
+                    <tbody id="tbodyMovimientos"></tbody>
+                </table>
+                <div id="emptyRows" class="yp-empty d-none"><i class="bi bi-search"></i><strong>Sin coincidencias</strong><span>Prueba con otro filtro.</span></div>
+            </div>
+            <footer class="yp-footer">
+                <div><strong id="footerCount">0 movimientos</strong><span>Solo se insertarán los seleccionados.</span></div>
+                <button id="btnConfirmar" class="yp-btn yp-btn-success"><i class="bi bi-check2-circle"></i> Confirmar importación</button>
+            </footer>
+        </section>
+    </section>
+</div>
+
+@section Scripts { <script src="~/js/yape/yape-importacion.js" asp-append-version="true"></script> }

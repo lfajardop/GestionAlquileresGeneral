@@ -444,6 +444,334 @@ public async Task<DbActionResult> RegistrarDesembolsoAsync(
             return await _repo.RegistrarPagoAsync(request, usuario, estacion, cancellationToken);
         }
 
+        public async Task<JsonResponseRequest<PagoGlobalSimulacionDto>> SimularPagoGlobalAsync(
+    PagoGlobalSimularRequestDto request,
+    CancellationToken cancellationToken)
+        {
+            var res = new JsonResponseRequest<PagoGlobalSimulacionDto>();
+
+            try
+            {
+                request.Cod_TipAnex = (request.Cod_TipAnex ?? string.Empty).Trim();
+                request.Cod_Anxo = (request.Cod_Anxo ?? string.Empty).Trim();
+                request.SoloVencidas = (request.SoloVencidas ?? "N").Trim().ToUpperInvariant();
+
+                var errores = new List<string>();
+
+                if (string.IsNullOrWhiteSpace(request.Cod_TipAnex))
+                    errores.Add("Cod_TipAnex|Seleccione un cliente.");
+
+                if (string.IsNullOrWhiteSpace(request.Cod_Anxo))
+                    errores.Add("Cod_Anxo|Seleccione un cliente.");
+
+                if (request.ImportePago <= 0)
+                    errores.Add("ImportePago|El importe debe ser mayor a cero.");
+
+                if (request.SoloVencidas != "S")
+                    request.SoloVencidas = "N";
+
+                if (errores.Count > 0)
+                {
+                    res.Success = false;
+                    res.Mensaje = "Validación.";
+                    res.Errors = errores;
+                    return res;
+                }
+
+                var dto = await _repo.SimularPagoGlobalAsync(request, cancellationToken);
+
+                res.Success = dto.Resumen.Ok;
+                res.Mensaje = dto.Resumen.Mensaje;
+                res.Data = dto;
+
+                if (!dto.Resumen.Ok)
+                    res.Errors.Add(dto.Resumen.Mensaje);
+
+                return res;
+            }
+            catch (Exception ex)
+            {
+                var errorId = Guid.NewGuid();
+                _logger.LogError(ex, "ErrorId: {ErrorId} - Error al simular pago global", errorId);
+
+                res.Success = false;
+                res.Mensaje = $"Ocurrió un error al simular el pago global. ErrorId: {errorId}";
+                res.Errors.Add(ex.Message);
+                return res;
+            }
+        }
+
+        public async Task<DbActionResult> AplicarPagoGlobalAsync(
+    PagoGlobalAplicarRequestDto request,
+    string usuario,
+    string? estacion,
+    CancellationToken cancellationToken)
+        {
+            if (request is null)
+                throw new ArgumentNullException(nameof(request));
+
+            request.Cod_TipAnex = (request.Cod_TipAnex ?? string.Empty).Trim();
+            request.Cod_Anxo = (request.Cod_Anxo ?? string.Empty).Trim();
+            request.CodCajaChica = (request.CodCajaChica ?? string.Empty).Trim();
+            request.Glosa = (request.Glosa ?? string.Empty).Trim();
+            request.FormasPago = (request.FormasPago ?? new List<PagoGlobalFormaPagoDto>())
+                .Where(x => x != null)
+                .Select(x => new PagoGlobalFormaPagoDto
+                {
+                    IdFormaPago = x.IdFormaPago,
+                    CodCajaChica = (x.CodCajaChica ?? string.Empty).Trim(),
+                    Importe = x.Importe
+                })
+                .Where(x => x.IdFormaPago > 0 || !string.IsNullOrWhiteSpace(x.CodCajaChica) || x.Importe > 0)
+                .ToList();
+
+            var errores = new List<string>();
+
+            if (string.IsNullOrWhiteSpace(request.Cod_TipAnex) || string.IsNullOrWhiteSpace(request.Cod_Anxo))
+                errores.Add("Seleccione un cliente.");
+
+            if (request.ImportePago <= 0)
+                errores.Add("El importe de pago debe ser mayor a cero.");
+
+            if (request.FecPago == default)
+                errores.Add("La fecha de pago es obligatoria.");
+
+            if (request.FormasPago.Count == 0 && request.IdFormaPago <= 0)
+                errores.Add("La forma de pago es obligatoria.");
+
+            if (request.FormasPago.Count == 0 && string.IsNullOrWhiteSpace(request.CodCajaChica))
+                errores.Add("La caja es obligatoria.");
+
+            if (request.FormasPago.Count > 0)
+            {
+                for (int i = 0; i < request.FormasPago.Count; i++)
+                {
+                    var fp = request.FormasPago[i];
+
+                    if (fp.IdFormaPago <= 0)
+                        errores.Add($"FormaPago{i}|Seleccione forma de pago en la línea {i + 1}.");
+
+                    if (string.IsNullOrWhiteSpace(fp.CodCajaChica))
+                        errores.Add($"CodCajaChica{i}|Seleccione caja en la línea {i + 1}.");
+
+                    if (fp.Importe <= 0)
+                        errores.Add($"ImporteFormaPago{i}|El importe de la línea {i + 1} debe ser mayor a cero.");
+                }
+
+                var totalFormas = request.FormasPago.Sum(x => x.Importe);
+                if (Math.Abs(totalFormas - request.ImportePago) > 0.009m)
+                    errores.Add("La suma de formas de pago debe ser igual al importe total.");
+            }
+
+            if (string.IsNullOrWhiteSpace(usuario) || usuario == "0")
+                errores.Add("No se pudo identificar el usuario.");
+
+            if (errores.Count > 0)
+            {
+                return new DbActionResult
+                {
+                    Ok = false,
+                    Mensaje = string.Join(" ", errores)
+                };
+            }
+
+            if (request.FormasPago.Count == 0)
+                return await _repo.AplicarPagoGlobalAsync(request, usuario, estacion, cancellationToken);
+
+            DbActionResult? ultimoResultado = null;
+
+            for (int i = 0; i < request.FormasPago.Count; i++)
+            {
+                var fp = request.FormasPago[i];
+                var parcial = new PagoGlobalAplicarRequestDto
+                {
+                    Cod_TipAnex = request.Cod_TipAnex,
+                    Cod_Anxo = request.Cod_Anxo,
+                    ImportePago = fp.Importe,
+                    FecPago = request.FecPago,
+                    IdFormaPago = fp.IdFormaPago,
+                    CodCajaChica = fp.CodCajaChica,
+                    Glosa = request.FormasPago.Count == 1
+                        ? request.Glosa
+                        : $"{request.Glosa} | Parte {i + 1}/{request.FormasPago.Count}",
+                    PermitirExcedente = request.PermitirExcedente && i == request.FormasPago.Count - 1
+                };
+
+                ultimoResultado = await _repo.AplicarPagoGlobalAsync(parcial, usuario, estacion, cancellationToken);
+
+                if (!ultimoResultado.Ok)
+                    return ultimoResultado;
+            }
+
+            return new DbActionResult
+            {
+                Ok = true,
+                Mensaje = $"Pago global mixto registrado correctamente. Líneas: {request.FormasPago.Count}. Total: S/.{request.ImportePago:N2}"
+            };
+        }
+
+        public async Task<JsonResponseRequest<PrestamoContinuacionSimulacionDto>> SimularContinuacionAsync(
+    PrestamoContinuacionSimularRequestDto request,
+    CancellationToken cancellationToken)
+        {
+            var res = new JsonResponseRequest<PrestamoContinuacionSimulacionDto>();
+
+            try
+            {
+                request.FrecuenciaPago = (request.FrecuenciaPago ?? string.Empty).Trim().ToUpperInvariant();
+
+                var errores = new List<string>();
+
+                if (request.Id_Prestamo <= 0)
+                    errores.Add("Id_Prestamo|Seleccione un préstamo.");
+
+                if (request.FechaHasta == default)
+                    errores.Add("FechaHasta|La fecha hasta es obligatoria.");
+
+                if (request.PorcInteresMensual.HasValue && request.PorcInteresMensual.Value <= 0)
+                    errores.Add("PorcInteresMensual|El interés debe ser mayor a cero.");
+
+                if (!string.IsNullOrWhiteSpace(request.FrecuenciaPago) && !"DSM".Contains(request.FrecuenciaPago))
+                    errores.Add("FrecuenciaPago|Frecuencia inválida.");
+
+                if (request.CapitalBase.HasValue && request.CapitalBase.Value <= 0)
+                    errores.Add("CapitalBase|El capital base debe ser mayor a cero.");
+
+                if (errores.Count > 0)
+                {
+                    res.Success = false;
+                    res.Mensaje = "Validación.";
+                    res.Errors = errores;
+                    return res;
+                }
+
+                var dto = await _repo.SimularContinuacionAsync(request, cancellationToken);
+
+                res.Success = dto.Resumen.Ok;
+                res.Mensaje = dto.Resumen.Mensaje;
+                res.Data = dto;
+
+                if (!dto.Resumen.Ok)
+                    res.Errors.Add(dto.Resumen.Mensaje);
+
+                return res;
+            }
+            catch (Exception ex)
+            {
+                var errorId = Guid.NewGuid();
+                _logger.LogError(ex, "ErrorId: {ErrorId} - Error al simular continuidad", errorId);
+
+                res.Success = false;
+                res.Mensaje = $"Ocurrió un error al simular la continuidad. ErrorId: {errorId}";
+                res.Errors.Add(ex.Message);
+                return res;
+            }
+        }
+
+        public async Task<DbActionResult> AplicarContinuacionAsync(
+    PrestamoContinuacionAplicarRequestDto request,
+    string usuario,
+    CancellationToken cancellationToken)
+        {
+            if (request is null)
+                throw new ArgumentNullException(nameof(request));
+
+            request.FrecuenciaPago = (request.FrecuenciaPago ?? string.Empty).Trim().ToUpperInvariant();
+            request.Observacion = (request.Observacion ?? string.Empty).Trim();
+
+            var errores = new List<string>();
+
+            if (request.Id_Prestamo <= 0)
+                errores.Add("Seleccione un préstamo.");
+
+            if (request.FechaHasta == default)
+                errores.Add("La fecha hasta es obligatoria.");
+
+            if (request.PorcInteresMensual.HasValue && request.PorcInteresMensual.Value <= 0)
+                errores.Add("El interés debe ser mayor a cero.");
+
+            if (!string.IsNullOrWhiteSpace(request.FrecuenciaPago) && !"DSM".Contains(request.FrecuenciaPago))
+                errores.Add("Frecuencia inválida.");
+
+            if (request.CapitalBase.HasValue && request.CapitalBase.Value <= 0)
+                errores.Add("El capital base debe ser mayor a cero.");
+
+            if (string.IsNullOrWhiteSpace(usuario) || usuario == "0")
+                errores.Add("No se pudo identificar el usuario.");
+
+            if (errores.Count > 0)
+            {
+                return new DbActionResult
+                {
+                    Ok = false,
+                    Mensaje = string.Join(" ", errores)
+                };
+            }
+
+            return await _repo.AplicarContinuacionAsync(request, usuario, cancellationToken);
+        }
+
+        public async Task<JsonResponseRequest<List<PrestamoContinuacionListadoDto>>> ListarContinuacionesAsync(CancellationToken cancellationToken)
+        {
+            try { return new JsonResponseRequest<List<PrestamoContinuacionListadoDto>> { Success = true, Data = await _repo.ListarContinuacionesAsync(cancellationToken) }; }
+            catch (Exception ex) { _logger.LogError(ex, "Error al listar continuaciones"); return new JsonResponseRequest<List<PrestamoContinuacionListadoDto>> { Success = false, Mensaje = "No se pudieron cargar las continuaciones." }; }
+        }
+
+        public async Task<JsonResponseRequest<PrestamoContinuacionEdicionDto>> ObtenerContinuacionAsync(int idContinuacion, CancellationToken cancellationToken)
+        {
+            if (idContinuacion <= 0) return new JsonResponseRequest<PrestamoContinuacionEdicionDto> { Success = false, Mensaje = "Continuacion invalida." };
+            try
+            {
+                var data = await _repo.ObtenerContinuacionAsync(idContinuacion, cancellationToken);
+                return new JsonResponseRequest<PrestamoContinuacionEdicionDto> { Success = data != null, Data = data, Mensaje = data == null ? "No existe la continuacion." : "" };
+            }
+            catch (Exception ex) { _logger.LogError(ex, "Error al obtener continuacion {Id}", idContinuacion); return new JsonResponseRequest<PrestamoContinuacionEdicionDto> { Success = false, Mensaje = "No se pudo obtener la continuacion." }; }
+        }
+
+        public async Task<JsonResponseRequest<PrestamoContinuacionSimulacionDto>> SimularEdicionContinuacionAsync(PrestamoContinuacionEditarSimularRequestDto request, CancellationToken cancellationToken)
+        {
+            var errors = ValidarEdicionContinuacion(request);
+            if (errors.Count > 0) return new JsonResponseRequest<PrestamoContinuacionSimulacionDto> { Success = false, Mensaje = "Revisa los datos indicados.", Errors = errors };
+            try
+            {
+                request.FrecuenciaPago = request.FrecuenciaPago.Trim().ToUpperInvariant();
+                var data = await _repo.SimularEdicionContinuacionAsync(request, cancellationToken);
+                return new JsonResponseRequest<PrestamoContinuacionSimulacionDto> { Success = data.Resumen.Ok, Mensaje = data.Resumen.Mensaje, Data = data };
+            }
+            catch (Exception ex) { _logger.LogError(ex, "Error al simular edicion de continuacion"); return new JsonResponseRequest<PrestamoContinuacionSimulacionDto> { Success = false, Mensaje = "No se pudo simular la correccion." }; }
+        }
+
+        public async Task<DbActionResult> GuardarEdicionContinuacionAsync(PrestamoContinuacionEditarGuardarRequestDto request, string usuario, CancellationToken cancellationToken)
+        {
+            var errors = ValidarEdicionContinuacion(request);
+            if (string.IsNullOrWhiteSpace(usuario) || usuario == "0") errors.Add("No se pudo identificar el usuario.");
+            if (errors.Count > 0) return new DbActionResult { Ok = false, Mensaje = string.Join(" ", errors.Select(x => x.Contains('|') ? x.Split('|')[1] : x)) };
+            request.FrecuenciaPago = request.FrecuenciaPago.Trim().ToUpperInvariant(); request.Observacion = (request.Observacion ?? "").Trim();
+            return await _repo.GuardarEdicionContinuacionAsync(request, usuario, cancellationToken);
+        }
+
+        public async Task<(byte[] Archivo, string NombreArchivo, string ContentType, string? MensajeError)> ExportarContinuacionPdfAsync(int idContinuacion, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var data = await _repo.ObtenerContinuacionAsync(idContinuacion, cancellationToken);
+                if (data == null) return (Array.Empty<byte>(), "", "", "No existe la continuacion.");
+                return (PrestamoContinuacionPdfBuilder.Build(data), $"Continuacion_{idContinuacion}_{DateTime.Now:yyyyMMdd}.pdf", "application/pdf", null);
+            }
+            catch (Exception ex) { var id = Guid.NewGuid(); _logger.LogError(ex, "ErrorId {ErrorId} al exportar continuacion", id); return (Array.Empty<byte>(), "", "", $"No se pudo generar el PDF. ErrorId: {id}"); }
+        }
+
+        private static List<string> ValidarEdicionContinuacion(PrestamoContinuacionEditarSimularRequestDto request)
+        {
+            var errors = new List<string>();
+            if (request.IdContinuacion <= 0) errors.Add("IdContinuacion|Selecciona una continuacion.");
+            if (request.FechaHasta == default) errors.Add("FechaHasta|La fecha hasta es obligatoria.");
+            if (request.PorcInteresMensual <= 0) errors.Add("PorcInteresMensual|El interes debe ser mayor a cero.");
+            if (string.IsNullOrWhiteSpace(request.FrecuenciaPago) || !"DSM".Contains(request.FrecuenciaPago.Trim().ToUpperInvariant())) errors.Add("FrecuenciaPago|Selecciona una frecuencia valida.");
+            if (request.CapitalBase <= 0) errors.Add("CapitalBase|El capital base debe ser mayor a cero.");
+            return errors;
+        }
+
         public async Task<List<PrestamoConceptoDto>> ListarConceptosAsync(CancellationToken cancellationToken)
         {
             return await _repo.ListarConceptosAsync(cancellationToken);

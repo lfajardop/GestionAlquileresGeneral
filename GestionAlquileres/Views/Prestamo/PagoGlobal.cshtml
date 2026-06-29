@@ -1,0 +1,148 @@
+@{
+    ViewData["Title"] = "Pago global por cliente";
+    Layout = "~/Views/Shared/_LayoutGAP.cshtml";
+}
+
+<link href="~/css/prestamo/pago-global.css" rel="stylesheet" asp-append-version="true" />
+
+<div class="container-fluid pago-global-page">
+    <div class="pg-header">
+        <div>
+            <div class="pg-kicker">Cobranza</div>
+            <h3 class="pg-title">Pago global por cliente</h3>
+            <div class="pg-subtitle">Distribuye un pago mixto entre cuotas vencidas y antiguas del cliente.</div>
+        </div>
+        <a asp-controller="Prestamo" asp-action="CuentaCorriente" class="pg-btn-light">
+            <i class="bi bi-card-list"></i> Cuenta corriente
+        </a>
+    </div>
+
+    <form id="frmPagoGlobal" autocomplete="off">
+        @Html.AntiForgeryToken()
+        <input type="hidden" id="Cod_TipAnex" name="Cod_TipAnex" />
+        <input type="hidden" id="Cod_Anxo" name="Cod_Anxo" />
+        <input type="hidden" id="ImportePago" name="ImportePago" value="0" />
+
+        <section class="pg-card pg-filter-card">
+            <div class="row g-3 align-items-end">
+                <div class="col-lg-4">
+                    <label class="form-label">Cliente</label>
+                    <select id="ClientePagoGlobal" class="form-select" style="width:100%"></select>
+                    <span class="field-error" data-valmsg-for="Cod_Anxo"></span>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Fecha pago</label>
+                    <input id="FecPago" name="FecPago" type="date" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Total pago</label>
+                    <input id="ImportePagoVista" type="text" class="form-control text-end pg-total-input" value="S/.0.00" readonly />
+                    <span class="field-error" data-valmsg-for="ImportePago"></span>
+                </div>
+                <div class="col-lg-4">
+                    <label class="form-label">Glosa</label>
+                    <input id="Glosa" name="Glosa" class="form-control" maxlength="250" value="PAGO GLOBAL POR CLIENTE" />
+                </div>
+                <div class="col-md-3">
+                    <div class="pg-checkline">
+                        <input id="SoloVencidas" type="checkbox" class="form-check-input" />
+                        <label for="SoloVencidas" class="form-check-label">Solo cuotas vencidas</label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="pg-checkline">
+                        <input id="PermitirExcedente" name="PermitirExcedente" type="checkbox" value="true" class="form-check-input" />
+                        <label for="PermitirExcedente" class="form-check-label">Permitir excedente</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="pg-card">
+            <div class="pg-card-head">
+                <div>
+                    <h5>Formas de pago</h5>
+                    <span>Agrega efectivo, Yape, banco u otra caja disponible en lineas separadas.</span>
+                </div>
+                <button type="button" id="btnAgregarFormaPago" class="pg-btn-secondary">
+                    <i class="bi bi-plus-lg"></i> Agregar
+                </button>
+            </div>
+
+            <div class="pg-payment-table-wrap">
+                <table class="table pg-payment-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Forma</th>
+                            <th>Caja</th>
+                            <th class="text-end">Importe</th>
+                            <th class="text-center">Accion</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyFormasPago"></tbody>
+                </table>
+            </div>
+        </section>
+    </form>
+
+    <section class="pg-metrics">
+        <div class="pg-metric">
+            <span>Pago ingresado</span>
+            <strong id="pgImportePago">S/.0.00</strong>
+        </div>
+        <div class="pg-metric pg-metric-ok">
+            <span>Aplicado</span>
+            <strong id="pgImporteAplicado">S/.0.00</strong>
+        </div>
+        <div class="pg-metric pg-metric-warn">
+            <span>Excedente</span>
+            <strong id="pgImporteExcedente">S/.0.00</strong>
+        </div>
+        <div class="pg-metric">
+            <span>Cuotas</span>
+            <strong id="pgCuotas">0</strong>
+        </div>
+        <div class="pg-metric">
+            <span>Prestamos</span>
+            <strong id="pgPrestamos">0</strong>
+        </div>
+    </section>
+
+    <section class="pg-card pg-table-card">
+        <div class="pg-section-title">
+            <div>
+                <h5>Distribucion simulada</h5>
+                <span id="pgMensaje">Simula para ver que cuotas se pagaran primero.</span>
+            </div>
+            <div class="pg-actions">
+                <button type="button" id="btnSimularPagoGlobal" class="pg-btn-primary">
+                    <i class="bi bi-arrow-repeat"></i> Simular
+                </button>
+                <button type="button" id="btnAplicarPagoGlobal" class="pg-btn-success" disabled>
+                    <i class="bi bi-check2-circle"></i> Aplicar pago
+                </button>
+            </div>
+        </div>
+        <div class="pg-table-scroll">
+            <table id="tblPagoGlobal" class="table pg-data-table align-middle w-100">
+                <thead>
+                    <tr>
+                        <th>Orden</th>
+                        <th>Prestamo</th>
+                        <th>Cobranza</th>
+                        <th>Cuota</th>
+                        <th>Vencimiento</th>
+                        <th>Deuda antes</th>
+                        <th>Aplicado</th>
+                        <th>Saldo luego</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+@section Scripts {
+    <script src="~/js/prestamo/pago-global.js" asp-append-version="true"></script>
+}

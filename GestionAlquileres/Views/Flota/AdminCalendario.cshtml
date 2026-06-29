@@ -1,0 +1,248 @@
+@model GestionAlquileres.ViewModels.Flota.FlotaAdminCalendarioViewModel
+@{
+    ViewData["Title"] = Model.Titulo;
+    Layout = "~/Views/Shared/_LayoutGAP.cshtml";
+}
+<link href="~/css/flota/flotaAdminCalendario.css" rel="stylesheet" asp-append-version="true" />
+<form id="faToken">
+    @Html.AntiForgeryToken()
+</form>
+<main class="fa-page">
+    <header class="fa-head">
+        <div>
+            <span>CONTROL INTERNO DE ALQUILERES</span>
+            <h2>@Model.Titulo</h2>
+            <p>Selecciona dias, genera recibos y registra pagos sin afectar caja general.</p>
+        </div>
+        <a asp-controller="Flota" asp-action="Index">
+            <i class="bi bi-grid"></i> Ir a operacion diaria
+        </a>
+    </header>
+    <section class="fa-filter">
+        <label>
+            Contrato
+            <select id="faContrato">
+                <option value="">Selecciona contrato...</option>
+            </select>
+        </label>
+        <label>
+            Mes
+            <input id="faMes" type="month" value="@($"{Model.Anio:D4}-{Model.Mes:D2}")" />
+        </label>
+        <button id="faCargar" type="button">
+            <i class="bi bi-arrow-repeat"></i> Cargar
+        </button>
+    </section>
+    <section id="faWorkspace" class="d-none">
+        <div class="fa-summary">
+            <article><span>Chofer</span><strong id="faChofer">-</strong><small id="faVehiculo">-</small></article>
+            <article><span>Recibos emitidos</span><strong id="faTotalRecibos">S/.0.00</strong></article>
+            <article><span>Pagado</span><strong id="faPagado">S/.0.00</strong></article>
+            <article class="debt"><span>Saldo pendiente</span><strong id="faSaldo">S/.0.00</strong></article>
+        </div>
+        <div class="fa-layout">
+            <section class="fa-calendar-shell">
+                <div class="fa-section-head">
+                    <div>
+                        <h5 id="faTituloMes">Calendario</h5>
+                        <p>Haz clic para seleccionar dias o abrir el detalle administrativo.</p>
+                    </div>
+                    <button id="faLimpiar" type="button" title="Limpiar seleccion">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                </div>
+                <div class="fa-week"><span>Lun</span><span>Mar</span><span>Mie</span><span>Jue</span><span>Vie</span><span>Sab</span><span>Dom</span></div>
+                <div id="faCalendar" class="fa-calendar"></div>
+            </section>
+            <aside class="fa-actions">
+                <div><span>DIAS SELECCIONADOS</span><strong id="faCount">0</strong><small id="faRange">Ningun dia seleccionado</small></div>
+                <label>Tarifa diaria<input id="faTarifa" type="number" step="0.01" /></label>
+                <label>
+                    Agrupacion
+                    <select id="faAgrupar">
+                        <option value="U">Un solo recibo</option>
+                        <option value="R">Separar por rangos consecutivos</option>
+                    </select>
+                </label>
+                <label>Observacion<textarea id="faObs" rows="3"></textarea></label>
+                <button id="faGenerar" type="button" class="btn-operativo"><i class="bi bi-receipt"></i> Generar desde dias registrados</button>
+                <button id="faManual" type="button" class="btn-manual"><i class="bi bi-calendar-plus"></i> Marcar manual y generar</button>
+                <p class="fa-note"><i class="bi bi-shield-check"></i> Los recibos son internos y no generan movimiento de caja.</p>
+            </aside>
+            <aside class="fa-actions">
+                <div class="fa-section-head">
+                    <div>
+                        <h5>Detalle del dia</h5>
+                        <p>Revisa el estado y aplica correcciones administrativas.</p>
+                    </div>
+                </div>
+                <div id="faDayDetail" class="fa-day-detail">
+                    <p class="text-muted mb-0">Selecciona un dia del calendario para ver su detalle.</p>
+                </div>
+                <button id="faOpenCorrectDay" type="button" class="btn-operativo d-none"><i class="bi bi-pencil-square"></i> Corregir dia</button>
+            </aside>
+        </div>
+        <section class="fa-receipts">
+            <div class="fa-section-head">
+                <div>
+                    <h5>Recibos del mes</h5>
+                    <p>Pagos parciales, saldo y trazabilidad por periodo.</p>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table id="faTabla" class="table w-100">
+                    <thead>
+                        <tr>
+                            <th>Recibo</th>
+                            <th>Periodo</th>
+                            <th>Dias</th>
+                            <th class="text-end">Total</th>
+                            <th class="text-end">Pagado</th>
+                            <th class="text-end">Saldo</th>
+                            <th>Estado</th>
+                            <th>Origen</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+    </section>
+</main>
+<div id="faPayModal" class="fa-modal" aria-hidden="true">
+    <div class="fa-modal-box">
+        <header>
+            <div><small>REGISTRAR PAGO INTERNO</small><h5 id="payReceipt">Recibo</h5></div>
+            <button type="button" class="fa-close"><i class="bi bi-x-lg"></i></button>
+        </header>
+        <div class="fa-balance"><span>Saldo disponible</span><strong id="payBalance">S/.0.00</strong></div>
+        <form id="payForm">
+            <input id="payId" name="IdReciboAlquiler" type="hidden" />
+            <div class="fa-form-grid">
+                <label>Fecha<input name="FechaPago" type="datetime-local" value="@Model.FechaPago.ToString("yyyy-MM-ddT12:00")" required /></label>
+                <label>Importe<input id="payAmount" name="Importe" type="number" min="0.01" step="0.01" required /></label>
+                <label>Medio de pago<select id="payMethod" name="MedioPago" required></select></label>
+                <label>Voucher<input name="voucher" type="file" accept="image/*,.pdf" /></label>
+            </div>
+            <label>Observacion<textarea name="Observacion" rows="2"></textarea></label>
+            <label class="fa-check"><input name="Validado" type="checkbox" value="true" /> Pago validado por administrador</label>
+            <button type="submit"><i class="bi bi-check2-circle"></i> Aplicar pago al recibo</button>
+        </form>
+    </div>
+</div>
+<div id="faDetailModal" class="fa-modal" aria-hidden="true">
+    <div class="fa-modal-box detail">
+        <header>
+            <div><small>DETALLE DEL RECIBO</small><h5 id="detailTitle">Recibo</h5></div>
+            <button type="button" class="fa-close"><i class="bi bi-x-lg"></i></button>
+        </header>
+        <div id="detailBody"></div>
+    </div>
+</div>
+<div id="faCancelReceiptModal" class="fa-modal" aria-hidden="true">
+    <div class="fa-modal-box">
+        <header>
+            <div><small>ACCION DE RECIBO</small><h5>Anular recibo</h5></div>
+            <button type="button" class="fa-close"><i class="bi bi-x-lg"></i></button>
+        </header>
+        <form id="faCancelReceiptForm">
+            <input id="faCancelReceiptId" type="hidden" />
+            <p class="mb-3">Esta accion anula el recibo seleccionado y exige motivo obligatorio.</p>
+            <label>Motivo<textarea id="faCancelReceiptReason" rows="3" placeholder="@Model.MotivoPlaceholder" required></textarea></label>
+            <button type="submit" class="btn btn-danger mt-3">Confirmar anulacion</button>
+        </form>
+    </div>
+</div>
+<div id="faRemoveDayModal" class="fa-modal" aria-hidden="true">
+    <div class="fa-modal-box">
+        <header>
+            <div><small>DETALLE DEL RECIBO</small><h5>Quitar dia del recibo</h5></div>
+            <button type="button" class="fa-close"><i class="bi bi-x-lg"></i></button>
+        </header>
+        <form id="faRemoveDayForm">
+            <input id="faRemoveDayReceiptId" type="hidden" />
+            <input id="faRemoveDayOperacionId" type="hidden" />
+            <p id="faRemoveDayText" class="mb-3">Se retirara el dia seleccionado del recibo.</p>
+            <label>Motivo<textarea id="faRemoveDayReason" rows="3" placeholder="@Model.MotivoPlaceholder" required></textarea></label>
+            <button type="submit" class="btn btn-danger mt-3">Quitar dia</button>
+        </form>
+    </div>
+</div>
+<div id="faEditPaymentModal" class="fa-modal" aria-hidden="true">
+    <div class="fa-modal-box">
+        <header>
+            <div><small>PAGO DEL RECIBO</small><h5>Editar pago</h5></div>
+            <button type="button" class="fa-close"><i class="bi bi-x-lg"></i></button>
+        </header>
+        <form id="faEditPaymentForm">
+            <input id="faEditPaymentId" type="hidden" />
+            <div class="fa-form-grid">
+                <label>Fecha de pago<input id="faEditPaymentDate" type="datetime-local" value="@Model.FechaEdicionPago.ToString("yyyy-MM-ddT12:00")" required /></label>
+                <label>Importe<input id="faEditPaymentAmount" type="number" min="0.01" step="0.01" required /></label>
+                <label>Medio de pago<select id="faEditPaymentMethod" required></select></label>
+                <label>Foto voucher<input id="faEditPaymentVoucher" type="text" placeholder="Ruta o referencia opcional" /></label>
+            </div>
+            <label>Observacion<textarea id="faEditPaymentObservation" rows="2"></textarea></label>
+            <label>Motivo<textarea id="faEditPaymentReason" rows="3" placeholder="@Model.MotivoPlaceholder" required></textarea></label>
+            <button type="submit" class="btn btn-primary mt-3">Guardar cambios</button>
+        </form>
+    </div>
+</div>
+<div id="faCancelPaymentModal" class="fa-modal" aria-hidden="true">
+    <div class="fa-modal-box">
+        <header>
+            <div><small>PAGO DEL RECIBO</small><h5>Anular pago</h5></div>
+            <button type="button" class="fa-close"><i class="bi bi-x-lg"></i></button>
+        </header>
+        <form id="faCancelPaymentForm">
+            <input id="faCancelPaymentId" type="hidden" />
+            <p id="faCancelPaymentText" class="mb-3">Se anulara el pago seleccionado.</p>
+            <label>Motivo<textarea id="faCancelPaymentReason" rows="3" placeholder="@Model.MotivoPlaceholder" required></textarea></label>
+            <button type="submit" class="btn btn-danger mt-3">Anular pago</button>
+        </form>
+    </div>
+</div>
+<div id="faValidatePaymentModal" class="fa-modal" aria-hidden="true">
+    <div class="fa-modal-box">
+        <header>
+            <div><small>PAGO DEL RECIBO</small><h5>Validar pago</h5></div>
+            <button type="button" class="fa-close"><i class="bi bi-x-lg"></i></button>
+        </header>
+        <form id="faValidatePaymentForm">
+            <input id="faValidatePaymentId" type="hidden" />
+            <label>
+                Estado de validacion
+                <select id="faValidatePaymentFlag" required>
+                    <option value="S">Validado</option>
+                    <option value="N">No validado</option>
+                </select>
+            </label>
+            <label class="mt-3">Motivo<textarea id="faValidatePaymentReason" rows="3" placeholder="@Model.MotivoPlaceholder" required></textarea></label>
+            <button type="submit" class="btn btn-primary mt-3">Actualizar validacion</button>
+        </form>
+    </div>
+</div>
+<div id="faCorrectDayModal" class="fa-modal" aria-hidden="true">
+    <div class="fa-modal-box">
+        <header>
+            <div><small>CORRECCION ADMINISTRATIVA</small><h5>Corregir operacion del dia</h5></div>
+            <button type="button" class="fa-close"><i class="bi bi-x-lg"></i></button>
+        </header>
+        <form id="faCorrectDayForm">
+            <input id="faCorrectDayId" type="hidden" />
+            <div class="fa-form-grid">
+                <label>Trabajo<select id="faCorrectDayWorked" required><option value="S">Si trabajo</option><option value="N">No trabajo</option></select></label>
+                <label>Estado cobrable<select id="faCorrectDayBillable" required><option value="S">Cobrable</option><option value="N">No cobrable</option></select></label>
+                <label>Motivo del dia<input id="faCorrectDayCode" type="text" maxlength="10" required /></label>
+            </div>
+            <label>Observacion<textarea id="faCorrectDayObservation" rows="2"></textarea></label>
+            <label>Motivo administrativo<textarea id="faCorrectDayReason" rows="3" placeholder="@Model.MotivoPlaceholder" required></textarea></label>
+            <button type="submit" class="btn btn-primary mt-3">Guardar correccion</button>
+        </form>
+    </div>
+</div>
+@section Scripts
+{
+    <script src="~/js/flota/flotaAdminCalendario.js" asp-append-version="true"></script>
+}

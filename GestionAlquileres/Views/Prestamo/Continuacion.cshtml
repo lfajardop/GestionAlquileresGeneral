@@ -1,0 +1,181 @@
+@{
+    ViewData["Title"] = "Continuacion de prestamo";
+    Layout = "~/Views/Shared/_LayoutGAP.cshtml";
+}
+
+<link href="~/css/prestamo/continuacion.css" rel="stylesheet" asp-append-version="true" />
+
+<div class="container-fluid prest-cont-page">
+    <div class="pc-header">
+        <div>
+            <div class="pc-kicker">Prestamos</div>
+            <h3 class="pc-title">Ampliacion / continuacion</h3>
+            <div class="pc-subtitle">Genera cuotas nuevas de interes para prestamos vencidos que siguen activos.</div>
+        </div>
+        <a asp-controller="Prestamo" asp-action="CuentaCorriente" class="pc-btn-light">
+            <i class="bi bi-card-list"></i> Cuenta corriente
+        </a>
+    </div>
+
+    <section class="pc-card">
+        <div class="pc-card-head">
+            <div>
+                <h5>Prestamos disponibles</h5>
+                <span>Selecciona un prestamo vencido o ingresa el ID manualmente.</span>
+            </div>
+            <button type="button" id="btnCargarPrestamosContinuacion" class="pc-btn-secondary">
+                <i class="bi bi-arrow-clockwise"></i> Cargar
+            </button>
+        </div>
+        <div class="pc-table-scroll">
+            <table id="tblPrestamosContinuacion" class="table pc-table w-100">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Cliente</th>
+                        <th>Capital</th>
+                        <th>Cuotas</th>
+                        <th>Programado</th>
+                        <th>Pagado</th>
+                        <th>Saldo</th>
+                        <th>Estado</th>
+                        <th>Accion</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="pc-card pc-table-card">
+        <div class="pc-card-head pc-head-padded">
+            <div>
+                <h5>Continuaciones registradas</h5>
+                <span>Edita la ultima continuacion sin pagos o genera su documento PDF.</span>
+            </div>
+            <button type="button" id="btnNuevaContinuacion" class="pc-btn-secondary"><i class="bi bi-plus-circle"></i> Nueva</button>
+        </div>
+        <div class="pc-table-scroll">
+            <table id="tblContinuaciones" class="table pc-table w-100">
+                <thead><tr><th>ID</th><th>Prestamo</th><th>Cliente</th><th>Periodo</th><th>Frecuencia</th><th>Capital</th><th>Interes</th><th>Cuotas</th><th>Acciones</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </section>
+
+    <form id="frmContinuacion" autocomplete="off">
+        @Html.AntiForgeryToken()
+        <input type="hidden" id="IdContinuacion" name="IdContinuacion" value="0" />
+
+        <section class="pc-card pc-filter-card">
+            <div id="pcModoEdicion" class="pc-edit-mode d-none">
+                <div><i class="bi bi-pencil-square"></i><span><strong>Corrigiendo continuacion <b id="pcEdicionId">-</b></strong><small>Los cambios reemplazaran solo sus cuotas sin pagos.</small></span></div>
+                <button type="button" id="btnCancelarEdicion" title="Cancelar edicion"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <div id="pcPrestamoSeleccionado" class="pc-selected-box d-none">
+                <div>
+                    <span class="pc-selected-label">Prestamo seleccionado</span>
+                    <strong id="pcSeleccionTitulo">-</strong>
+                </div>
+                <div class="pc-selected-actions">
+                    <span id="pcSeleccionMonto" class="pc-selected-amount">-</span>
+                    <button type="button" id="btnEditarUltimaContinuacion" class="pc-selected-action d-none" title="Editar la ultima continuacion"><i class="bi bi-pencil"></i> Editar ultima</button>
+                    <a id="btnPdfUltimaContinuacion" class="pc-selected-action pc-selected-pdf d-none" target="_blank" title="Abrir PDF de la ultima continuacion"><i class="bi bi-file-earmark-pdf"></i> PDF ultima continuacion</a>
+                </div>
+            </div>
+            <div class="row g-3 align-items-end">
+                <div class="col-md-2">
+                    <label class="form-label">ID prestamo</label>
+                    <input id="Id_Prestamo" name="Id_Prestamo" class="form-control text-end" type="number" min="1" />
+                    <span class="field-error" data-valmsg-for="Id_Prestamo"></span>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Continuar hasta</label>
+                    <input id="FechaHasta" name="FechaHasta" class="form-control" type="date" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                    <span class="field-error" data-valmsg-for="FechaHasta"></span>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Interes mensual</label>
+                    <input id="PorcInteresMensual" name="PorcInteresMensual" class="form-control text-end" type="number" step="0.0001" min="0" placeholder="Usar actual" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Frecuencia</label>
+                    <select id="FrecuenciaPago" name="FrecuenciaPago" class="form-select">
+                        <option value="">Usar actual</option>
+                        <option value="M">Mensual</option>
+                        <option value="S">Semanal</option>
+                        <option value="D">Diaria</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Capital base</label>
+                    <input id="CapitalBase" name="CapitalBase" class="form-control text-end" type="number" step="0.01" min="0" placeholder="Usar actual" />
+                </div>
+                <div class="col-md-2 d-flex gap-2">
+                    <button type="button" id="btnSimularContinuacion" class="pc-btn-primary flex-fill">
+                        <i class="bi bi-arrow-repeat"></i> Simular
+                    </button>
+                    <button type="button" id="btnAplicarContinuacion" class="pc-btn-success flex-fill" disabled>
+                        <i class="bi bi-check2-circle"></i> <span>Aplicar</span>
+                    </button>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Observacion</label>
+                    <input id="Observacion" name="Observacion" class="form-control" maxlength="250" value="CONTINUIDAD DE PRESTAMO VENCIDO" />
+                </div>
+            </div>
+        </section>
+    </form>
+
+    <section class="pc-metrics">
+        <div class="pc-metric">
+            <span>Desde</span>
+            <strong id="pcFechaDesde">-</strong>
+        </div>
+        <div class="pc-metric">
+            <span>Hasta</span>
+            <strong id="pcFechaHasta">-</strong>
+        </div>
+        <div class="pc-metric">
+            <span>Cuotas nuevas</span>
+            <strong id="pcNroCuotas">0</strong>
+        </div>
+        <div class="pc-metric pc-metric-warn">
+            <span>Interes generado</span>
+            <strong id="pcInteresTotal">S/.0.00</strong>
+        </div>
+        <div class="pc-metric">
+            <span>Capital base</span>
+            <strong id="pcCapitalBase">S/.0.00</strong>
+        </div>
+    </section>
+
+    <section class="pc-card pc-table-card">
+        <div class="pc-card-head">
+            <div>
+                <h5>Cronograma nuevo</h5>
+                <span id="pcMensaje">Simula para ver las cuotas de continuidad.</span>
+            </div>
+        </div>
+        <div class="pc-table-scroll">
+            <table id="tblContinuacionDetalle" class="table pc-table w-100">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Desde</th>
+                        <th>Hasta</th>
+                        <th>Vence</th>
+                        <th>Base</th>
+                        <th>Interes</th>
+                        <th>Cuota</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+@section Scripts {
+    <script src="~/js/prestamo/continuacion.js" asp-append-version="true"></script>
+}

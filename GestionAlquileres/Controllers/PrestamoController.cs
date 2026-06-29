@@ -23,6 +23,13 @@ namespace GestionAlquileres.Controllers
             _cajaService = cajaService;
             _logger = logger;
         }
+
+        private string ObtenerUsuarioTemporal()
+        {
+            var usuario = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            return string.IsNullOrWhiteSpace(usuario) || usuario == "0" ? "1007" : usuario;
+        }
+
         public IActionResult Index()
         {
             return View();
@@ -39,6 +46,19 @@ namespace GestionAlquileres.Controllers
             var result = await _prestamoService.ListarAsync(cancellationToken);
             return Json(result);
         }
+
+        [HttpGet]
+        public IActionResult PagoGlobal()
+        {
+            return View();
+        }
+
+        [HttpGet]
+        public IActionResult Continuacion()
+        {
+            return View();
+        }
+
         [HttpGet]
         public async Task<IActionResult> BuscarClientes(string texto, CancellationToken cancellationToken)
         {
@@ -75,7 +95,7 @@ namespace GestionAlquileres.Controllers
         {
             try
             {
-                var usuario = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0";
+                var usuario = ObtenerUsuarioTemporal();
                 var result = await _prestamoService.GuardarAsync(request, usuario, cancellationToken);
                 return Json(result);
             }
@@ -129,7 +149,7 @@ namespace GestionAlquileres.Controllers
         {
             try
             {
-                var usuario = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0";
+                var usuario = ObtenerUsuarioTemporal();
                 var estacion = HttpContext.Connection.RemoteIpAddress?.ToString();
 
                 var result = await _prestamoService.RegistrarDesembolsoAsync(request, usuario, estacion, cancellationToken);
@@ -231,7 +251,7 @@ namespace GestionAlquileres.Controllers
         {
             try
             {
-                var usuario = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0";
+                var usuario = ObtenerUsuarioTemporal();
                 var estacion = HttpContext.Connection.RemoteIpAddress?.ToString();
 
                 var result = await _prestamoService.RegistrarPagoAsync(request, usuario, estacion, cancellationToken);
@@ -248,6 +268,141 @@ namespace GestionAlquileres.Controllers
                     Errors = new List<string> { ex.Message }
                 });
             }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SimularPagoGlobal([FromForm] PagoGlobalSimularRequestDto request, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var result = await _prestamoService.SimularPagoGlobalAsync(request, cancellationToken);
+                return Json(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al simular pago global");
+
+                return Json(new JsonResponse<object>
+                {
+                    Success = false,
+                    Mensaje = "No se pudo simular el pago global.",
+                    Errors = new List<string> { ex.Message }
+                });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AplicarPagoGlobal([FromForm] PagoGlobalAplicarRequestDto request, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var usuario = ObtenerUsuarioTemporal();
+                var estacion = HttpContext.Connection.RemoteIpAddress?.ToString();
+
+                var result = await _prestamoService.AplicarPagoGlobalAsync(request, usuario, estacion, cancellationToken);
+
+                return Json(new JsonResponse<object>
+                {
+                    Success = result.Ok,
+                    Mensaje = result.Mensaje,
+                    Data = result,
+                    Errors = result.Ok ? new List<string>() : new List<string> { result.Mensaje }
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al aplicar pago global");
+
+                return Json(new JsonResponse<object>
+                {
+                    Success = false,
+                    Mensaje = "No se pudo aplicar el pago global.",
+                    Errors = new List<string> { ex.Message }
+                });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SimularContinuacion([FromForm] PrestamoContinuacionSimularRequestDto request, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var result = await _prestamoService.SimularContinuacionAsync(request, cancellationToken);
+                return Json(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al simular continuidad");
+
+                return Json(new JsonResponse<object>
+                {
+                    Success = false,
+                    Mensaje = "No se pudo simular la continuidad.",
+                    Errors = new List<string> { ex.Message }
+                });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AplicarContinuacion([FromForm] PrestamoContinuacionAplicarRequestDto request, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var usuario = ObtenerUsuarioTemporal();
+                var result = await _prestamoService.AplicarContinuacionAsync(request, usuario, cancellationToken);
+
+                return Json(new JsonResponse<object>
+                {
+                    Success = result.Ok,
+                    Mensaje = result.Mensaje,
+                    Data = result,
+                    Errors = result.Ok ? new List<string>() : new List<string> { result.Mensaje }
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al aplicar continuidad");
+
+                return Json(new JsonResponse<object>
+                {
+                    Success = false,
+                    Mensaje = "No se pudo aplicar la continuidad.",
+                    Errors = new List<string> { ex.Message }
+                });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ListarContinuaciones(CancellationToken cancellationToken)
+            => Json(await _prestamoService.ListarContinuacionesAsync(cancellationToken));
+
+        [HttpGet]
+        public async Task<IActionResult> ObtenerContinuacion(int idContinuacion, CancellationToken cancellationToken)
+            => Json(await _prestamoService.ObtenerContinuacionAsync(idContinuacion, cancellationToken));
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SimularEdicionContinuacion([FromForm] PrestamoContinuacionEditarSimularRequestDto request, CancellationToken cancellationToken)
+            => Json(await _prestamoService.SimularEdicionContinuacionAsync(request, cancellationToken));
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> GuardarEdicionContinuacion([FromForm] PrestamoContinuacionEditarGuardarRequestDto request, CancellationToken cancellationToken)
+        {
+            var result = await _prestamoService.GuardarEdicionContinuacionAsync(request, ObtenerUsuarioTemporal(), cancellationToken);
+            return Json(new JsonResponse<object> { Success = result.Ok, Mensaje = result.Mensaje, Data = result });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportarContinuacionPdf(int idContinuacion, CancellationToken cancellationToken)
+        {
+            var result = await _prestamoService.ExportarContinuacionPdfAsync(idContinuacion, cancellationToken);
+            if (!string.IsNullOrWhiteSpace(result.MensajeError)) return BadRequest(result.MensajeError);
+            return File(result.Archivo, result.ContentType, result.NombreArchivo);
         }
 
         [HttpGet]
@@ -301,7 +456,7 @@ namespace GestionAlquileres.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> GuardarEdicion([FromForm] PrestamoEditarGuardarRequestDto request)
         {
-            var usuario = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0";
+            var usuario = ObtenerUsuarioTemporal();
             var result = await _prestamoService.GuardarEdicionAsync(request, usuario);
             return Json(result);
         }

@@ -1,0 +1,15 @@
+using Aplicacion.Common;using Aplicacion.Interfaces;using Dominio.DTO.Compensacion;using Infraestructura.Interfaces;
+namespace Aplicacion.CasosUso;
+public class CompensacionService:ICompensacionService
+{
+ const int Empresa=6;const string Est="4";readonly ICompensacionRepository _r;public CompensacionService(ICompensacionRepository r)=>_r=r;private static JsonResponseRequest<T> Ok<T>(T d,string m)=>new(){Success=true,Data=d,Mensaje=m};private static JsonResponseRequest<T> Fail<T>(string m)=>new(){Success=false,Mensaje=m,Errors=new(){m}};
+ public async Task<JsonResponseRequest<List<CompensacionConceptoDto>>> CatalogosAsync(CancellationToken ct)=>Ok(await _r.CatalogosAsync(ct),"Catalogos cargados.");
+ public async Task<JsonResponseRequest<CompensacionResultadoDto>> CrearObligacionAsync(int u,CompensacionObligacionCrearDto x,CancellationToken ct){if(x.Importe<=0||string.IsNullOrWhiteSpace(x.CodAnxo))return Fail<CompensacionResultadoDto>("Complete persona, concepto e importe.");var d=await _r.CrearObligacionAsync(Empresa,Est,u,x,ct);return d.Ok?Ok(d,d.Mensaje):Fail<CompensacionResultadoDto>(d.Mensaje);}
+ public async Task<JsonResponseRequest<List<CompensacionObligacionDto>>> ObligacionesAsync(string t,string a,CancellationToken ct)=>Ok(await _r.ObligacionesAsync(Empresa,Est,t,a,ct),"Saldos a favor cargados.");
+ public async Task<JsonResponseRequest<List<CompensacionPrestamoDto>>> PrestamosAsync(string t,string a,DateTime f,CancellationToken ct)=>Ok(await _r.PrestamosAsync(Empresa,t,a,f,ct),"Prestamos cargados.");
+ public async Task<JsonResponseRequest<CompensacionSimulacionDto>> SimularAsync(CompensacionSimularRequestDto x,CancellationToken ct){if(x.IdsPrestamo.Count==0||x.Importe<=0)return Fail<CompensacionSimulacionDto>("Seleccione saldo a favor, prestamos e importe.");var d=await _r.SimularAsync(Empresa,Est,x,ct);return d==null?Fail<CompensacionSimulacionDto>("No se pudo distribuir la compensacion. Revise saldos y fecha de corte."):Ok(d,"Compensacion simulada.");}
+ public async Task<JsonResponseRequest<CompensacionResultadoDto>> AplicarAsync(int u,CompensacionAplicarRequestDto x,CancellationToken ct){var d=await _r.AplicarAsync(Empresa,Est,u,x,ct);return d.Ok?Ok(d,d.Mensaje):Fail<CompensacionResultadoDto>(d.Mensaje);}
+ public async Task<JsonResponseRequest<CompensacionResultadoDto>> RevertirAsync(int u,CompensacionRevertirDto x,CancellationToken ct){if(string.IsNullOrWhiteSpace(x.Motivo))return Fail<CompensacionResultadoDto>("El motivo de reversa es obligatorio.");var d=await _r.RevertirAsync(Empresa,Est,u,x,ct);return d.Ok?Ok(d,d.Mensaje):Fail<CompensacionResultadoDto>(d.Mensaje);}
+ public async Task<JsonResponseRequest<List<CompensacionListaDto>>> ListarAsync(CancellationToken ct)=>Ok(await _r.ListarAsync(Empresa,Est,ct),"Compensaciones cargadas.");
+ public async Task<(byte[] Archivo,string Nombre,string Tipo,string? Error)> PdfAsync(int id,CancellationToken ct){var d=await _r.ObtenerAsync(Empresa,Est,id,ct);return d==null?(Array.Empty<byte>(),"","application/pdf","Compensacion no encontrada."):(CompensacionPdfBuilder.Build(d),$"Compensacion_{d.Numero}_{DateTime.Now:yyyyMMdd}.pdf","application/pdf",null);}
+}

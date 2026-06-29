@@ -60,6 +60,78 @@
                     </a>
                 </li>
 
+                <li class="menu-title">Préstamos</li>
+
+                <li>
+                    <a asp-controller="Prestamo" asp-action="Index">
+                        <i class="bi bi-journal-text"></i> Préstamos
+                    </a>
+                </li>
+
+                <li>
+                    <a asp-controller="Prestamo" asp-action="CuentaCorriente">
+                        <i class="bi bi-card-list"></i> Cuenta corriente
+                    </a>
+                </li>
+
+                <li>
+                    <a asp-controller="Prestamo" asp-action="PagoGlobal">
+                        <i class="bi bi-cash-coin"></i> Pago global
+                    </a>
+                </li>
+
+                  <li>
+                     <a asp-controller="Prestamo" asp-action="Continuacion">
+                         <i class="bi bi-calendar-plus"></i> Continuación
+                      </a>
+                  </li>
+
+                  <li>
+                     <a asp-controller="Refinanciamiento" asp-action="Index">
+                         <i class="bi bi-intersect"></i> Refinanciación
+                      </a>
+                  </li>
+
+                  <li>
+                     <a asp-controller="Compensacion" asp-action="Index">
+                         <i class="bi bi-arrow-left-right"></i> Compensaciones
+                      </a>
+                  </li>
+
+                <li class="menu-title">Alquileres</li>
+                <li>
+                    <a asp-controller="Flota" asp-action="Index">
+                        <i class="bi bi-car-front"></i> Vehiculos y alquileres
+                    </a>
+                </li>
+                <li>
+                    <a asp-controller="Flota" asp-action="AdminCalendario">
+                        <i class="bi bi-calendar3"></i> Calendario y recibos
+                    </a>
+                </li>
+
+                <li class="menu-title">Reportes</li>
+
+                <li>
+                    <a asp-controller="Reporte" asp-action="DeudaActual">
+                        <i class="bi bi-bar-chart-line"></i> Deuda actual
+                    </a>
+                </li>
+
+                <li>
+                    <a asp-controller="Reporte" asp-action="EstadoCuentaCliente">
+                        <i class="bi bi-file-earmark-person"></i> Estado de cuenta
+                    </a>
+                </li>
+
+                <li class="menu-title">Caja personal</li>
+
+                <li>
+                    <a asp-controller="YapeImportacion" asp-action="Index">
+                        <i class="bi bi-phone"></i> Importar Yape
+                    </a>
+                </li>
+
             </ul>
         </aside>
 
@@ -96,10 +168,11 @@
     <!-- Plugins -->
     <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <!-- JS propio -->
     <script src="~/js/site.js" asp-append-version="true"></script>
-    <script src="~/js/shared/webapp.js" asp-append-version="true"></script>
+    <script src="~/js/shared/webApp.js" asp-append-version="true"></script>
 
     <!-- Toggle Sidebar -->
     <script>

@@ -23,6 +23,13 @@ namespace GestionAlquileres.Controllers
         }
 
         [HttpGet]
+        public async Task<IActionResult> ObtenerResumen(CancellationToken cancellationToken)
+        {
+            var result = await _cobranzaService.ObtenerResumenAsync(cancellationToken);
+            return Json(result);
+        }
+
+        [HttpGet]
         public async Task<IActionResult> ListarPrestamosPendientes(CancellationToken cancellationToken)
         {
             var result = await _cobranzaService.ListarPrestamosPendientesAsync(cancellationToken);

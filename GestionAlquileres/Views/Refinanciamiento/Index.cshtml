@@ -1,0 +1,74 @@
+@{
+    ViewData["Title"] = "Refinanciacion de prestamos";
+    Layout = "~/Views/Shared/_LayoutGAP.cshtml";
+}
+<link rel="stylesheet" href="~/css/refinanciamiento/index.css" asp-append-version="true" />
+<div class="container-fluid rf-page">
+    @Html.AntiForgeryToken()
+    <header class="rf-header">
+        <div><span class="rf-kicker">Prestamos</span><h3>Refinanciacion formal</h3><p>Consolida deuda vencida en un nuevo cronograma auditable.</p></div>
+        <a asp-controller="Reporte" asp-action="EstadoCuentaCliente" class="btn rf-btn-light"><i class="bi bi-file-earmark-person"></i> Estado de cuenta</a>
+    </header>
+    <div class="rf-flow" role="status">
+        <span><b>1</b> Selecciona préstamos</span><i class="bi bi-chevron-right"></i>
+        <span><b>2</b> Calcula la deuda</span><i class="bi bi-chevron-right"></i>
+        <span><b>3</b> Define el nuevo préstamo</span><i class="bi bi-chevron-right"></i>
+        <span><b>4</b> Confirma</span>
+    </div>
+
+    <section class="rf-card rf-search">
+        <div class="rf-section-title"><div><b>1. Cliente y fecha de corte</b><small>Busca al titular y revisa todos sus prestamos vigentes.</small></div></div>
+        <div class="row g-2 align-items-end">
+            <div class="col-lg-7"><label>Cliente</label><div class="input-group"><input id="txtCliente" class="form-control" placeholder="Nombre, DNI o RUC" autocomplete="off"><button id="btnBuscarCliente" class="btn btn-primary" type="button"><i class="bi bi-search"></i></button></div><div id="rfClientes" class="rf-results d-none"></div></div>
+            <div class="col-sm-4 col-lg-2"><label>Fecha corte</label><input id="fechaCorte" type="date" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")"></div>
+            <div class="col-sm-8 col-lg-3"><button id="btnCargarPrestamos" type="button" class="btn btn-primary w-100"><i class="bi bi-arrow-down-circle"></i> Cargar deuda</button></div>
+        </div>
+        <div id="rfClienteElegido" class="rf-selected d-none"><i class="bi bi-person-check"></i><span><small>Cliente seleccionado</small><b id="rfClienteNombre"></b></span></div>
+    </section>
+
+    <section class="rf-card">
+        <div class="rf-section-title"><div><b>2. Prestamos a consolidar</b><small>El interes futuro no ganado queda excluido.</small></div><button id="btnTodos" type="button" class="btn rf-btn-light btn-sm"><i class="bi bi-check2-square"></i> Seleccionar todos</button></div>
+        <div class="table-responsive"><table id="tblPrestamosRf" class="table rf-table"><thead><tr><th></th><th>Prestamo</th><th>Fecha / fin</th><th class="text-end">Capital pendiente</th><th class="text-end">Interes vencido</th><th class="text-end">Futuro excluido</th><th class="text-end">Pagado</th><th class="text-center">Vencidas</th></tr></thead><tbody><tr><td colspan="8" class="rf-empty">Selecciona un cliente para cargar su deuda.</td></tr></tbody></table></div>
+    </section>
+
+    <section class="rf-card">
+        <div class="rf-section-title"><div><b>3. Ajustes y consolidacion</b><small>La mora y las condonaciones requieren sustento operativo.</small></div><button id="btnCalcular" type="button" class="btn btn-primary btn-sm"><i class="bi bi-calculator"></i> Calcular deuda</button></div>
+        <div class="row g-2">
+            <div class="col-sm-4"><label>Mora autorizada <i class="bi bi-info-circle" title="Cargo adicional autorizado por atraso. Se suma al capital refinanciado."></i></label><input id="mora" type="number" min="0" step="0.01" value="0" class="form-control text-end"><small class="rf-help">Importe adicional por atraso.</small></div>
+            <div class="col-sm-4"><label>Condonar interes <i class="bi bi-info-circle" title="Interes vencido que decides perdonar. Reduce el nuevo capital."></i></label><input id="condInteres" type="number" min="0" step="0.01" value="0" class="form-control text-end"><small class="rf-help">Reduce interés vencido.</small></div>
+            <div class="col-sm-4"><label>Condonar mora <i class="bi bi-info-circle" title="Parte de la mora autorizada que no se cobrara."></i></label><input id="condMora" type="number" min="0" step="0.01" value="0" class="form-control text-end"><small class="rf-help">Reduce la mora aplicada.</small></div>
+        </div>
+        <div class="rf-totals">
+            <div><small>Capital pendiente</small><b id="tCapital">S/.0.00</b></div><div><small>Interes vencido</small><b id="tInteres">S/.0.00</b></div><div><small>Interes futuro excluido</small><b id="tFuturo">S/.0.00</b></div><div class="rf-total-main"><small>Nuevo capital</small><b id="tNuevo">S/.0.00</b></div>
+        </div>
+    </section>
+
+    <section id="rfNuevoPrestamo" class="rf-card">
+        <div class="rf-section-title"><div><b>4. Nuevo prestamo</b><small>Define las condiciones del cronograma refinanciado.</small></div></div>
+        <div class="row g-2">
+            <div class="col-sm-4 col-lg-2"><label>Interes mensual % <i class="bi bi-info-circle" title="Tasa que realmente se aplicara al nuevo prestamo."></i></label><input id="tasa" type="number" min="0.0001" step="0.0001" class="form-control text-end"><small class="rf-help">Tasa real del nuevo préstamo.</small></div>
+            <div class="col-sm-4 col-lg-2"><label>Tasa referencia % <i class="bi bi-info-circle" title="Valor de comparación o política interna. No se cobra ni altera el cálculo. Si la tasa real la supera, debes justificarlo."></i></label><input id="tasaRef" type="number" min="0" step="0.0001" class="form-control text-end"><small class="rf-help">Solo compara y alerta.</small></div>
+            <div class="col-sm-4 col-lg-2"><label>Frecuencia</label><select id="frecuencia" class="form-select"><option value="M">Mensual</option><option value="S">Semanal</option><option value="D">Diaria</option></select></div>
+            <div class="col-sm-4 col-lg-2"><label>Modalidad <i class="bi bi-info-circle" title="Define cómo se reparte capital e interés entre las cuotas."></i></label><select id="modalidad" class="form-select"><option value="C">Capital + interes</option><option value="I">Solo interes y capital final</option><option value="F">Todo al final</option></select></div>
+            <div class="col-sm-4 col-lg-2"><label>Inicio cobro</label><input id="fechaInicio" type="date" class="form-control"><small class="rf-help">Inicio del primer período.</small></div>
+            <div class="col-sm-4 col-lg-2"><label>Fin cobro</label><input id="fechaFin" type="date" class="form-control"><small class="rf-help">Último vencimiento.</small></div>
+            <div class="col-md-4"><label>Motivo</label><select id="motivo" class="form-select"><option value="CON">Consolidacion de deudas</option><option value="CAP">Falta de capacidad de pago</option><option value="PLA">Ampliacion de plazo</option><option value="OTR">Otro autorizado</option></select></div>
+            <div class="col-md-4"><label>Alcance</label><select id="alcance" class="form-select"><option value="E">Toda la empresa</option><option value="S">Solo establecimiento origen</option></select></div>
+            <div class="col-md-4"><label>Periodo de gracia</label><div class="rf-grace-status"><i class="bi bi-check-circle-fill"></i><span><b>Sin gracia</b><small>No bloquea la refinanciacion. Otras modalidades se habilitaran con su cronograma.</small></span></div></div>
+            <div class="col-12"><label>Justificacion de tasa / observacion</label><textarea id="observacion" rows="2" class="form-control" maxlength="500" placeholder="Obligatoria cuando la tasa supera la referencia"></textarea></div>
+        </div>
+        <div class="rf-simulate-action"><button id="btnSimularCronograma" type="button" class="btn btn-primary" disabled><i class="bi bi-calendar3"></i> Simular nuevo cronograma</button></div>
+        <div id="rfCronograma" class="rf-schedule d-none">
+            <div class="rf-schedule-head"><div><b>Vista previa del préstamo refinanciado</b><small>Este será el cronograma que se generará al confirmar.</small></div><span id="rfCronogramaEstado" class="badge bg-success">Simulado</span></div>
+            <div class="rf-schedule-totals"><div><small>Cuotas</small><b id="cCuotas">0</b></div><div><small>Capital</small><b id="cCapital">S/.0.00</b></div><div><small>Interés nuevo</small><b id="cInteres">S/.0.00</b></div><div><small>Total a cobrar</small><b id="cTotal">S/.0.00</b></div><div><small>TEA referencial</small><b id="cTea">0%</b></div></div>
+            <div class="table-responsive"><table class="table rf-table"><thead><tr><th>Cuota</th><th>Vencimiento</th><th class="text-end">Capital</th><th class="text-end">Interés</th><th class="text-end">Importe</th></tr></thead><tbody id="rfCronogramaBody"></tbody></table></div>
+        </div>
+        <div class="rf-actions"><span id="rfSiguientePaso"><i class="bi bi-info-circle"></i> Primero pulsa <b>Calcular deuda</b>.</span><button id="btnAplicar" type="button" class="btn btn-success" disabled><i class="bi bi-check2-circle"></i> Generar refinanciacion</button></div>
+    </section>
+
+    <section class="rf-card">
+        <div class="rf-section-title"><div><b>Operaciones registradas</b><small>Historial formal de consolidaciones.</small></div><button id="btnRecargar" class="btn rf-btn-light btn-sm"><i class="bi bi-arrow-clockwise"></i></button></div>
+        <div class="table-responsive"><table id="tblHistorialRf" class="table rf-table"><thead><tr><th>ID</th><th>Cliente</th><th>Fecha</th><th>Origenes</th><th>Nuevo prestamo</th><th class="text-end">Capital</th><th class="text-end">Total</th><th>Estado</th><th>Documentos</th></tr></thead><tbody></tbody></table></div>
+    </section>
+</div>
+<script src="~/js/refinanciamiento/index.js" asp-append-version="true"></script>

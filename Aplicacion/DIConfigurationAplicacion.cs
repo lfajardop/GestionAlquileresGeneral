@@ -24,6 +24,16 @@ namespace Aplicacion
             services.AddScoped<ICajaService, CajaService>();
             services.AddScoped<ICajaRepository, CajaRepository>();
             services.AddScoped<IFormaPagoRepository, FormaPagoRepository>();
+            services.AddScoped<IReporteService, ReporteService>();
+            services.AddScoped<IReporteRepository, ReporteRepository>();
+            services.AddScoped<IYapeImportacionService, YapeImportacionService>();
+            services.AddScoped<IYapeImportacionRepository, YapeImportacionRepository>();
+            services.AddScoped<IRefinanciamientoService, RefinanciamientoService>();
+            services.AddScoped<IRefinanciamientoRepository, RefinanciamientoRepository>();
+            services.AddScoped<ICompensacionService, CompensacionService>();
+            services.AddScoped<ICompensacionRepository, CompensacionRepository>();
+            services.AddScoped<IFlotaService, FlotaService>();
+            services.AddScoped<IFlotaRepository, FlotaRepository>();
             return services;
         }
     }
