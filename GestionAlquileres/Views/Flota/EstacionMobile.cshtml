@@ -51,21 +51,30 @@
             </select>
         }
         <div id="fmContratoResumen" class="fm-readonly-strip fm-contract-summary" style="display:none;">
-            <div>
-                <div class="fm-muted">Contrato</div>
-                <strong id="fmContratoNumero">-</strong>
+            <div class="fm-section-title">
+                <div>
+                    <strong id="fmContratoCompacto">Placa - | Contrato -</strong>
+                    <div class="fm-muted">Contrato operativo asignado</div>
+                </div>
+                <button id="fmToggleContratoResumen" type="button" class="fm-btn fm-btn-soft">Ver datos</button>
             </div>
-            <div>
-                <div class="fm-muted">Chofer</div>
-                <strong id="fmChofer">-</strong>
-            </div>
-            <div>
-                <div class="fm-muted">Placa</div>
-                <strong id="fmPlaca">-</strong>
-            </div>
-            <div class="fm-pill-row">
-                <span id="fmModalidad" class="fm-pill">Modalidad</span>
-                <span id="fmPeriodicidad" class="fm-pill">Periodicidad</span>
+            <div id="fmContratoDetalle" style="display:none;">
+                <div>
+                    <div class="fm-muted">Contrato</div>
+                    <strong id="fmContratoNumero">-</strong>
+                </div>
+                <div>
+                    <div class="fm-muted">Chofer</div>
+                    <strong id="fmChofer">-</strong>
+                </div>
+                <div>
+                    <div class="fm-muted">Placa</div>
+                    <strong id="fmPlaca">-</strong>
+                </div>
+                <div class="fm-pill-row">
+                    <span id="fmModalidad" class="fm-pill">Modalidad</span>
+                    <span id="fmPeriodicidad" class="fm-pill">Periodicidad</span>
+                </div>
             </div>
         </div>
     </section>

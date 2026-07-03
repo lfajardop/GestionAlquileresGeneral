@@ -305,6 +305,11 @@
     gap: .75rem;
 }
 
+#fmContratoDetalle {
+    display: grid;
+    gap: .75rem;
+}
+
 .fm-contract-summary strong,
 .fm-card-item strong {
     color: #f4f7fb;

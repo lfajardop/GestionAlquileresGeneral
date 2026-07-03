@@ -160,6 +160,7 @@ public class FlotaOperacionMobileGuardarDto
 {
     public int IdContrato{get;set;}
     public DateTime Fecha{get;set;}
+    public string? ModoRegistro{get;set;}
     public string FlgTrabajo{get;set;}="N";
     public string CodMotivo{get;set;}="";
     public string FlgCobrable{get;set;}="N";
@@ -168,6 +169,8 @@ public class FlotaOperacionMobileGuardarDto
     public decimal GalonesCargados{get;set;}
     public decimal ImporteCombustible{get;set;}
     public string? FlgPagoCombustible{get;set;}
+    public DateTime? FechaHoraInicio{get;set;}
+    public DateTime? FechaHoraFin{get;set;}
     public string? Observacion{get;set;}
 }
 public class FlotaOperacionMobileConsultaDto
@@ -201,6 +204,8 @@ public class FlotaOperacionMobileDiaDto
 {
     public int IdOperacionDia{get;set;}
     public DateTime Fecha{get;set;}
+    public DateTime? FechaHoraInicio{get;set;}
+    public DateTime? FechaHoraFin{get;set;}
     public string FlgTrabajo{get;set;}="N";
     public string CodMotivo{get;set;}="";
     public string FlgCobrable{get;set;}="N";

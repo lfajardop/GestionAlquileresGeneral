@@ -9,6 +9,8 @@
 
     const money = v => "S/." + Number(v || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const date = v => v ? new Date(String(v).substring(0, 10) + "T12:00:00").toLocaleDateString("es-PE") : "-";
+    const dateTimeLocal = v => v ? String(v).replace("T", " ").substring(0, 16) : "-";
+    const dateTimeInput = v => v ? String(v).substring(0, 16) : "";
     const token = () => $("#faToken input[name='__RequestVerificationToken']").val();
     const notify = (ok, msg) => Swal.fire({ icon: ok ? "success" : "error", title: ok ? "Listo" : "No se pudo completar", text: msg, confirmButtonColor: ok ? "#087253" : "#b42318" });
     const jsonPost = (url, data) => $.ajax({ url: url, type: "POST", contentType: "application/json", data: JSON.stringify(data), headers: { RequestVerificationToken: token() } });
@@ -263,6 +265,10 @@
             '<div><span>En recibo</span><strong>' + receipt + '</strong></div>' +
             '<div><span>Motivo</span><strong>' + motivo + '</strong></div>' +
             '<div><span>Importe</span><strong>' + money(day.importe || 0) + '</strong></div>' +
+            '<div><span>Km inicial</span><strong>' + (day.kmInicial ?? "-") + '</strong></div>' +
+            '<div><span>Km final</span><strong>' + (day.kmFinal ?? "-") + '</strong></div>' +
+            '<div><span>Inicio real</span><strong>' + dateTimeLocal(day.fechaHoraInicio) + '</strong></div>' +
+            '<div><span>Fin real</span><strong>' + dateTimeLocal(day.fechaHoraFin) + '</strong></div>' +
             '</div>' +
             '<div class="mt-3"><span>Observacion</span><p class="mb-0">' + observacion + '</p></div>'
         );
@@ -307,6 +313,11 @@
             }).join("")
             : '<tr><td colspan="5">Sin pagos registrados.</td></tr>';
 
+        const paymentSummary = c.estadoCodigo === "X"
+            ? '<div class="alert alert-warning py-2 mb-3">Recibo anulado: no se pueden registrar pagos.</div>'
+            : c.saldo > 0
+                ? '<div class="alert alert-info py-2 mb-3 d-flex justify-content-between align-items-center"><span>Este pago se aplica directamente al recibo.</span><button type="button" id="faOpenPayReceipt" class="btn btn-sm btn-primary" data-id="' + c.idReciboAlquiler + '">Registrar pago al recibo</button></div>'
+                : '<div class="alert alert-light py-2 mb-3">Recibo sin saldo pendiente.</div>';
         const receiptActions = c.estadoCodigo !== "X"
             ? '<button type="button" id="faOpenCancelReceipt" class="btn btn-outline-danger" data-id="' + c.idReciboAlquiler + '">Anular recibo</button>'
             : '<span class="text-muted">Recibo anulado</span>';
@@ -319,6 +330,7 @@
             '<div><span>Total</span><strong>' + money(c.importeTotal) + '</strong></div>' +
             '<div><span>Saldo</span><strong>' + money(c.saldo) + '</strong></div>' +
             '</div>' +
+            paymentSummary +
             '<div class="mt-3 mb-3">' + receiptActions + '</div>' +
             '<table class="detail-table"><thead><tr><th>Fecha</th><th>Origen</th><th>Importe</th><th class="text-end">Acciones</th></tr></thead><tbody>' + dayRows + '</tbody></table>' +
             '<table class="detail-table"><thead><tr><th>Pago</th><th>Medio</th><th>Importe</th><th>Validado</th><th>Acciones</th></tr></thead><tbody>' + payRows + '</tbody></table>'
@@ -434,6 +446,10 @@
             flgTrabajo: $("#faCorrectDayWorked").val(),
             codMotivo: $("#faCorrectDayCode").val(),
             flgCobrable: $("#faCorrectDayBillable").val(),
+            kmInicial: $("#faCorrectDayKmInicial").val() === "" ? null : Number($("#faCorrectDayKmInicial").val()),
+            kmFinal: $("#faCorrectDayKmFinal").val() === "" ? null : Number($("#faCorrectDayKmFinal").val()),
+            fechaHoraInicio: $("#faCorrectDayHoraInicio").val() || null,
+            fechaHoraFin: $("#faCorrectDayHoraFin").val() || null,
             observacion: $("#faCorrectDayObservation").val(),
             motivo: $("#faCorrectDayReason").val().trim()
         };
@@ -467,6 +483,15 @@
     });
 
     $(document).on("click", ".fa-pay", function () {
+        const x = selectedReceipt($(this).data("id"));
+        $("#payId").val(x.idReciboAlquiler);
+        $("#payReceipt").text(x.numero);
+        $("#payBalance").text(money(x.saldo));
+        $("#payAmount").val(x.saldo).attr("max", x.saldo);
+        openModal("#faPayModal");
+    });
+
+    $(document).on("click", "#faOpenPayReceipt", function () {
         const x = selectedReceipt($(this).data("id"));
         $("#payId").val(x.idReciboAlquiler);
         $("#payReceipt").text(x.numero);
@@ -552,6 +577,10 @@
         $("#faCorrectDayId").val(diaActual.idOperacionDia);
         $("#faCorrectDayWorked").val(diaActual.flgTrabajo || diaActual.trabajo || "S");
         $("#faCorrectDayBillable").val(diaActual.flgCobrable || diaActual.cobrable || "S");
+        $("#faCorrectDayKmInicial").val(diaActual.kmInicial ?? "");
+        $("#faCorrectDayKmFinal").val(diaActual.kmFinal ?? "");
+        $("#faCorrectDayHoraInicio").val(dateTimeInput(diaActual.fechaHoraInicio));
+        $("#faCorrectDayHoraFin").val(dateTimeInput(diaActual.fechaHoraFin));
         $("#faCorrectDayObservation").val(diaActual.observacion || "");
         $("#faCorrectDayReason").val("");
 

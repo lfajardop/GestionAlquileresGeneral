@@ -117,6 +117,7 @@
             <button type="button" class="fa-close"><i class="bi bi-x-lg"></i></button>
         </header>
         <div class="fa-balance"><span>Saldo disponible</span><strong id="payBalance">S/.0.00</strong></div>
+        <p class="fa-note mb-3">Este pago se aplica directamente al recibo.</p>
         <form id="payForm">
             <input id="payId" name="IdReciboAlquiler" type="hidden" />
             <div class="fa-form-grid">
@@ -235,6 +236,10 @@
                 <label>Trabajo<select id="faCorrectDayWorked" required><option value="S">Si trabajo</option><option value="N">No trabajo</option></select></label>
                 <label>Estado cobrable<select id="faCorrectDayBillable" required><option value="S">Cobrable</option><option value="N">No cobrable</option></select></label>
                 <label>Motivo del dia<input id="faCorrectDayCode" type="text" maxlength="10" required /></label>
+                <label>Km inicial<input id="faCorrectDayKmInicial" type="number" step="0.01" min="0" /></label>
+                <label>Km final<input id="faCorrectDayKmFinal" type="number" step="0.01" min="0" /></label>
+                <label>Hora real inicio<input id="faCorrectDayHoraInicio" type="datetime-local" /></label>
+                <label>Hora real fin<input id="faCorrectDayHoraFin" type="datetime-local" /></label>
             </div>
             <label>Observacion<textarea id="faCorrectDayObservation" rows="2"></textarea></label>
             <label>Motivo administrativo<textarea id="faCorrectDayReason" rows="3" placeholder="@Model.MotivoPlaceholder" required></textarea></label>

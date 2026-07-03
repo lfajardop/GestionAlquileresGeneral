@@ -4,6 +4,7 @@
         contratos: [],
         contrato: null,
         operacion: null,
+        contratoExpandido: false,
         pagos: [],
         combustibles: [],
         combustibleResumen: { totalGalones: 0, totalImporte: 0, totalCargas: 0 },
@@ -87,6 +88,12 @@
         return parts.join("\n");
     }
 
+    function currentDateTimeFor(fechaSelector) {
+        const fecha = $(fechaSelector).val() || currentFecha();
+        const now = new Date();
+        return `${fecha}T${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+    }
+
     function currentFecha() {
         return $("#fmFechaOperacion").val();
     }
@@ -147,8 +154,11 @@
         $("#fmContratoNumero").text(val(state.contrato, "numero", "Numero") || "-");
         $("#fmChofer").text(val(state.contrato, "chofer", "Chofer") || "-");
         $("#fmPlaca").text(val(state.contrato, "placa", "Placa") || "-");
+        $("#fmContratoCompacto").text(`Placa ${val(state.contrato, "placa", "Placa") || "-"} | Contrato ${val(state.contrato, "numero", "Numero") || "-"}`);
         $("#fmModalidad").text(`Modalidad: ${val(state.contrato, "modalidad", "Modalidad") || "-"}`);
         $("#fmPeriodicidad").text(`Periodicidad: ${val(state.contrato, "periodicidad", "Periodicidad") || "-"}`);
+        $("#fmContratoDetalle").toggle(!!state.contratoExpandido);
+        $("#fmToggleContratoResumen").text(state.contratoExpandido ? "Ocultar" : "Ver datos");
     }
 
     function renderOperacion() {
@@ -159,11 +169,14 @@
         }
         const fecha = String(val(op, "fecha", "Fecha") || "").slice(0, 10);
         const observaciones = parseObservacion(val(op, "observacion", "Observacion"));
+        const kmInicial = val(op, "kmInicial", "KmInicial");
+        const kmFinal = val(op, "kmFinal", "KmFinal");
+        const finPendiente = !val(op, "fechaHoraFin", "FechaHoraFin");
         $("#fmFechaOperacion").val(fecha);
         $("#fmFechaFin").val(fecha);
         $("#fmCombustibleFecha").val(fecha);
-        $("#fmKmInicial").val(val(op, "kmInicial", "KmInicial") ?? "");
-        $("#fmKmFinal").val(val(op, "kmFinal", "KmFinal") ?? "");
+        $("#fmKmInicial").val(kmInicial ?? "");
+        $("#fmKmFinal").val(finPendiente ? "" : (kmFinal ?? ""));
         $("#fmObservacionInicio").val(observaciones.inicio);
         $("#fmObservacionFin").val(observaciones.fin);
         renderHistorial();
@@ -271,13 +284,20 @@
             box.html('<div class="fm-empty">Todavia no hay un resumen operativo guardado para esta fecha.</div>');
             return;
         }
+        const kmInicial = val(state.operacion, "kmInicial", "KmInicial");
+        const kmFinal = val(state.operacion, "kmFinal", "KmFinal");
+        const fechaHoraInicio = val(state.operacion, "fechaHoraInicio", "FechaHoraInicio");
+        const fechaHoraFin = val(state.operacion, "fechaHoraFin", "FechaHoraFin");
+        const finPendiente = !fechaHoraFin;
         const recorrido = Number(val(state.operacion, "kmRecorrido", "KmRecorrido") || 0);
         box.append(`
             <div class="fm-card-item">
                 <strong>Fecha ${String(val(state.operacion, "fecha", "Fecha") || "").slice(0, 10)}</strong>
-                <small>Km inicial: ${val(state.operacion, "kmInicial", "KmInicial") ?? "-"}</small>
-                <small>Km final: ${val(state.operacion, "kmFinal", "KmFinal") ?? "-"}</small>
-                <small>Km recorrido: ${recorrido.toFixed(2)}</small>
+                <small>Inicio real: ${fechaHoraInicio ? String(fechaHoraInicio).replace("T", " ").substring(0, 16) : "-"}</small>
+                <small>Fin real: ${fechaHoraFin ? String(fechaHoraFin).replace("T", " ").substring(0, 16) : "-"}</small>
+                <small>Km inicial: ${kmInicial ?? "-"}</small>
+                <small>Km final: ${finPendiente ? "-" : (kmFinal ?? "-")}</small>
+                <small>Km recorrido: ${finPendiente ? "-" : recorrido.toFixed(2)}</small>
                 <small>Observacion: ${val(state.operacion, "observacion", "Observacion") || "Sin observacion"}</small>
             </div>`);
         if (state.combustibles.length) {
@@ -406,17 +426,21 @@
     function buildOperacionPayload(mode) {
         const kmInicialActual = $("#fmKmInicial").val() ? Number($("#fmKmInicial").val()) : null;
         const kmFinalActual = $("#fmKmFinal").val() ? Number($("#fmKmFinal").val()) : null;
+        const kmInicialBase = kmInicialActual ?? val(state.operacion, "kmInicial", "KmInicial") ?? null;
         return {
             idContrato: currentContratoId(),
             fecha: currentFecha(),
+            modoRegistro: mode === "inicio" ? "I" : "F",
             flgTrabajo: "S",
             codMotivo: "TRA",
             flgCobrable: "S",
-            kmInicial: mode === "inicio" ? kmInicialActual : (kmInicialActual ?? val(state.operacion, "kmInicial", "KmInicial") ?? null),
-            kmFinal: mode === "fin" ? kmFinalActual : (val(state.operacion, "kmFinal", "KmFinal") ?? null),
+            kmInicial: kmInicialBase,
+            kmFinal: mode === "inicio" ? null : kmFinalActual,
             galonesCargados: 0,
             importeCombustible: 0,
             flgPagoCombustible: null,
+            fechaHoraInicio: mode === "inicio" ? currentDateTimeFor("#fmFechaOperacion") : null,
+            fechaHoraFin: mode === "fin" ? currentDateTimeFor("#fmFechaFin") : null,
             observacion: composeObservacion()
         };
     }
@@ -425,9 +449,10 @@
         if (!state.contrato) return notify(false, "Selecciona un contrato.");
         if (!$("#fmKmInicial").val()) return notify(false, "Ingresa el km inicial.");
         const payload = buildOperacionPayload("inicio");
+        const actualiza = !!val(state.operacion, "kmInicial", "KmInicial");
         $("#fmGuardarInicio").prop("disabled", true);
-        postJson("/Flota/GuardarOperacionMobile", payload).done(r => {
-            notify(r.success, r.message);
+        postJson("/Flota/GuardarInicioOperacionMobile", payload).done(r => {
+            notify(r.success, r.success ? (actualiza ? "Dato actualizado. Administracion podra revisar el registro." : "Inicio registrado. Administracion podra revisar el estado final del dia.") : r.message);
             if (r.success) reloadCurrentContext();
         }).fail(xhr => notify(false, messageFromXhr(xhr, "No se pudo guardar el inicio."))).always(() => $("#fmGuardarInicio").prop("disabled", false));
     }
@@ -440,9 +465,10 @@
         const kmFinal = Number($("#fmKmFinal").val() || 0);
         if (kmFinal < kmInicial) return notify(false, "El km final debe ser mayor o igual que el km inicial.");
         const payload = buildOperacionPayload("fin");
+        const actualiza = !!val(state.operacion, "fechaHoraFin", "FechaHoraFin");
         $("#fmGuardarFin").prop("disabled", true);
-        postJson("/Flota/GuardarOperacionMobile", payload).done(r => {
-            notify(r.success, r.message);
+        postJson("/Flota/GuardarFinOperacionMobile", payload).done(r => {
+            notify(r.success, r.success ? (actualiza ? "Dato actualizado. Administracion podra revisar el registro." : "Fin registrado. Administracion podra revisar el estado final del dia.") : r.message);
             if (r.success) reloadCurrentContext();
         }).fail(xhr => notify(false, messageFromXhr(xhr, "No se pudo guardar el fin."))).always(() => $("#fmGuardarFin").prop("disabled", false));
     }
@@ -591,6 +617,10 @@
         if ($("#fmCombustibleFormCard").is(":visible")) {
             resetCombustibleForm();
         }
+    });
+    $("#fmToggleContratoResumen").on("click", function () {
+        state.contratoExpandido = !state.contratoExpandido;
+        renderContratoCard();
     });
     $("#fmGuardarInicio").on("click", guardarInicio);
     $("#fmGuardarFin").on("click", guardarFin);
