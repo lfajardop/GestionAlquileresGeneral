@@ -11,5 +11,5 @@ public class FlotaEstacionMobileViewModel
     public string TelefonoSesion{get;set;}="";
     public int? IdContratoAsignado{get;set;}
     public bool PuedeCambiarContrato{get;set;}=true;
-    public string TabInicial{get;set;}="dia";
+    public string TabInicial{get;set;}="inicio";
 }

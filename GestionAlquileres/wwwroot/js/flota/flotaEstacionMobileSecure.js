@@ -9,8 +9,7 @@
         combustibleResumen: { totalGalones: 0, totalImporte: 0, totalCargas: 0 },
         pagoSeleccionadoId: 0,
         combustibleSeleccionadoId: 0,
-        flgTrabajo: "S",
-        tab: String(page.data("tab-inicial") || "dia"),
+        tab: String(page.data("tab-inicial") || "inicio"),
         contratoFijoId: Number(page.data("contrato-fijo") || 0),
         puedeCambiarContrato: String(page.data("puede-cambiar-contrato") || "1") === "1"
     };
@@ -27,13 +26,14 @@
     }
 
     function notify(ok, msg) {
-        feedback.removeClass("show ok error").addClass(ok ? "ok" : "error").addClass("show").text(msg || (ok ? "Operacion completada." : "No se pudo completar la operacion."));
+        const text = msg || (ok ? "Operacion completada." : "No se pudo completar la operacion.");
+        feedback.removeClass("show ok error").addClass(ok ? "ok" : "error").addClass("show").text(text);
         if (window.Swal) {
             Swal.fire({
                 icon: ok ? "success" : "error",
                 title: ok ? "Listo" : "No se pudo completar",
-                text: msg || "",
-                confirmButtonColor: ok ? "#0f766e" : "#b42318"
+                text,
+                confirmButtonColor: ok ? "#1268d8" : "#b42318"
             });
         }
     }
@@ -63,32 +63,64 @@
         });
     }
 
+    function normalizeText(value) {
+        return String(value || "").trim();
+    }
+
+    function parseObservacion(texto) {
+        const raw = String(texto || "");
+        const lines = raw.split(/\r?\n/);
+        const inicio = lines.find(x => x.indexOf("Inicio:") === 0);
+        const fin = lines.find(x => x.indexOf("Fin:") === 0);
+        return {
+            inicio: inicio ? inicio.replace("Inicio:", "").trim() : "",
+            fin: fin ? fin.replace("Fin:", "").trim() : ""
+        };
+    }
+
+    function composeObservacion() {
+        const inicio = normalizeText($("#fmObservacionInicio").val());
+        const fin = normalizeText($("#fmObservacionFin").val());
+        const parts = [];
+        if (inicio) parts.push(`Inicio: ${inicio}`);
+        if (fin) parts.push(`Fin: ${fin}`);
+        return parts.join("\n");
+    }
+
+    function currentFecha() {
+        return $("#fmFechaOperacion").val();
+    }
+
+    function currentContratoId() {
+        return Number(val(state.contrato, "idContrato", "IdContrato") || 0);
+    }
+
+    function currentOperacionId() {
+        return Number(val(state.operacion, "idOperacionDia", "IdOperacionDia") || 0);
+    }
+
     function tab(tabId) {
         state.tab = tabId;
         $(".fm-tab").removeClass("active").filter(`[data-tab='${tabId}']`).addClass("active");
         $(".fm-panel").removeClass("active");
-        ({
-            dia: "#fmPanelDia",
+        const map = {
+            inicio: "#fmPanelInicio",
+            fin: "#fmPanelFin",
             combustible: "#fmPanelCombustible",
             pagos: "#fmPanelPagos",
             historial: "#fmPanelHistorial"
-        }[tabId] || "#fmPanelDia");
-        $(({
-            dia: "#fmPanelDia",
-            combustible: "#fmPanelCombustible",
-            pagos: "#fmPanelPagos",
-            historial: "#fmPanelHistorial"
-        })[tabId] || "#fmPanelDia").addClass("active");
+        };
+        $(map[tabId] || "#fmPanelInicio").addClass("active");
     }
 
     function resetOperacionForm() {
-        $("#fmMotivo").val("TRA");
-        $("#fmKmInicial,#fmKmFinal,#fmObservacionOperacion").val("");
+        $("#fmKmInicial,#fmKmFinal,#fmObservacionInicio,#fmObservacionFin").val("");
         state.operacion = null;
+        renderHistorial();
     }
 
     function resetCombustibleForm() {
-        $("#fmCombustibleFecha").val($("#fmFechaOperacion").val());
+        $("#fmCombustibleFecha").val(currentFecha());
         $("#fmCombustiblePago").val("C");
         $("#fmCombustibleGalones,#fmCombustibleImporte,#fmCombustibleObservacion,#fmReciboCombustibleObs").val("");
         $("#fmReciboCombustibleArchivo").val("");
@@ -125,21 +157,23 @@
             resetOperacionForm();
             return;
         }
-        $("#fmFechaOperacion").val(String(val(op, "fecha", "Fecha") || "").slice(0, 10));
-        $("#fmCombustibleFecha").val(String(val(op, "fecha", "Fecha") || "").slice(0, 10));
-        state.flgTrabajo = val(op, "flgTrabajo", "FlgTrabajo") || "S";
-        $(".js-flg-trabajo").removeClass("active").filter(`[data-value='${state.flgTrabajo}']`).addClass("active");
-        $("#fmMotivo").val(val(op, "codMotivo", "CodMotivo") || "TRA");
+        const fecha = String(val(op, "fecha", "Fecha") || "").slice(0, 10);
+        const observaciones = parseObservacion(val(op, "observacion", "Observacion"));
+        $("#fmFechaOperacion").val(fecha);
+        $("#fmFechaFin").val(fecha);
+        $("#fmCombustibleFecha").val(fecha);
         $("#fmKmInicial").val(val(op, "kmInicial", "KmInicial") ?? "");
         $("#fmKmFinal").val(val(op, "kmFinal", "KmFinal") ?? "");
-        $("#fmObservacionOperacion").val(val(op, "observacion", "Observacion") || "");
+        $("#fmObservacionInicio").val(observaciones.inicio);
+        $("#fmObservacionFin").val(observaciones.fin);
+        renderHistorial();
     }
 
     function renderCombustibleResumen() {
         const resumen = state.combustibleResumen || {};
-        $("#fmResumenGalones,#fmCombustibleTotalGalones").text(Number(val(resumen, "totalGalones", "TotalGalones") || 0).toFixed(3));
-        $("#fmResumenImporte,#fmCombustibleTotalImporte").text(money(val(resumen, "totalImporte", "TotalImporte")));
-        $("#fmResumenCargas,#fmCombustibleTotalCargas").text(val(resumen, "totalCargas", "TotalCargas") || 0);
+        $("#fmCombustibleTotalGalones").text(Number(val(resumen, "totalGalones", "TotalGalones") || 0).toFixed(3));
+        $("#fmCombustibleTotalImporte").text(money(val(resumen, "totalImporte", "TotalImporte")));
+        $("#fmCombustibleTotalCargas").text(val(resumen, "totalCargas", "TotalCargas") || 0);
     }
 
     function adjuntosLinks(adjuntos) {
@@ -155,14 +189,14 @@
             $("#fmSubirReciboCombustible").prop("disabled", true);
             $("#fmAdjuntosCombustible").html('<div class="fm-empty">Todavia no hay recibos GLP por carga.</div>');
             renderCombustibleResumen();
+            renderHistorial();
             return;
         }
         const historial = [];
         state.combustibles.forEach(x => {
             const id = val(x, "idCombustibleOperacion", "IdCombustibleOperacion");
-            const selected = state.combustibleSeleccionadoId === id;
             list.append(`
-                <div class="fm-card-item ${selected ? "active" : ""}">
+                <div class="fm-card-item">
                     <strong>${Number(val(x, "galones", "Galones") || 0).toFixed(3)} gal · ${money(val(x, "importe", "Importe"))}</strong>
                     <small>${String(val(x, "fecha", "Fecha") || "").slice(0, 10)} · ${val(x, "flgPagoCombustibleTexto", "FlgPagoCombustibleTexto") || "-"}</small>
                     <small>${val(x, "observacion", "Observacion") || "Sin observacion"}</small>
@@ -179,6 +213,7 @@
         $("#fmSubirReciboCombustible").prop("disabled", !state.combustibleSeleccionadoId);
         $("#fmAdjuntosCombustible").html(historial.join("") || '<div class="fm-empty">Todavia no hay recibos GLP por carga.</div>');
         renderCombustibleResumen();
+        renderHistorial();
     }
 
     function renderAdjuntosOperacion(adjuntos) {
@@ -205,6 +240,7 @@
         if (!state.pagos.length) {
             box.html('<div class="fm-empty">Todavia no hay pagos declarados para este contrato.</div>');
             $("#fmSubirVoucher").prop("disabled", true);
+            renderHistorial();
             return;
         }
         state.pagos.forEach(x => {
@@ -226,6 +262,30 @@
             select.val(String(state.pagoSeleccionadoId));
         }
         $("#fmSubirVoucher").prop("disabled", !state.pagoSeleccionadoId);
+        renderHistorial();
+    }
+
+    function renderHistorial() {
+        const box = $("#fmHistorialResumen").empty();
+        if (!state.operacion) {
+            box.html('<div class="fm-empty">Todavia no hay un resumen operativo guardado para esta fecha.</div>');
+            return;
+        }
+        const recorrido = Number(val(state.operacion, "kmRecorrido", "KmRecorrido") || 0);
+        box.append(`
+            <div class="fm-card-item">
+                <strong>Fecha ${String(val(state.operacion, "fecha", "Fecha") || "").slice(0, 10)}</strong>
+                <small>Km inicial: ${val(state.operacion, "kmInicial", "KmInicial") ?? "-"}</small>
+                <small>Km final: ${val(state.operacion, "kmFinal", "KmFinal") ?? "-"}</small>
+                <small>Km recorrido: ${recorrido.toFixed(2)}</small>
+                <small>Observacion: ${val(state.operacion, "observacion", "Observacion") || "Sin observacion"}</small>
+            </div>`);
+        if (state.combustibles.length) {
+            box.append(`<div class="fm-card-item"><strong>Combustible del dia</strong><small>${state.combustibles.length} cargas registradas</small><small>Total: ${$("#fmCombustibleTotalGalones").text()} gal · ${$("#fmCombustibleTotalImporte").text()}</small></div>`);
+        }
+        if (state.pagos.length) {
+            box.append(`<div class="fm-card-item"><strong>Pagos declarados</strong><small>${state.pagos.length} pagos en este contrato</small><small>El pago declarado no descuenta recibos todavia.</small></div>`);
+        }
     }
 
     function llenarFormasPago(items) {
@@ -233,19 +293,6 @@
         (items || []).forEach(x => {
             select.append($("<option>").val(val(x, "idFormaPago", "IdFormaPago")).text(val(x, "tipo", "Tipo") || val(x, "descripcion", "Descripcion") || val(x, "abrev", "Abrev")));
         });
-    }
-
-    function cargarMotivos() {
-        const opciones = [
-            { codigo: "TRA", nombre: "Dia trabajado" },
-            { codigo: "DES", nombre: "Descanso acordado" },
-            { codigo: "MAN", nombre: "Mantenimiento aprobado" },
-            { codigo: "AVE", nombre: "Averia del vehiculo" },
-            { codigo: "FAL", nombre: "Falta del conductor" },
-            { codigo: "OTR", nombre: "Otro motivo autorizado" }
-        ];
-        const select = $("#fmMotivo").empty();
-        opciones.forEach(x => select.append($("<option>").val(x.codigo).text(x.nombre)));
     }
 
     function getSelectedContrato() {
@@ -280,7 +327,7 @@
             renderPagos();
             return $.Deferred().resolve().promise();
         }
-        return getJson("/Flota/PagosContratoPorContrato", { idContrato: val(state.contrato, "idContrato", "IdContrato") }).done(r => {
+        return getJson("/Flota/PagosContratoPorContrato", { idContrato: currentContratoId() }).done(r => {
             if (!r.success) return notify(false, r.message);
             state.pagos = val(r, "data") || [];
             if (state.pagoSeleccionadoId && !state.pagos.some(x => Number(val(x, "idPagoContrato", "IdPagoContrato")) === state.pagoSeleccionadoId)) {
@@ -297,7 +344,7 @@
             renderCombustibles();
             return $.Deferred().resolve().promise();
         }
-        return getJson("/Flota/CombustiblesPorFecha", { idContrato: val(state.contrato, "idContrato", "IdContrato"), fecha: $("#fmCombustibleFecha").val() || $("#fmFechaOperacion").val() }).done(r => {
+        return getJson("/Flota/CombustiblesPorFecha", { idContrato: currentContratoId(), fecha: $("#fmCombustibleFecha").val() || currentFecha() }).done(r => {
             if (!r.success) return notify(false, r.message);
             state.combustibles = val(r, "data")?.cargas || [];
             state.combustibleResumen = val(r, "data")?.resumen || { totalGalones: 0, totalImporte: 0, totalCargas: 0 };
@@ -309,12 +356,11 @@
     }
 
     function loadAdjuntosOperacion() {
-        const idOperacion = Number(val(state.operacion, "idOperacionDia", "IdOperacionDia") || 0);
-        if (!idOperacion) {
+        if (!currentOperacionId()) {
             renderAdjuntosOperacion([]);
             return $.Deferred().resolve().promise();
         }
-        return getJson("/Flota/AdjuntosFlota", { tipoEntidad: "OPERACION_DIA", idEntidad: idOperacion }).done(r => {
+        return getJson("/Flota/AdjuntosFlota", { tipoEntidad: "OPERACION_DIA", idEntidad: currentOperacionId() }).done(r => {
             renderAdjuntosOperacion(val(r, "data") || []);
         }).fail(xhr => notify(false, messageFromXhr(xhr, "No se pudieron cargar los adjuntos de operacion.")));
     }
@@ -338,8 +384,8 @@
             return $.Deferred().resolve().promise();
         }
         return getJson("/Flota/OperacionMobileDetalle", {
-            idContrato: val(state.contrato, "idContrato", "IdContrato"),
-            fecha: $("#fmFechaOperacion").val()
+            idContrato: currentContratoId(),
+            fecha: currentFecha()
         }).done(r => {
             if (!r.success) return notify(false, r.message);
             const data = val(r, "data") || {};
@@ -352,39 +398,63 @@
     }
 
     function reloadCurrentContext() {
-        $("#fmCombustibleFecha").val($("#fmFechaOperacion").val());
+        $("#fmFechaFin").val(currentFecha());
+        $("#fmCombustibleFecha").val(currentFecha());
         return $.when(loadOperacion(), loadPagos(), loadCombustibles()).then(() => $.when(loadAdjuntosOperacion(), loadAdjuntosPago()));
     }
 
-    function registrarOperacion() {
-        if (!state.contrato) return notify(false, "Selecciona un contrato.");
-        const payload = {
-            idContrato: val(state.contrato, "idContrato", "IdContrato"),
-            fecha: $("#fmFechaOperacion").val(),
-            flgTrabajo: state.flgTrabajo,
-            codMotivo: $("#fmMotivo").val(),
-            kmInicial: $("#fmKmInicial").val() ? Number($("#fmKmInicial").val()) : null,
-            kmFinal: $("#fmKmFinal").val() ? Number($("#fmKmFinal").val()) : null,
+    function buildOperacionPayload(mode) {
+        const kmInicialActual = $("#fmKmInicial").val() ? Number($("#fmKmInicial").val()) : null;
+        const kmFinalActual = $("#fmKmFinal").val() ? Number($("#fmKmFinal").val()) : null;
+        return {
+            idContrato: currentContratoId(),
+            fecha: currentFecha(),
+            flgTrabajo: "S",
+            codMotivo: "TRA",
+            flgCobrable: "S",
+            kmInicial: mode === "inicio" ? kmInicialActual : (kmInicialActual ?? val(state.operacion, "kmInicial", "KmInicial") ?? null),
+            kmFinal: mode === "fin" ? kmFinalActual : (val(state.operacion, "kmFinal", "KmFinal") ?? null),
             galonesCargados: 0,
             importeCombustible: 0,
             flgPagoCombustible: null,
-            observacion: $("#fmObservacionOperacion").val()
+            observacion: composeObservacion()
         };
-        $("#fmGuardarOperacion").prop("disabled", true);
+    }
+
+    function guardarInicio() {
+        if (!state.contrato) return notify(false, "Selecciona un contrato.");
+        if (!$("#fmKmInicial").val()) return notify(false, "Ingresa el km inicial.");
+        const payload = buildOperacionPayload("inicio");
+        $("#fmGuardarInicio").prop("disabled", true);
         postJson("/Flota/GuardarOperacionMobile", payload).done(r => {
             notify(r.success, r.message);
             if (r.success) reloadCurrentContext();
-        }).fail(xhr => notify(false, messageFromXhr(xhr, "No se pudo guardar el dia."))).always(() => $("#fmGuardarOperacion").prop("disabled", false));
+        }).fail(xhr => notify(false, messageFromXhr(xhr, "No se pudo guardar el inicio."))).always(() => $("#fmGuardarInicio").prop("disabled", false));
+    }
+
+    function guardarFin() {
+        if (!state.contrato) return notify(false, "Selecciona un contrato.");
+        const kmInicial = Number($("#fmKmInicial").val() || val(state.operacion, "kmInicial", "KmInicial") || 0);
+        if (!kmInicial) return notify(false, "Primero registra el km inicial.");
+        if (!$("#fmKmFinal").val()) return notify(false, "Ingresa el km final.");
+        const kmFinal = Number($("#fmKmFinal").val() || 0);
+        if (kmFinal < kmInicial) return notify(false, "El km final debe ser mayor o igual que el km inicial.");
+        const payload = buildOperacionPayload("fin");
+        $("#fmGuardarFin").prop("disabled", true);
+        postJson("/Flota/GuardarOperacionMobile", payload).done(r => {
+            notify(r.success, r.message);
+            if (r.success) reloadCurrentContext();
+        }).fail(xhr => notify(false, messageFromXhr(xhr, "No se pudo guardar el fin."))).always(() => $("#fmGuardarFin").prop("disabled", false));
     }
 
     function registrarCombustible() {
         if (!state.contrato) return notify(false, "Selecciona un contrato.");
         const payload = {
-            idContrato: val(state.contrato, "idContrato", "IdContrato"),
+            idContrato: currentContratoId(),
             idChofer: val(state.contrato, "idChofer", "IdChofer"),
             idVehiculo: val(state.contrato, "idVehiculo", "IdVehiculo"),
-            idOperacionDia: val(state.operacion, "idOperacionDia", "IdOperacionDia") || null,
-            fecha: $("#fmCombustibleFecha").val() || $("#fmFechaOperacion").val(),
+            idOperacionDia: currentOperacionId() || null,
+            fecha: $("#fmCombustibleFecha").val() || currentFecha(),
             galones: Number($("#fmCombustibleGalones").val() || 0),
             importe: Number($("#fmCombustibleImporte").val() || 0),
             flgPagoCombustible: $("#fmCombustiblePago").val() || null,
@@ -405,10 +475,10 @@
     function registrarPago() {
         if (!state.contrato) return notify(false, "Selecciona un contrato.");
         const payload = {
-            idContrato: val(state.contrato, "idContrato", "IdContrato"),
+            idContrato: currentContratoId(),
             idChofer: val(state.contrato, "idChofer", "IdChofer"),
             idVehiculo: val(state.contrato, "idVehiculo", "IdVehiculo"),
-            idOperacionDia: val(state.operacion, "idOperacionDia", "IdOperacionDia") || null,
+            idOperacionDia: currentOperacionId() || null,
             fechaPago: $("#fmFechaPago").val(),
             importe: Number($("#fmImportePago").val() || 0),
             idFormaPago: Number($("#fmFormaPago").val() || 0),
@@ -479,12 +549,6 @@
         }).fail(xhr => notify(false, messageFromXhr(xhr, "No se pudo cerrar la sesion."))).always(() => $("#fmLogout").prop("disabled", false));
     }
 
-    $(document).on("click", ".js-flg-trabajo", function () {
-        state.flgTrabajo = $(this).data("value");
-        $(".js-flg-trabajo").removeClass("active");
-        $(this).addClass("active");
-    });
-
     $(document).on("click", ".fm-tab", function () {
         tab($(this).data("tab"));
     });
@@ -503,6 +567,12 @@
     });
 
     $("#fmFechaOperacion").on("change", function () {
+        $("#fmFechaFin").val($(this).val());
+        $("#fmCombustibleFecha").val($(this).val());
+        reloadCurrentContext();
+    });
+    $("#fmFechaFin").on("change", function () {
+        $("#fmFechaOperacion").val($(this).val());
         $("#fmCombustibleFecha").val($(this).val());
         reloadCurrentContext();
     });
@@ -522,7 +592,8 @@
             resetCombustibleForm();
         }
     });
-    $("#fmGuardarOperacion").on("click", registrarOperacion);
+    $("#fmGuardarInicio").on("click", guardarInicio);
+    $("#fmGuardarFin").on("click", guardarFin);
     $("#fmRegistrarCombustible").on("click", registrarCombustible);
     $("#fmRegistrarPago").on("click", registrarPago);
     $("#fmSubirReciboCombustible").on("click", subirAdjuntoCombustible);
@@ -530,7 +601,6 @@
     $("#fmLogout").on("click", logout);
 
     $(function () {
-        cargarMotivos();
         tab(state.tab);
         loadContratos().then(() => {
             if (state.contratoFijoId <= 0) {
@@ -540,6 +610,7 @@
             renderAdjuntosPago([]);
             renderCombustibles();
             renderPagos();
+            renderHistorial();
         });
     });
 })();
