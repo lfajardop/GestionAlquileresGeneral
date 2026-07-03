@@ -1,0 +1,124 @@
+﻿
+#tblPrestamos thead th,
+#tblPagosPrestamo thead th {
+    background-color: #f8f9fa !important;
+    color: #212529 !important;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+#mdlDetallePrestamo thead th {
+    background-color: #f1f3f5 !important;
+    color: #212529 !important;
+    font-weight: 600;
+    border-color: #d0d7de !important;
+}
+
+#mdlDetallePrestamo .table {
+    color: #212529;
+}
+
+#mdlDetallePrestamo .table td {
+    color: #212529;
+}
+/*  */
+
+#mdlPrestamo thead th {
+    background-color: #f1f3f5 !important;
+    color: #212529 !important;
+    font-weight: 600;
+    border-color: #d0d7de !important;
+}
+
+#mdlPrestamo .table {
+    color: #212529;
+}
+
+    #mdlPrestamo .table td {
+        color: #212529;
+    }
+
+    /**/
+
+#mdlPagosPrestamo thead th {
+    background-color: #f1f3f5 !important;
+    color: #212529 !important;
+    font-weight: 600;
+    border-color: #d0d7de !important;
+}
+
+#mdlPagosPrestamo .table {
+    color: #212529;
+}
+
+    #mdlPagosPrestamo .table td {
+        color: #212529;
+    }
+
+
+/**/
+
+#mdlGenerarPago thead th {
+    background-color: #f1f3f5 !important;
+    color: #212529 !important;
+    font-weight: 600;
+    border-color: #d0d7de !important;
+}
+
+#mdlGenerarPago .table {
+    color: #212529;
+}
+
+    #mdlGenerarPago .table td {
+        color: #212529;
+    }
+/**/
+
+#mdlDesembolsoPrestamo thead th {
+    background-color: #f1f3f5 !important;
+    color: #212529 !important;
+    font-weight: 600;
+    border-color: #d0d7de !important;
+}
+
+#mdlDesembolsoPrestamo .table {
+    color: #212529;
+}
+
+    #mdlDesembolsoPrestamo .table td {
+        color: #212529;
+    }
+
+/**/
+
+#mdlRegistrarDesembolso thead th {
+    background-color: #f1f3f5 !important;
+    color: #212529 !important;
+    font-weight: 600;
+    border-color: #d0d7de !important;
+}
+
+#mdlRegistrarDesembolso .table {
+    color: #212529;
+}
+
+    #mdlRegistrarDesembolso .table td {
+        color: #212529;
+    }
+
+/**/
+
+#mdlDetallePrestamo thead th {
+    background-color: #f1f3f5 !important;
+    color: #212529 !important;
+    font-weight: 600;
+    border-color: #d0d7de !important;
+}
+
+#mdlDetallePrestamo .table {
+    color: #212529;
+}
+
+    #mdlDetallePrestamo .table td {
+        color: #212529;
+    }

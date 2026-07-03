@@ -1,0 +1,355 @@
+@model GestionAlquileres.ViewModels.Flota.FlotaEstacionMobileViewModel
+@{
+    ViewData["Title"] = Model.TituloPantalla;
+    Layout = "~/Views/Shared/_LayoutGAP.cshtml";
+}
+<form id="flotaMobileToken">@Html.AntiForgeryToken()</form>
+
+<style>
+    .fm-page { max-width: 760px; margin: 0 auto; padding: 1rem .9rem 6rem; background: linear-gradient(180deg, #f7fbfd 0%, #eef6fb 100%); min-height: 100vh; }
+    .fm-banner { background: linear-gradient(135deg, #0d3d56, #157a73 60%, #47a793); color: #fff; border-radius: 24px; padding: 1rem; box-shadow: 0 18px 36px rgba(15, 39, 61, .18); }
+    .fm-banner small { display: block; opacity: .84; letter-spacing: .08em; text-transform: uppercase; }
+    .fm-banner strong { display: block; font-size: 1.15rem; margin-top: .35rem; }
+    .fm-security { margin-top: .85rem; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.2); padding: .8rem .9rem; border-radius: 16px; font-size: .92rem; }
+    .fm-topbar { display: flex; justify-content: space-between; gap: .75rem; align-items: flex-start; margin-top: .9rem; }
+    .fm-user { font-size: .92rem; }
+    .fm-btn { border: 0; border-radius: 18px; padding: .95rem 1rem; font-weight: 700; font-size: 1rem; transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease; }
+    .fm-btn:active { transform: translateY(1px); }
+    .fm-btn:disabled { opacity: .55; cursor: not-allowed; box-shadow: none; }
+    .fm-btn-primary { background: linear-gradient(135deg, #0f766e, #159e93); color: #fff; box-shadow: 0 10px 24px rgba(15,118,110,.22); }
+    .fm-btn-secondary { background: linear-gradient(135deg, #184f77, #256896); color: #fff; box-shadow: 0 10px 24px rgba(24,79,119,.18); }
+    .fm-btn-soft { background: #edf5fb; color: #184f77; border: 1px solid #c8dceb; }
+    .fm-btn-danger { background: #fff1f1; color: #b42318; border: 1px solid #f4c7c3; }
+    .fm-card { background: rgba(255,255,255,.94); border-radius: 22px; padding: 1rem; box-shadow: 0 12px 30px rgba(16,24,40,.08); border: 1px solid #e3edf4; margin-top: 1rem; backdrop-filter: blur(4px); }
+    .fm-card h3 { margin: 0 0 .75rem; font-size: 1.02rem; color: #16384e; }
+    .fm-muted { color: #5a7080; font-size: .92rem; }
+    .fm-grid { display: grid; gap: .8rem; grid-template-columns: 1fr; }
+    .fm-field label, .fm-inline-label { display: block; font-size: .84rem; font-weight: 700; color: #355063; margin-bottom: .35rem; }
+    .fm-field input, .fm-field select, .fm-field textarea { width: 100%; border: 1px solid #cad8e1; border-radius: 16px; padding: 1rem .95rem; font-size: 1rem; background: #fbfdfe; }
+    .fm-field textarea { min-height: 92px; resize: vertical; }
+    .fm-field input:focus, .fm-field select:focus, .fm-field textarea:focus { outline: none; border-color: #159e93; box-shadow: 0 0 0 4px rgba(21,158,147,.12); }
+    .fm-actions { display: grid; gap: .7rem; margin-top: .95rem; }
+    .fm-contract-summary { display: grid; gap: .75rem; }
+    .fm-pill { display: inline-flex; align-items: center; gap: .35rem; padding: .38rem .72rem; border-radius: 999px; background: #edf7f7; color: #0f766e; font-weight: 700; font-size: .8rem; }
+    .fm-lock { margin-top: .65rem; border-radius: 14px; padding: .8rem; background: #fff7e8; color: #8a5d00; border: 1px solid #f0d28b; font-size: .92rem; }
+    .fm-feedback { display: none; border-radius: 16px; padding: .85rem .95rem; margin-top: 1rem; font-weight: 600; }
+    .fm-feedback.show { display: block; }
+    .fm-feedback.ok { background: #eaf8f1; color: #0f7b45; border: 1px solid #bfe5cf; }
+    .fm-feedback.error { background: #fff1f1; color: #b42318; border: 1px solid #f4c7c3; }
+    .fm-choice { display: grid; grid-template-columns: 1fr 1fr; gap: .65rem; }
+    .fm-choice button { border: 1px solid #cbd7df; border-radius: 16px; padding: .95rem; background: #fff; color: #143044; text-align: left; font-weight: 700; }
+    .fm-choice button.active { border-color: #0f766e; background: #edf9f7; color: #0f766e; box-shadow: 0 0 0 3px rgba(15,118,110,.08); }
+    .fm-file-note { font-size: .82rem; color: #5b7283; }
+    .fm-list { display: grid; gap: .8rem; }
+    .fm-empty { border: 1px dashed #c6d4de; border-radius: 18px; padding: 1rem; color: #5b7283; text-align: center; background: #fbfdfe; }
+    .fm-state { display: inline-flex; padding: .32rem .58rem; border-radius: 999px; font-size: .78rem; font-weight: 700; }
+    .fm-state-ok { background: #e8f8ef; color: #0f7b45; }
+    .fm-state-warn { background: #fff4db; color: #9a6700; }
+    .fm-state-info { background: #edf5fb; color: #184f77; }
+    .fm-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: .55rem; margin-top: 1rem; }
+    .fm-tab { border: 1px solid #d7e3eb; border-radius: 18px; background: rgba(255,255,255,.9); padding: .75rem .6rem; font-weight: 700; color: #234760; min-height: 58px; }
+    .fm-tab.active { background: linear-gradient(135deg, #184f77, #0f766e); color: #fff; border-color: transparent; box-shadow: 0 10px 24px rgba(24,79,119,.18); }
+    .fm-panel { display: none; }
+    .fm-panel.active { display: block; }
+    .fm-summary-band { display: grid; grid-template-columns: repeat(3, 1fr); gap: .6rem; margin-bottom: .9rem; }
+    .fm-summary-box { background: linear-gradient(180deg, #f4fafc, #edf7fb); border: 1px solid #d9e7ef; border-radius: 18px; padding: .8rem; }
+    .fm-summary-box strong { display: block; color: #16384e; font-size: 1rem; }
+    .fm-summary-box span { display: block; color: #5a7080; font-size: .8rem; }
+    .fm-card-item { border: 1px solid #dde7ee; border-radius: 18px; padding: .95rem; background: #fcfeff; box-shadow: inset 0 1px 0 rgba(255,255,255,.65); }
+    .fm-card-item strong { display: block; color: #17344a; }
+    .fm-card-item small { display: block; color: #5b7283; }
+    .fm-card-actions { display: flex; flex-wrap: wrap; gap: .55rem; margin-top: .8rem; }
+    .fm-sticky { position: sticky; bottom: .8rem; z-index: 5; margin-top: 1rem; }
+    .fm-sticky .fm-btn { width: 100%; }
+    .fm-inline-message { margin-top: .55rem; color: #5b7283; font-size: .84rem; }
+    .fm-pill-row { display: flex; flex-wrap: wrap; gap: .45rem; }
+    .fm-section-title { display: flex; justify-content: space-between; gap: .75rem; align-items: center; margin-bottom: .75rem; }
+    .fm-section-title h3 { margin-bottom: 0; }
+    @@media (min-width: 700px) {
+        .fm-grid-2 { grid-template-columns: 1fr 1fr; }
+    }
+</style>
+
+<main class="fm-page" data-contrato-fijo="@(Model.IdContratoAsignado?.ToString() ?? "")" data-puede-cambiar-contrato="@(Model.PuedeCambiarContrato ? "1" : "0")" data-tab-inicial="@Model.TabInicial">
+    <section class="fm-banner">
+        <small>Desarrollo controlado</small>
+        <strong>@Model.TituloPantalla</strong>
+        <div class="fm-security">@Model.TodoSeguridad</div>
+        <div class="fm-topbar">
+            <div class="fm-user">
+                <div><strong>@(string.IsNullOrWhiteSpace(Model.NombreSesion) ? "Usuario mobile" : Model.NombreSesion)</strong></div>
+                @if (!string.IsNullOrWhiteSpace(Model.TelefonoSesion))
+                {
+                    <div>@Model.TelefonoSesion</div>
+                }
+            </div>
+            <button id="fmLogout" type="button" class="fm-btn fm-btn-danger">Cerrar sesion</button>
+        </div>
+    </section>
+
+    <div id="fmFeedback" class="fm-feedback" role="alert"></div>
+
+    <section class="fm-card">
+        <h3>Contrato activo</h3>
+        <div class="fm-grid">
+            <div class="fm-field">
+                <label for="fmContrato">Selecciona contrato</label>
+                <select id="fmContrato" @(Model.PuedeCambiarContrato ? "" : "disabled")>
+                    <option value="">Cargando contratos...</option>
+                </select>
+            </div>
+        </div>
+        @if (!Model.PuedeCambiarContrato)
+        {
+            <div class="fm-lock">Tu sesion mobile esta asignada a un solo contrato. No puedes cambiarlo desde esta pantalla.</div>
+        }
+        <div id="fmContratoResumen" class="fm-card fm-contract-summary" style="display:none;">
+            <div>
+                <div class="fm-muted">Contrato</div>
+                <strong id="fmContratoNumero">-</strong>
+            </div>
+            <div>
+                <div class="fm-muted">Chofer</div>
+                <strong id="fmChofer">-</strong>
+            </div>
+            <div>
+                <div class="fm-muted">Placa</div>
+                <strong id="fmPlaca">-</strong>
+            </div>
+            <div class="fm-pill-row">
+                <span id="fmModalidad" class="fm-pill">Modalidad</span>
+                <span id="fmPeriodicidad" class="fm-pill">Periodicidad</span>
+            </div>
+        </div>
+    </section>
+
+    <nav class="fm-tabs" aria-label="Secciones mobile">
+        <button type="button" class="fm-tab active" data-tab="dia">Registro del dia</button>
+        <button type="button" class="fm-tab" data-tab="combustible">Combustible</button>
+        <button type="button" class="fm-tab" data-tab="pagos">Pagos</button>
+        <button type="button" class="fm-tab" data-tab="historial">Historial</button>
+    </nav>
+
+    <section id="fmPanelDia" class="fm-panel active">
+        <div class="fm-card">
+            <div class="fm-section-title">
+                <h3>Registro del dia</h3>
+                <span class="fm-pill">Registro general</span>
+            </div>
+            <div class="fm-grid fm-grid-2">
+                <div class="fm-field">
+                    <label for="fmFechaOperacion">Fecha</label>
+                    <input id="fmFechaOperacion" type="date" value="@Model.FechaOperacionInicial.ToString("yyyy-MM-dd")" />
+                </div>
+            </div>
+            <div class="fm-inline-label">¿Trabajó?</div>
+            <div class="fm-choice">
+                <button type="button" class="js-flg-trabajo active" data-value="S">Si trabajó</button>
+                <button type="button" class="js-flg-trabajo" data-value="N">No trabajó</button>
+            </div>
+            <div class="fm-grid fm-grid-2" style="margin-top:.75rem;">
+                <div class="fm-field">
+                    <label for="fmMotivo">Situacion reportada</label>
+                    <select id="fmMotivo"></select>
+                </div>
+                <div class="fm-field">
+                    <label for="fmKmInicial">Km inicial</label>
+                    <input id="fmKmInicial" type="number" step="0.01" inputmode="decimal" />
+                </div>
+                <div class="fm-field">
+                    <label for="fmKmFinal">Km final</label>
+                    <input id="fmKmFinal" type="number" step="0.01" inputmode="decimal" />
+                </div>
+            </div>
+            <div class="fm-help" style="margin-top:.5rem;">Esta informacion sera revisada por administracion.</div>
+            <div class="fm-field" style="margin-top:.75rem;">
+                <label for="fmObservacionOperacion">Observacion</label>
+                <textarea id="fmObservacionOperacion"></textarea>
+            </div>
+            <div class="fm-inline-message">El combustible del dia se registra en la pestaña <strong>Combustible</strong> para permitir varias cargas.</div>
+            <div id="fmResumenCombustibleDia" class="fm-summary-band" style="margin-top:1rem;">
+                <div class="fm-summary-box">
+                    <span>Total galones</span>
+                    <strong id="fmResumenGalones">0.000</strong>
+                </div>
+                <div class="fm-summary-box">
+                    <span>Total importe</span>
+                    <strong id="fmResumenImporte">S/.0.00</strong>
+                </div>
+                <div class="fm-summary-box">
+                    <span>Cargas del dia</span>
+                    <strong id="fmResumenCargas">0</strong>
+                </div>
+            </div>
+            <div class="fm-sticky">
+                <button id="fmGuardarOperacion" type="button" class="fm-btn fm-btn-primary">Guardar dia</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="fmPanelCombustible" class="fm-panel">
+        <div class="fm-card">
+            <div class="fm-section-title">
+                <h3>Combustible</h3>
+                <button id="fmToggleCombustibleForm" type="button" class="fm-btn fm-btn-soft">Agregar combustible</button>
+            </div>
+            <div class="fm-summary-band">
+                <div class="fm-summary-box">
+                    <span>Total galones del dia</span>
+                    <strong id="fmCombustibleTotalGalones">0.000</strong>
+                </div>
+                <div class="fm-summary-box">
+                    <span>Total importe del dia</span>
+                    <strong id="fmCombustibleTotalImporte">S/.0.00</strong>
+                </div>
+                <div class="fm-summary-box">
+                    <span>Cargas registradas</span>
+                    <strong id="fmCombustibleTotalCargas">0</strong>
+                </div>
+            </div>
+
+            <div id="fmCombustibleFormCard" class="fm-card" style="display:none; margin-top:0;">
+                <h3>Nueva carga GLP</h3>
+                <div class="fm-grid fm-grid-2">
+                    <div class="fm-field">
+                        <label for="fmCombustibleFecha">Fecha</label>
+                        <input id="fmCombustibleFecha" type="date" value="@Model.FechaOperacionInicial.ToString("yyyy-MM-dd")" />
+                    </div>
+                    <div class="fm-field">
+                        <label for="fmCombustiblePago">Quien pagó</label>
+                        <select id="fmCombustiblePago">
+                            <option value="C">Chofer</option>
+                            <option value="D">Dueño/Empresa</option>
+                            <option value="P">Pendiente</option>
+                        </select>
+                    </div>
+                    <div class="fm-field">
+                        <label for="fmCombustibleGalones">Galones cargados</label>
+                        <input id="fmCombustibleGalones" type="number" step="0.001" inputmode="decimal" />
+                    </div>
+                    <div class="fm-field">
+                        <label for="fmCombustibleImporte">Importe combustible</label>
+                        <input id="fmCombustibleImporte" type="number" step="0.01" inputmode="decimal" />
+                    </div>
+                </div>
+                <div class="fm-field" style="margin-top:.75rem;">
+                    <label for="fmCombustibleObservacion">Observacion</label>
+                    <textarea id="fmCombustibleObservacion"></textarea>
+                </div>
+                <div class="fm-file-note" style="margin-top:.75rem;">Puedes registrar la carga primero y subir el recibo después. Permitidos: @Model.ExtensionesPermitidas. Máximo @Model.MaxUploadMb MB.</div>
+                <div class="fm-actions">
+                    <button id="fmRegistrarCombustible" type="button" class="fm-btn fm-btn-primary">Guardar combustible</button>
+                </div>
+            </div>
+
+            <div class="fm-card" style="margin-top:1rem;">
+                <h3>Recibo GLP de una carga</h3>
+                <div class="fm-grid">
+                    <div class="fm-field">
+                        <label for="fmCombustibleSeleccionado">Selecciona una carga</label>
+                        <select id="fmCombustibleSeleccionado">
+                            <option value="">Selecciona una carga...</option>
+                        </select>
+                    </div>
+                    <div class="fm-field">
+                        <label for="fmReciboCombustibleArchivo">Foto o PDF del recibo GLP</label>
+                        <input id="fmReciboCombustibleArchivo" type="file" accept=".jpg,.jpeg,.png,.webp,.pdf" />
+                    </div>
+                    <div class="fm-field">
+                        <label for="fmReciboCombustibleObs">Observacion del recibo</label>
+                        <input id="fmReciboCombustibleObs" type="text" />
+                    </div>
+                </div>
+                <div class="fm-actions">
+                    <button id="fmSubirReciboCombustible" type="button" class="fm-btn fm-btn-secondary" disabled>Subir recibo GLP</button>
+                </div>
+            </div>
+
+            <div class="fm-card" style="margin-top:1rem;">
+                <h3>Cargas GLP del dia</h3>
+                <div id="fmCombustiblesLista" class="fm-list"></div>
+            </div>
+        </div>
+    </section>
+
+    <section id="fmPanelPagos" class="fm-panel">
+        <div class="fm-card">
+            <h3>Pago declarado</h3>
+            <div class="fm-muted">Este pago queda declarado para validación. Todavía no descuenta recibos.</div>
+            <div class="fm-grid fm-grid-2" style="margin-top:.75rem;">
+                <div class="fm-field">
+                    <label for="fmFechaPago">Fecha pago</label>
+                    <input id="fmFechaPago" type="date" value="@Model.FechaOperacionInicial.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="fm-field">
+                    <label for="fmImportePago">Importe</label>
+                    <input id="fmImportePago" type="number" step="0.01" inputmode="decimal" />
+                </div>
+                <div class="fm-field">
+                    <label for="fmFormaPago">Forma de pago</label>
+                    <select id="fmFormaPago">
+                        <option value="">Selecciona...</option>
+                    </select>
+                </div>
+                <div class="fm-field">
+                    <label for="fmReferenciaPago">Referencia</label>
+                    <input id="fmReferenciaPago" type="text" />
+                </div>
+            </div>
+            <div class="fm-field" style="margin-top:.75rem;">
+                <label for="fmObservacionPago">Observacion</label>
+                <textarea id="fmObservacionPago"></textarea>
+            </div>
+            <div class="fm-sticky">
+                <button id="fmRegistrarPago" type="button" class="fm-btn fm-btn-primary" disabled>Registrar pago declarado</button>
+            </div>
+        </div>
+
+        <div class="fm-card">
+            <h3>Voucher del pago</h3>
+            <div class="fm-grid">
+                <div class="fm-field">
+                    <label for="fmPagoSeleccionado">Selecciona pago declarado</label>
+                    <select id="fmPagoSeleccionado">
+                        <option value="">Selecciona un pago...</option>
+                    </select>
+                </div>
+                <div class="fm-field">
+                    <label for="fmVoucherArchivo">Voucher</label>
+                    <input id="fmVoucherArchivo" type="file" accept=".jpg,.jpeg,.png,.webp,.pdf" />
+                </div>
+            </div>
+            <div class="fm-actions">
+                <button id="fmSubirVoucher" type="button" class="fm-btn fm-btn-secondary" disabled>Subir voucher</button>
+            </div>
+        </div>
+
+        <div class="fm-card">
+            <h3>Pagos declarados</h3>
+            <div id="fmPagosDeclarados" class="fm-list"></div>
+        </div>
+    </section>
+
+    <section id="fmPanelHistorial" class="fm-panel">
+        <div class="fm-card">
+            <h3>Historial y adjuntos</h3>
+            <div class="fm-muted">Aquí ves los adjuntos activos del día, los recibos GLP por carga y los vouchers de pagos declarados.</div>
+        </div>
+        <div class="fm-card">
+            <h3>Adjuntos del día</h3>
+            <div id="fmAdjuntosOperacion" class="fm-list"></div>
+        </div>
+        <div class="fm-card">
+            <h3>Recibos GLP por carga</h3>
+            <div id="fmAdjuntosCombustible" class="fm-list"></div>
+        </div>
+        <div class="fm-card">
+            <h3>Vouchers del pago seleccionado</h3>
+            <div id="fmAdjuntosPago" class="fm-list"></div>
+        </div>
+    </section>
+</main>
+
+@section Scripts {
+    <script src="~/js/flota/flotaEstacionMobileSecure.js" asp-append-version="true"></script>
+}

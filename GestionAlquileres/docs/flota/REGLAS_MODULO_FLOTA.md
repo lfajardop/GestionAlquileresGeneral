@@ -229,6 +229,18 @@ La pantalla operativa actual permite:
 - `FlotaReciboDetalleViewModel`
 - `FlotaPagoReciboViewModel`
 
+## Regla temporal de tenant
+
+- Actualmente el modulo Flota usa `Empresa=6` y `Est='4'` de forma temporal porque aun no existe login/sesion/contexto tenant.
+- Esta regla solo es valida mientras el sistema opere con una unica empresa/establecimiento controlado.
+- Antes de convertir Flota a uso multitenant real, `Empresa` e `id_est` deben obtenerse desde sesion, claims, usuario autenticado, configuracion tenant o contexto equivalente.
+- Queda prohibido publicar el modulo para multiples empresas mientras `Empresa`/`Est` esten fijos en codigo.
+- Todo metodo nuevo debe recibir empresa/est como variable interna del service, aunque temporalmente salgan de constantes.
+- Si produccion solo corresponde a `Empresa=6` y `Est='4'`, el pase puede hacerse de forma controlada.
+- Si produccion muestra mas empresas o sucursales, existe riesgo y no debe ampliarse el uso sin tenant real.
+- Dejar `TODO` visible en `FlotaService` indicando:
+- `TODO: reemplazar Empresa=6 y Est='4' por tenant real cuando exista login/sesion.`
+
 ## 3. Pendientes por fase
 
 ### Fase 1.1 - Correccion administrativa
@@ -293,3 +305,11 @@ La pantalla operativa actual permite:
 - No usar `GETDATE()` en nuevos scripts del modulo Flota para fechas/hora operativas o auditoria.
 - No consultar ni modificar datos solo por Id interno si tambien corresponde validar `id_empresa` e `id_est`.
 - No usar reglas de memoria del chat si contradicen este archivo.
+
+## Regla de schema Flota
+- Todo objeto nuevo propio del modulo Flota debe crearse en schema `flota`.
+- No crear tablas nuevas en `dbo` para funcionalidades Flota.
+- Solo se permite referenciar catalogos generales existentes como `dbo.formaPago`.
+- Si mas adelante se necesita un catalogo propio de Flota, debe crearse en `flota`.
+- SP nuevos del modulo deben llamarse `flota.p_...`
+- Types nuevos deben crearse en `flota`.
