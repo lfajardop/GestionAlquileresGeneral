@@ -1,0 +1,33 @@
+﻿#mdlPrestamo .select2-container {
+    width: 100% !important;
+}
+
+#mdlPrestamo .select2-container--default .select2-selection--single {
+    height: 38px;
+    border: 1px solid #ced4da;
+    border-radius: .5rem;
+    padding: .375rem .75rem;
+    display: flex;
+    align-items: center;
+}
+
+    #mdlPrestamo .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: normal;
+        padding-left: 0;
+        padding-right: 20px;
+        color: #212529;
+    }
+
+    #mdlPrestamo .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 36px;
+        right: 8px;
+    }
+
+#mdlPrestamo .select2-dropdown {
+    z-index: 2000;
+}
+
+#mdlPrestamo .select2-search--dropdown .select2-search__field {
+    border-radius: .4rem;
+    border: 1px solid #ced4da;
+}

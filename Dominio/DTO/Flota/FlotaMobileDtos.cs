@@ -92,6 +92,15 @@ public class FlotaPagoContratoRegistrarDto
     public string? OperacionReferencia{get;set;}
     public string? Observacion{get;set;}
 }
+public class FlotaPagoContratoEditarMobileDto
+{
+    public int IdPagoContrato{get;set;}
+    public DateTime FechaPago{get;set;}
+    public decimal Importe{get;set;}
+    public int IdFormaPago{get;set;}
+    public string? OperacionReferencia{get;set;}
+    public string? Observacion{get;set;}
+}
 public class FlotaPagoContratoDto
 {
     public int IdPagoContrato{get;set;}

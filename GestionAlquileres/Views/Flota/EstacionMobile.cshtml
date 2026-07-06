@@ -5,7 +5,7 @@
 }
 <form id="flotaMobileToken">@Html.AntiForgeryToken()</form>
 
-<main class="fm-mobile-page fm-page" data-contrato-fijo="@(Model.IdContratoAsignado?.ToString() ?? "")" data-puede-cambiar-contrato="@(Model.PuedeCambiarContrato ? "1" : "0")" data-tab-inicial="@Model.TabInicial">
+<main class="fm-mobile-page fm-page" data-contrato-fijo="@(Model.IdContratoAsignado?.ToString() ?? "")" data-puede-cambiar-contrato="@(Model.PuedeCambiarContrato ? "1" : "0")" data-tab-inicial="@Model.TabInicial" data-fecha-maxima="@Model.FechaOperacionMaxima.ToString("yyyy-MM-dd")">
     <header class="fm-mobile-topbar">
         <div class="fm-brand">
             <span class="fm-brand-dot"></span>
@@ -85,7 +85,7 @@
             <div class="fm-grid">
                 <div class="fm-field">
                     <label for="fmFechaOperacion">Fecha</label>
-                    <input id="fmFechaOperacion" type="date" value="@Model.FechaOperacionInicial.ToString("yyyy-MM-dd")" />
+                    <input id="fmFechaOperacion" type="date" value="@Model.FechaOperacionInicial.ToString("yyyy-MM-dd")" max="@Model.FechaOperacionMaxima.ToString("yyyy-MM-dd")" />
                 </div>
                 <div class="fm-field">
                     <label for="fmKmInicial">Km inicial</label>
@@ -109,7 +109,7 @@
             <div class="fm-grid">
                 <div class="fm-field">
                     <label for="fmFechaFin">Fecha</label>
-                    <input id="fmFechaFin" type="date" value="@Model.FechaOperacionInicial.ToString("yyyy-MM-dd")" />
+                    <input id="fmFechaFin" type="date" value="@Model.FechaOperacionInicial.ToString("yyyy-MM-dd")" max="@Model.FechaOperacionMaxima.ToString("yyyy-MM-dd")" />
                 </div>
                 <div class="fm-field">
                     <label for="fmKmFinal">Km final</label>
@@ -154,7 +154,7 @@
             <div class="fm-grid">
                 <div class="fm-field">
                     <label for="fmCombustibleFecha">Fecha</label>
-                    <input id="fmCombustibleFecha" type="date" value="@Model.FechaOperacionInicial.ToString("yyyy-MM-dd")" />
+                    <input id="fmCombustibleFecha" type="date" value="@Model.FechaOperacionInicial.ToString("yyyy-MM-dd")" max="@Model.FechaOperacionMaxima.ToString("yyyy-MM-dd")" />
                 </div>
                 <div class="fm-field">
                     <label for="fmCombustibleGalones">Galones</label>
@@ -219,7 +219,7 @@
             <div class="fm-grid">
                 <div class="fm-field">
                     <label for="fmFechaPago">Fecha pago</label>
-                    <input id="fmFechaPago" type="date" value="@Model.FechaOperacionInicial.ToString("yyyy-MM-dd")" />
+                    <input id="fmFechaPago" type="date" value="@Model.FechaOperacionInicial.ToString("yyyy-MM-dd")" max="@Model.FechaOperacionMaxima.ToString("yyyy-MM-dd")" />
                 </div>
                 <div class="fm-field">
                     <label for="fmImportePago">Importe</label>
@@ -297,6 +297,51 @@
         <button type="button" class="fm-tab" data-tab="historial"><i class="bi bi-clock-history"></i><span>Historial</span></button>
     </nav>
 </main>
+
+<div id="fmEditPagoModal" class="fm-modal" aria-hidden="true">
+    <div class="fm-modal-box">
+        <div class="fm-modal-header">
+            <div>
+                <small>PAGO DECLARADO</small>
+                <h3>Editar pago pendiente</h3>
+            </div>
+            <button id="fmCloseEditPago" type="button" class="fm-modal-close" aria-label="Cerrar">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <form id="fmEditPagoForm" class="fm-modal-body">
+            <input id="fmEditPagoId" type="hidden" />
+            <div class="fm-grid">
+                <div class="fm-field">
+                    <label for="fmEditFechaPago">Fecha pago</label>
+                    <input id="fmEditFechaPago" type="date" max="@Model.FechaOperacionMaxima.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="fm-field">
+                    <label for="fmEditImportePago">Importe</label>
+                    <input id="fmEditImportePago" type="number" step="0.01" inputmode="decimal" />
+                </div>
+                <div class="fm-field">
+                    <label for="fmEditFormaPago">Forma de pago</label>
+                    <select id="fmEditFormaPago">
+                        <option value="">Selecciona...</option>
+                    </select>
+                </div>
+                <div class="fm-field">
+                    <label for="fmEditReferenciaPago">Referencia</label>
+                    <input id="fmEditReferenciaPago" type="text" />
+                </div>
+                <div class="fm-field">
+                    <label for="fmEditObservacionPago">Observacion</label>
+                    <textarea id="fmEditObservacionPago" placeholder="Opcional"></textarea>
+                </div>
+            </div>
+            <div class="fm-help">El voucher existente se conserva. Si necesitas nueva evidencia, sube otro adjunto despues de guardar.</div>
+            <div class="fm-sticky">
+                <button id="fmGuardarEdicionPago" type="submit" class="fm-btn fm-btn-primary">Guardar cambios</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 @section Scripts {
     <script src="~/js/flota/flotaEstacionMobileSecure.js" asp-append-version="true"></script>

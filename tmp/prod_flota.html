@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Alquiler de vehiculos - SGA</title>
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Select2 -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+    <!-- DataTables -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css" />
+
+    <!-- CSS propio -->
+    <link href="/css/layout/layout.css" rel="stylesheet" />
+</head>
+
+<body>
+
+    <div class="app-container">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <div class="logo">DSI</div>
+
+            <ul class="menu">
+
+                <li>
+                    <a href="/">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/Incidencias/VerDocumento">
+                        <i class="bi bi-file-earmark-text"></i> Incidencias
+                    </a>
+                </li>
+
+                <li class="menu-title">Mantenimientos</li>
+
+                <li><a href="/PerfilUsuario"><i class="bi bi-person-badge"></i> Perfiles</a></li>
+                <li><a href="/Operario"><i class="bi bi-gear"></i> Operarios</a></li>
+                <li><a href="/Corporacion"><i class="bi bi-building"></i> Corporaciones</a></li>
+                <li><a href="/Usuario"><i class="bi bi-person"></i> Usuarios</a></li>
+                <li><a href="/UsuarioCorporacionEmision"><i class="bi bi-diagram-3"></i> Usuario Corp</a></li>
+
+                <li class="menu-title">Clientes</li>
+
+                <li>
+                    <a href="/Cliente">
+                        <i class="bi bi-people"></i> Clientes
+                    </a>
+                </li>
+
+                <li class="menu-title">Préstamos</li>
+
+                <li>
+                    <a href="/Prestamo">
+                        <i class="bi bi-journal-text"></i> Préstamos
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/Prestamo/CuentaCorriente">
+                        <i class="bi bi-card-list"></i> Cuenta corriente
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/Prestamo/PagoGlobal">
+                        <i class="bi bi-cash-coin"></i> Pago global
+                    </a>
+                </li>
+
+                  <li>
+                     <a href="/Prestamo/Continuacion">
+                         <i class="bi bi-calendar-plus"></i> Continuación
+                      </a>
+                  </li>
+
+                  <li>
+                     <a href="/Refinanciamiento">
+                         <i class="bi bi-intersect"></i> Refinanciación
+                      </a>
+                  </li>
+
+                  <li>
+                     <a href="/Compensacion">
+                         <i class="bi bi-arrow-left-right"></i> Compensaciones
+                      </a>
+                  </li>
+
+                <li class="menu-title">Alquileres</li>
+                <li>
+                    <a href="/Flota">
+                        <i class="bi bi-car-front"></i> Vehiculos y alquileres
+                    </a>
+                </li>
+                <li>
+                    <a href="/Flota/AdminCalendario">
+                        <i class="bi bi-calendar3"></i> Calendario y recibos
+                    </a>
+                </li>
+
+                <li class="menu-title">Reportes</li>
+
+                <li>
+                    <a href="/Reporte/DeudaActual">
+                        <i class="bi bi-bar-chart-line"></i> Deuda actual
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/Reporte/EstadoCuentaCliente">
+                        <i class="bi bi-file-earmark-person"></i> Estado de cuenta
+                    </a>
+                </li>
+
+                <li class="menu-title">Caja personal</li>
+
+                <li>
+                    <a href="/YapeImportacion">
+                        <i class="bi bi-phone"></i> Importar Yape
+                    </a>
+                </li>
+
+            </ul>
+        </aside>
+
+        <!-- MAIN -->
+        <div class="main-content">
+
+            <!-- TOPBAR -->
+            <header class="topbar">
+
+                <button id="toggleSidebar" class="btn btn-light">
+                    <i class="bi bi-list"></i>
+                </button>
+
+                <div class="topbar-right">
+                    <span class="me-2">Usuario</span>
+                    <i class="bi bi-person-circle"></i>
+                </div>
+
+            </header>
+
+            <!-- CONTENT -->
+            <main class="content container-fluid">
+                <link href="/css/flota/flota.css?v=DMzFy7BLkHKTZzyeT2PLaa057cqEUEpJNgNu1_2YQUc" rel="stylesheet" />
+<form id="flotaToken"><input name="__RequestVerificationToken" type="hidden" value="CfDJ8I1_IKc5zhBAjwPKXzyU5kA5TnVM2Ji1QYvAHMsmNGy4KmJUqgQB885_Pj_87-q9A3Y8WTivCR8bHlwnZyonAxCh99VtsKKoyLXgGuSJRv0zvo8s3wNaZun1S5z6ttSo5E4Kh5yJFLWY_YwenNIZaNY" /></form>
+<main class="fleet-page">
+ <header class="fleet-head"><div><span>OPERACION DE FLOTA</span><h2>Alquiler de vehiculos</h2><p>Control diario, deuda y combustible en una sola estacion.</p></div><input id="fFecha" type="date" /></header>
+ <nav class="fleet-tabs"><button class="active" data-panel="pOperacion"><i class="bi bi-grid-1x2"></i> Operacion diaria</button><button data-panel="pContrato"><i class="bi bi-file-earmark-text"></i> Nuevo contrato</button><button data-panel="pMaestros"><i class="bi bi-car-front"></i> Maestros</button></nav>
+ <section id="pOperacion" class="fleet-panel active">
+  <div class="fleet-metrics"><article><span>Contratos activos</span><strong id="mContratos">0</strong></article><article><span>Generado</span><strong id="mGenerado">S/.0.00</strong></article><article><span>Kilometros</span><strong id="mKm">0 km</strong></article><article><span>Balance GLP</span><strong id="mGlp">S/.0.00</strong></article></div>
+  <div class="station-layout"><aside><div class="section-title"><h5>Vehiculos activos</h5><small>Selecciona uno para cerrar el dia</small></div><div id="fleetCards" class="fleet-cards"></div></aside>
+   <section id="dailyForm" class="daily-card empty"><div class="daily-empty"><i class="bi bi-car-front-fill"></i><strong>Selecciona un vehiculo</strong><span>Veras su conductor, tarifa y registro del dia.</span></div>
+    <div class="daily-content"><div class="daily-selected"><div><small id="dNumero">-</small><h3 id="dPlaca">-</h3><span id="dChofer">-</span></div><div><span id="dModalidad" class="mode-badge">-</span><strong id="dTarifa">S/.0.00</strong></div></div>
+     <div class="work-choice"><button type="button" data-work="true" class="worked"><i class="bi bi-check-circle-fill"></i><span>Si trabajo<small>Generar cobro del dia</small></span></button><button type="button" data-work="false" class="not-worked"><i class="bi bi-x-circle-fill"></i><span>No trabajo<small>Registrar el motivo</small></span></button></div>
+     <div class="form-grid"><label>Motivo<select id="dMotivo"></select></label><label class="km-field">Km inicial<input id="dKmIni" type="number" step="0.01" /></label><label class="km-field">Km final<input id="dKmFin" type="number" step="0.01" /></label><label>Combustible S/.<input id="dCombustible" type="number" step="0.01" value="0" /></label><label>Galones<input id="dGalones" type="number" step="0.001" value="0" /></label><label>Pagado por<select id="dPaga"><option value="">Sin carga</option><option value="C">Conductor</option><option value="P">Propietario</option></select></label></div>
+     <label class="obs">Observacion<textarea id="dObs" rows="2"></textarea></label><button id="btnGuardarDia" class="primary-action"><i class="bi bi-check2-square"></i> Guardar cierre del dia</button>
+    </div></section>
+  </div>
+ </section>
+ <section id="pContrato" class="fleet-panel"><div class="form-shell"><div class="section-title"><h5>Crear contrato de alquiler</h5><small>Diario o puerta libre, preparado para control de kilometraje.</small></div><div class="form-grid contract-grid"><label>Vehiculo<select id="cVehiculo"></select></label><label>Conductor<select id="cChofer"></select></label><label>Modalidad<select id="cModalidad"></select></label><label>Periodicidad del recibo<select id="cPeriodicidad"><option value="S">Semanal</option><option value="Q">Quincenal</option><option value="M">Mensual</option></select></label><label>Fecha inicio<input id="cInicio" type="date" /></label><label>Fecha fin<input id="cFin" type="date" /></label><label>Tarifa diaria<input id="cTarifa" type="number" step="0.01" /></label></div><div class="toggles"><label><input id="cDomingo" type="checkbox" /> Cobrar domingos</label><label><input id="cKm" type="checkbox" /> Controlar kilometraje y GLP</label></div><label class="obs">Observacion<textarea id="cObs" rows="2"></textarea></label><button id="btnContrato" class="primary-action"><i class="bi bi-file-earmark-plus"></i> Crear contrato</button></div></section>
+ <section id="pMaestros" class="fleet-panel"><div class="masters-grid"><div class="form-shell"><div class="section-title"><h5>Nuevo vehiculo</h5><small>Configura GLP solo cuando corresponda.</small></div><div class="form-grid"><label>Placa<input id="vPlaca" /></label><label>Marca<input id="vMarca" /></label><label>Modelo<input id="vModelo" /></label><label>Año<input id="vAnio" type="number" /></label><label>Galones tanque<input id="vGalones" type="number" step="0.001" value="11.641" /></label><label>Precio por galon<input id="vPrecio" type="number" step="0.01" value="6.50" /></label><label>Rendimiento tanque (km)<input id="vRendimiento" type="number" step="0.01" value="210" /></label></div><label class="toggle-line"><input id="vCompartido" type="checkbox" checked /> Vehiculo personal compartido</label><button id="btnVehiculo" class="secondary-action"><i class="bi bi-plus-circle"></i> Registrar vehiculo</button></div>
+ <div class="form-shell"><div class="section-title"><h5>Nuevo conductor</h5><small>Datos operativos para contrato y reportes.</small></div><div class="form-grid"><label>Nombres<input id="chNombre" /></label><label>Documento<input id="chDocumento" /></label><label>Telefono<input id="chTelefono" /></label><label>Licencia<input id="chLicencia" /></label></div><button id="btnChofer" class="secondary-action"><i class="bi bi-person-plus"></i> Registrar conductor</button></div></div></section>
+</main>
+
+            </main>
+
+        </div>
+
+    </div>
+
+    <!-- JS BASE -->
+    <script src="/lib/jquery/dist/jquery.min.js"></script>
+    <script src="/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Plugins -->
+    <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- JS propio -->
+    <script src="/js/site.js?v=hRQyftXiu1lLX2P9Ly9xa4gHJgLeR1uGN5qegUobtGo"></script>
+    <script src="/js/shared/webApp.js?v=9GDIiqfrOQJkoBwzGDN-hlC2XSGxUZEi2J5UbPkhdF4"></script>
+
+    <!-- Toggle Sidebar -->
+    <script>
+        $("#toggleSidebar").click(function () {
+            $("#sidebar").toggleClass("collapsed");
+        });
+    </script>
+
+    <!-- TOAST -->
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+        <div id="appToast" class="toast align-items-center text-bg-primary border-0"
+             role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body" id="appToastBody">...</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                        data-bs-dismiss="toast" aria-label="Cerrar"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SPINNER -->
+    <div id="appSpinner" class="app-spinner d-none" aria-hidden="true">
+        <div class="app-spinner__backdrop"></div>
+        <div class="app-spinner__box" role="status" aria-live="polite">
+            <div class="spinner-border" role="status"></div>
+            <div class="app-spinner__text">Procesando...</div>
+        </div>
+    </div>
+
+    <script src="/js/flota/flotaEstacion.js?v=D0DeMMC8oHYihlK_85kTrHJhrXl79cvDcINWIbknw5k"></script>
+
+</body>
+</html>

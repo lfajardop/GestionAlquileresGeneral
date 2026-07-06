@@ -3,6 +3,7 @@ public class FlotaEstacionMobileViewModel
 {
     public string TituloPantalla{get;set;}="Estacion mobile Flota";
     public DateTime FechaOperacionInicial{get;set;}
+    public DateTime FechaOperacionMaxima{get;set;}
     public string ExtensionesPermitidas{get;set;}=".jpg, .jpeg, .png, .webp, .pdf";
     public int MaxUploadMb{get;set;}=5;
     public string TodoSeguridad{get;set;}="TODO: no exponer esta pantalla sin login, PIN o token real.";

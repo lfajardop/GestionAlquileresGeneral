@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Ingreso mobile Flota - Flota Mobile</title>
+    <link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/site.css?v=pAGv4ietcJNk_EwsQZ5BN9-K4MuNYS2a9wl4Jw-q9D0" />
+    <link rel="stylesheet" href="/css/flota/flotaMobile.css?v=ERYmk-l8I0Xxm66PVf5_vJbWOq6s9kowLHOOjfhVMwc" />
+</head>
+<body class="fm-shell">
+    <form id="flotaMobileLoginToken"><input name="__RequestVerificationToken" type="hidden" value="CfDJ8I1_IKc5zhBAjwPKXzyU5kD45Vlk8WVx75XHUtecto1p3Imwb5sa2ztvDudG8Ek4mFhGyeMrL7uRVjYGeJSDdZ9ZvWg-a7jzVnkz6RhESgMZ62crdZXIjX2TkGGooHE8rrDlFOr71R3FNfBvlx4-kyU" /></form>
+
+<main class="fml-page">
+    <header class="fml-topbar">
+        <div class="fml-brand">
+            <span class="fml-brand-dot"></span>
+            <span>Flota Mobile</span>
+        </div>
+        <div class="fml-status">Acceso seguro</div>
+    </header>
+
+    <section class="fml-hero fm-panel-card">
+        <small>Acceso mobile temporal</small>
+        <strong>Ingreso mobile Flota</strong>
+        <div class="fml-note">Acceso temporal. No compartas tu clave o PIN.</div>
+    </section>
+
+    <section class="fml-box">
+        <div id="fmlFeedback" class="fml-feedback error" role="alert"></div>
+        <div class="fml-field">
+            <label for="fmlTelefono">Telefono</label>
+            <input id="fmlTelefono" type="tel" inputmode="tel" autocomplete="username" value="" />
+        </div>
+        <div class="fml-field">
+            <label for="fmlPin">PIN o contrasena temporal</label>
+            <input id="fmlPin" type="password" inputmode="numeric" autocomplete="current-password" />
+        </div>
+        <div class="fm-login-actions">
+            <button id="fmlIngresar" type="button" class="fml-btn">Ingresar</button>
+        </div>
+        <div class="fml-note">La sesion se mantiene por 30 dias en este dispositivo, salvo cierre manual o borrado de cookies.</div>
+    </section>
+</main>
+
+
+
+    <script src="/lib/jquery/dist/jquery.min.js"></script>
+    <script src="/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="/js/site.js?v=hRQyftXiu1lLX2P9Ly9xa4gHJgLeR1uGN5qegUobtGo"></script>
+    
+    <script src="/js/flota/flotaMobileLogin.js?v=EasatZa4l2TwoqrlgB6GqNoSiQClGD7P5yTIpsx7hzI"></script>
+
+</body>
+</html>
