@@ -32,6 +32,13 @@
 
     <div id="fmFeedback" class="fm-feedback" role="alert"></div>
 
+    @if (!string.IsNullOrWhiteSpace(Model.MensajeContrato))
+    {
+        <section class="fm-card">
+            <div class="fm-help">@Model.MensajeContrato</div>
+        </section>
+    }
+
     <section class="fm-card">
         <h3>Contrato asignado</h3>
         @if (Model.PuedeCambiarContrato)
@@ -45,7 +52,7 @@
         }
         else
         {
-            <div class="fm-lock">Tu sesion mobile esta asignada a un solo contrato. No puedes cambiarlo desde esta pantalla.</div>
+            <div class="fm-lock">@(Model.PuedeOperar ? "Tu sesion mobile esta asignada a un solo contrato. No puedes cambiarlo desde esta pantalla." : "Tu sesion mobile todavia no tiene contrato fijo asignado.")</div>
             <select id="fmContrato" hidden>
                 <option value="">Contrato fijo</option>
             </select>

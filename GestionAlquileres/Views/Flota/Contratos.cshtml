@@ -1,0 +1,215 @@
+@model GestionAlquileres.ViewModels.Flota.FlotaContratosViewModel
+@{
+    ViewData["Title"] = Model.Titulo;
+    Layout = "~/Views/Shared/_LayoutGAP.cshtml";
+}
+<link href="~/css/flota/flota.css" rel="stylesheet" asp-append-version="true" />
+
+<form id="flotaContratosToken">@Html.AntiForgeryToken()</form>
+
+<main class="fleet-admin-page">
+    <header class="fleet-admin-head">
+        <div>
+            <span class="fleet-admin-head__eyebrow">Flota · Fase 1 urgente</span>
+            <h1>@Model.Titulo</h1>
+            <p>Gestiona contratos reales del piloto sin borrar historial. Desde aquí podemos listar, crear y cerrar contratos activos, reutilizando el alta rápida de chofer y vehículo solo cuando haga falta.</p>
+        </div>
+        <div class="fleet-admin-actions">
+            <a class="fleet-soft-btn" href="@Url.Action("AdminCalendario","Flota")">Ver calendario y recibos</a>
+            <a class="fleet-soft-btn" href="@Url.Action("Index","Flota")">Estación temporal</a>
+        </div>
+    </header>
+
+    <section class="fleet-admin-layout">
+        <div class="fleet-stack">
+            <article class="fleet-panel-card">
+                <div class="fleet-panel-card__head">
+                    <div>
+                        <h2>Listado de contratos</h2>
+                        <p>Mostramos solo lo necesario para operar hoy: contrato, chofer, placa, modalidad, periodicidad, estado y saldo.</p>
+                    </div>
+                    <button id="btnRecargarContratos" type="button" class="fleet-btn fleet-btn-soft">
+                        <i class="bi bi-arrow-clockwise"></i> Recargar
+                    </button>
+                </div>
+                <div class="fleet-panel-card__body">
+                    <div class="fleet-kpi">
+                        <article><span>Activos</span><strong id="kpiContratosActivos">0</strong></article>
+                        <article><span>Cerrados</span><strong id="kpiContratosCerrados">0</strong></article>
+                        <article><span>Saldo total</span><strong id="kpiSaldoContratos">S/.0.00</strong></article>
+                    </div>
+
+                    <div class="fleet-table-wrap mt-3">
+                        <table class="fleet-table">
+                            <thead>
+                                <tr>
+                                    <th>Contrato</th>
+                                    <th>Chofer</th>
+                                    <th>Placa</th>
+                                    <th>Tipo</th>
+                                    <th>Periodo</th>
+                                    <th>Tarifa</th>
+                                    <th>Estado</th>
+                                    <th>Saldo</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="contratosRows">
+                                <tr><td colspan="9" class="fleet-empty">Cargando contratos...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </article>
+
+            <article class="fleet-panel-card">
+                <div class="fleet-panel-card__head">
+                    <div>
+                        <h2>Detalle y cierre controlado</h2>
+                        <p>El cierre no borra nada. Solo marca el contrato como cerrado, fija la fecha fin y conserva la observación histórica.</p>
+                    </div>
+                </div>
+                <div class="fleet-panel-card__body">
+                    <div id="contratoDetalleVacio" class="fleet-empty">Selecciona un contrato del listado para revisar sus datos y decidir si corresponde cerrarlo.</div>
+
+                    <div id="contratoDetallePanel" class="fleet-stack fleet-hidden">
+                        <div class="fleet-detail-list">
+                            <article class="fleet-detail-item"><span>Número</span><strong id="detalleNumero">-</strong></article>
+                            <article class="fleet-detail-item"><span>Estado</span><strong id="detalleEstado">-</strong></article>
+                            <article class="fleet-detail-item"><span>Chofer</span><strong id="detalleChofer">-</strong></article>
+                            <article class="fleet-detail-item"><span>Placa</span><strong id="detallePlaca">-</strong></article>
+                            <article class="fleet-detail-item"><span>Modalidad</span><strong id="detalleModalidad">-</strong></article>
+                            <article class="fleet-detail-item"><span>Periodicidad</span><strong id="detallePeriodicidad">-</strong></article>
+                            <article class="fleet-detail-item"><span>Inicio</span><strong id="detalleFechaInicio">-</strong></article>
+                            <article class="fleet-detail-item"><span>Fin</span><strong id="detalleFechaFin">-</strong></article>
+                            <article class="fleet-detail-item"><span>Tarifa diaria</span><strong id="detalleTarifa">-</strong></article>
+                            <article class="fleet-detail-item"><span>Observación</span><strong id="detalleObservacion">-</strong></article>
+                        </div>
+
+                        <div class="fleet-note">
+                            Si el contrato sigue activo y el vehículo necesita un nuevo contrato, primero lo cerramos aquí. Esto deja trazabilidad básica sin tocar recibos ni pagos ya registrados.
+                        </div>
+
+                        <form id="formFinalizarContrato" class="fleet-inline-form">
+                            <div class="fleet-inline-form__grid">
+                                <label>
+                                    Fecha fin
+                                    <input id="finalizarFechaFin" type="date" />
+                                </label>
+                                <label>
+                                    Motivo de cierre
+                                    <select id="finalizarMotivo">
+                                        <option value="">Seleccione...</option>
+                                        <option value="FN">Fin natural</option>
+                                        <option value="CM">Cambio de modalidad</option>
+                                        <option value="RV">Relevo de vehículo</option>
+                                        <option value="OT">Otro controlado</option>
+                                    </select>
+                                </label>
+                            </div>
+                            <label>
+                                Observación
+                                <textarea id="finalizarObservacion" rows="3" placeholder="Detalle breve del cierre administrativo."></textarea>
+                            </label>
+                            <button id="btnFinalizarContrato" type="submit" class="fleet-btn fleet-btn-danger">
+                                <i class="bi bi-lock"></i> Cerrar contrato activo
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </article>
+        </div>
+
+        <aside class="fleet-stack">
+            <article class="fleet-panel-card">
+                <div class="fleet-panel-card__head">
+                    <div>
+                        <h2>Nuevo contrato</h2>
+                        <p>Para alquiler diario, la periodicidad queda en <strong>D = Diario</strong> por defecto.</p>
+                    </div>
+                </div>
+                <div class="fleet-panel-card__body">
+                    <form id="formCrearContrato" class="fleet-inline-form">
+                        <div class="fleet-inline-form__grid">
+                            <label>
+                                Vehículo
+                                <select id="contratoVehiculo"></select>
+                            </label>
+                            <label>
+                                Chofer
+                                <select id="contratoChofer"></select>
+                            </label>
+                            <label>
+                                Modalidad
+                                <select id="contratoModalidad"></select>
+                            </label>
+                            <label>
+                                Periodicidad
+                                <select id="contratoPeriodicidad">
+                                    <option value="D">Diaria</option>
+                                    <option value="S">Semanal</option>
+                                    <option value="Q">Quincenal</option>
+                                    <option value="M">Mensual</option>
+                                </select>
+                            </label>
+                            <label>
+                                Fecha inicio
+                                <input id="contratoFechaInicio" type="date" />
+                            </label>
+                            <label>
+                                Fecha fin
+                                <input id="contratoFechaFin" type="date" />
+                            </label>
+                            <label>
+                                Tarifa diaria
+                                <input id="contratoTarifa" type="number" step="0.01" min="0" />
+                            </label>
+                        </div>
+                        <div class="toggles">
+                            <label><input id="contratoCobraDomingo" type="checkbox" /> Cobrar domingos</label>
+                            <label><input id="contratoControlKm" type="checkbox" /> Controlar kilometraje</label>
+                        </div>
+                        <label>
+                            Observación
+                            <textarea id="contratoObservacion" rows="3"></textarea>
+                        </label>
+                        <button type="submit" class="fleet-btn fleet-btn-primary">
+                            <i class="bi bi-file-earmark-plus"></i> Crear contrato
+                        </button>
+                    </form>
+                </div>
+            </article>
+
+            <article class="fleet-panel-card">
+                <div class="fleet-panel-card__head">
+                    <div>
+                        <h2>Alta rápida</h2>
+                        <p>Solo apoyo mínimo para piloto. No reemplaza mantenimientos formales.</p>
+                    </div>
+                </div>
+                <div class="fleet-panel-card__body fleet-stack">
+                    <div class="fleet-quick-grid">
+                        <form id="formCrearVehiculoRapido" class="fleet-inline-form">
+                            <label>Placa<input id="vehiculoPlacaRapido" /></label>
+                            <label>Marca<input id="vehiculoMarcaRapido" /></label>
+                            <label>Modelo<input id="vehiculoModeloRapido" /></label>
+                            <button type="submit" class="fleet-btn fleet-btn-soft"><i class="bi bi-car-front"></i> Crear vehículo</button>
+                        </form>
+
+                        <form id="formCrearChoferRapido" class="fleet-inline-form">
+                            <label>Nombres<input id="choferNombreRapido" /></label>
+                            <label>Documento<input id="choferDocumentoRapido" /></label>
+                            <label>Teléfono<input id="choferTelefonoRapido" /></label>
+                            <button type="submit" class="fleet-btn fleet-btn-soft"><i class="bi bi-person-plus"></i> Crear chofer</button>
+                        </form>
+                    </div>
+                    <div class="fleet-note">Si el vehículo o el chofer ya existen, usa los selectores superiores y evita duplicados.</div>
+                </div>
+            </article>
+        </aside>
+    </section>
+</main>
+
+@section Scripts{
+    <script src="~/js/flota/flotaContratos.js" asp-append-version="true"></script>
+}

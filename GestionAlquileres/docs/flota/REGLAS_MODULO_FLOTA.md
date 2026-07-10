@@ -178,6 +178,9 @@ La pantalla operativa actual permite:
 - El admin debe poder editar/anular pagos con motivo.
 - El sistema debe recalcular saldos luego de editar o anular pagos.
 - El sistema debe evitar que un mismo dia este en dos recibos activos del mismo contrato.
+- El motivo del dia debe salir del maestro `flota.motivo_dia`.
+- El motivo del dia no debe capturarse como texto libre.
+- La observacion del dia si puede ser texto libre complementario.
 - La validacion de pago se mantiene con `FlgValidado = S/N`.
 - En esta fase se permite cambiar la validacion en ambos sentidos: `N -> S` y `S -> N`.
 - Todo cambio de validacion de pago requiere motivo obligatorio y auditoria.
@@ -194,6 +197,13 @@ La pantalla operativa actual permite:
 - Toda operacion del modulo Flota debe respetar multitenant: filtrar y validar siempre por `id_empresa` e `id_est`.
 - Ningun procedimiento debe modificar recibos, pagos, dias, contratos o auditoria sin validar `id_empresa` e `id_est`.
 - No permitir que una correccion deje un recibo con saldo negativo o total menor que lo ya pagado, salvo ajuste administrativo explicito con motivo.
+- Un dia operativo futuro soportara de `1 a N` intervalos activos.
+- Las horas acumuladas futuras se calcularan sumando intervalos activos del dia operativo.
+- Si las horas acumuladas superan `12 horas`, debe mostrarse alerta de dia adicional cobrable.
+- No generar recibo automatico todavia por exceso de horas sin confirmacion administrativa.
+- La deuda global por chofer debe sumar varios contratos del mismo chofer.
+- La deuda real por recibos debe mostrarse separada de los pagos declarados `PagoContrato` no aplicados.
+- El pago global por chofer queda solo disenado por ahora; no debe aplicarse todavia a recibos hasta validar su integracion con `PagoReciboAlquiler`.
 
 ## Regla de transacciones en procedimientos almacenados
 

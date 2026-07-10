@@ -1,0 +1,95 @@
+@model GestionAlquileres.ViewModels.Flota.FlotaDeudaChoferesViewModel
+@{
+    ViewData["Title"] = Model.Titulo;
+    Layout = "~/Views/Shared/_LayoutGAP.cshtml";
+}
+<link href="~/css/flota/flota.css" rel="stylesheet" asp-append-version="true" />
+
+<main class="fleet-admin-page">
+    <header class="fleet-admin-head">
+        <div>
+            <span class="fleet-admin-head__eyebrow">Flota · deuda consolidada</span>
+            <h1>@Model.Titulo</h1>
+            <p>Vista de consulta para revisar la deuda real por chofer sumando varios contratos. Los pagos declarados se muestran aparte y no descuentan todavía el saldo real de recibos.</p>
+        </div>
+        <div class="fleet-admin-actions">
+            <a class="fleet-soft-btn" href="@Url.Action("Contratos","Flota")">Ver contratos</a>
+            <a class="fleet-soft-btn" href="@Url.Action("UsuariosMobile","Flota")">Ver usuarios mobile</a>
+        </div>
+    </header>
+
+    <section class="fleet-admin-layout">
+        <div class="fleet-stack">
+            <article class="fleet-panel-card">
+                <div class="fleet-panel-card__head">
+                    <div>
+                        <h2>Resumen por chofer</h2>
+                        <p>Solo consulta. No hay botón de pago global en esta etapa.</p>
+                    </div>
+                    <button id="btnRecargarDeudaChoferes" type="button" class="fleet-btn fleet-btn-soft">
+                        <i class="bi bi-arrow-clockwise"></i> Recargar
+                    </button>
+                </div>
+                <div class="fleet-panel-card__body">
+                    <div class="fleet-kpi">
+                        <article><span>Choferes</span><strong id="kpiChoferes">0</strong></article>
+                        <article><span>Saldo real recibos</span><strong id="kpiSaldoReal">S/.0.00</strong></article>
+                        <article><span>Pago declarado pendiente</span><strong id="kpiPagoPendiente">S/.0.00</strong></article>
+                        <article><span>Pago validado no aplicado</span><strong id="kpiPagoValidado">S/.0.00</strong></article>
+                    </div>
+
+                    <div class="fleet-table-wrap mt-3">
+                        <table class="fleet-table">
+                            <thead>
+                                <tr>
+                                    <th>Chofer</th>
+                                    <th>Documento</th>
+                                    <th>Teléfono</th>
+                                    <th>Contratos</th>
+                                    <th>Generado</th>
+                                    <th>Pagado</th>
+                                    <th>Saldo recibos</th>
+                                    <th>Pago pendiente</th>
+                                    <th>Validado no aplicado</th>
+                                    <th>Última deuda</th>
+                                </tr>
+                            </thead>
+                            <tbody id="deudaChoferesRows">
+                                <tr><td colspan="10" class="fleet-empty">Cargando deuda global de choferes...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </article>
+        </div>
+
+        <aside class="fleet-stack">
+            <article class="fleet-panel-card">
+                <div class="fleet-panel-card__head">
+                    <div>
+                        <h2>Regla vigente</h2>
+                        <p>Separación obligatoria entre deuda real y pagos declarados.</p>
+                    </div>
+                </div>
+                <div class="fleet-panel-card__body fleet-stack">
+                    <div class="fleet-note">
+                        <strong>Saldo recibos</strong>: deuda real emitida en <code>ReciboAlquiler</code>.
+                    </div>
+                    <div class="fleet-note">
+                        <strong>Pago declarado pendiente</strong>: registrado por mobile, aún no validado.
+                    </div>
+                    <div class="fleet-note">
+                        <strong>Pago validado no aplicado</strong>: ya validado, pero todavía no descuenta recibos.
+                    </div>
+                    <div class="fleet-note">
+                        Esta pantalla no permite pagar, aplicar ni anular nada. Solo ayuda a revisar el estado operativo real.
+                    </div>
+                </div>
+            </article>
+        </aside>
+    </section>
+</main>
+
+@section Scripts{
+    <script src="~/js/flota/flotaDeudaChoferes.js" asp-append-version="true"></script>
+}

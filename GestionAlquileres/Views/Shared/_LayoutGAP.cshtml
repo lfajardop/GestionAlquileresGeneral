@@ -99,15 +99,64 @@
                   </li>
 
                 <li class="menu-title">Alquileres</li>
-                <li>
-                    <a asp-controller="Flota" asp-action="Index">
-                        <i class="bi bi-car-front"></i> Vehiculos y alquileres
-                    </a>
-                </li>
-                <li>
-                    <a asp-controller="Flota" asp-action="AdminCalendario">
-                        <i class="bi bi-calendar3"></i> Calendario y recibos
-                    </a>
+                <li class="menu-group">
+                    <details open>
+                        <summary>
+                            <span class="menu-group__label"><i class="bi bi-truck-front"></i> Flota</span>
+                            <i class="bi bi-chevron-down menu-group__icon"></i>
+                        </summary>
+                        <ul class="submenu">
+                            <li class="submenu-title">Panel principal</li>
+                            <li>
+                                <a asp-controller="Flota" asp-action="Index">
+                                    <i class="bi bi-speedometer2"></i> Dashboard Flota
+                                </a>
+                            </li>
+
+                            <li class="submenu-title">Maestros</li>
+                            <li>
+                                <a asp-controller="Flota" asp-action="Contratos">
+                                    <i class="bi bi-file-earmark-text"></i> Contratos
+                                </a>
+                            </li>
+                            <li>
+                                <a asp-controller="Flota" asp-action="UsuariosMobile">
+                                    <i class="bi bi-phone"></i> Usuarios Mobile
+                                </a>
+                            </li>
+                            @* TODO: Habilitar /Flota/Vehiculos cuando exista la pantalla. *@
+                            @* TODO: Habilitar /Flota/Choferes cuando exista la pantalla. *@
+
+                            <li class="submenu-title">Operación</li>
+                            <li>
+                                <a asp-controller="Flota" asp-action="AdminCalendario">
+                                    <i class="bi bi-calendar3"></i> Calendario Admin
+                                </a>
+                            </li>
+                            <li>
+                                <a asp-controller="Flota" asp-action="EstacionMobile">
+                                    <i class="bi bi-phone-landscape"></i> Estación Mobile
+                                </a>
+                            </li>
+                            <li>
+                                <a asp-controller="Flota" asp-action="MobileLogin">
+                                    <i class="bi bi-shield-lock"></i> Login Mobile
+                                </a>
+                            </li>
+
+                            <li class="submenu-title">Finanzas Flota</li>
+                            <li>
+                                <a asp-controller="Flota" asp-action="DeudaChoferes">
+                                    <i class="bi bi-cash-stack"></i> Deuda Choferes
+                                </a>
+                            </li>
+                            @* TODO: Habilitar /Flota/AdminPagoContrato cuando exista la pantalla. *@
+                            @* TODO: Habilitar /Flota/PagosGlobalesChofer cuando exista la pantalla. *@
+
+                            @* TODO: Habilitar /Flota/UsoPropietario cuando exista la pantalla. *@
+                            @* TODO: Habilitar /Flota/Reportes cuando exista la pantalla. *@
+                        </ul>
+                    </details>
                 </li>
 
                 <li class="menu-title">Reportes</li>

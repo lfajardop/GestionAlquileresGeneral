@@ -21,6 +21,7 @@
 | 20260707B_flota_combustible_operacion_PROD.sql | OK | `Logs\MobileProduccion_20260705\20260707B_flota_combustible_operacion_PROD.log` | ExitCode 0. Confirma tabla y SP de combustible creados. |
 | 20260707C_flota_operacion_dia_horas_PROD.sql | OK | `Logs\MobileProduccion_20260705\20260707C_flota_operacion_dia_horas_PROD.log` | ExitCode 0. El precheck post-scripts confirma FechaHoraInicio/FechaHoraFin. |
 | 20260707D_flota_pagocontrato_edicion_mobile_PROD.sql | OK | `Logs\MobileProduccion_20260705\20260707D_flota_pagocontrato_edicion_mobile_PROD.log` | ExitCode 0. El precheck post-scripts confirma SP y columnas de modificacion. |
+| 20260706_URGENTE_flota_usuario_mobile_crud_PROD.sql | OK | `Logs\MobileProduccion_20260705\20260706_URGENTE_flota_usuario_mobile_crud_PROD.log` | ExitCode 0. SP admin UsuarioMobile creados/actualizados. `ListarAdmin` ejecuta sin error y hoy devuelve 0 filas porque aun no existen usuarios mobile reales. |
 | SEED_USUARIO_MOBILE_PRODUCCION.sql |  |  |  |
 | PRECHECK_POST_SCRIPTS_MOBILE_FLOTA.sql | OK | `Logs\MobileProduccion_20260705\PRECHECK_POST_SCRIPTS_MOBILE_FLOTA.log` | Todos los objetos esperados de Fase 2 quedaron en OK. Sin faltas ni alertas. |
 
