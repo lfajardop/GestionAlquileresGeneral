@@ -12,7 +12,7 @@
         <div>
             <span class="fleet-admin-head__eyebrow">Flota · maestro urgente</span>
             <h1>@Model.Titulo</h1>
-            <p>Aquí administramos teléfono, chofer, contrato fijo opcional, estado y reset de PIN sin tocar usuarios generales del sistema. El login mobile sigue viviendo solo en <code>flota.UsuarioMobile</code>.</p>
+            <p>Aquí administramos teléfono, chofer, estado y reset de PIN sin tocar usuarios generales del sistema. El login mobile sigue viviendo solo en <code>flota.UsuarioMobile</code>.</p>
         </div>
         <div class="fleet-admin-actions">
             <a class="fleet-soft-btn" href="@Url.Action("MobileLogin","Flota")">Probar MobileLogin</a>
@@ -26,7 +26,7 @@
                 <div class="fleet-panel-card__head">
                     <div>
                         <h2>Usuarios mobile registrados</h2>
-                        <p>Listado operativo para piloto: contrato fijo, chofer asignado, estado, último acceso y acciones administrativas controladas.</p>
+                        <p>Listado operativo para piloto: chofer asignado, estado, último acceso y acciones administrativas controladas.</p>
                     </div>
                     <div class="fleet-admin-actions">
                         <button id="btnNuevoUsuarioMobile" type="button" class="fleet-btn fleet-btn-primary">
@@ -41,7 +41,6 @@
                     <div class="fleet-kpi">
                         <article><span>Activos</span><strong id="kpiUsuariosActivos">0</strong></article>
                         <article><span>Inactivos</span><strong id="kpiUsuariosInactivos">0</strong></article>
-                        <article><span>Con contrato fijo</span><strong id="kpiUsuariosConContrato">0</strong></article>
                     </div>
 
                     <div class="fleet-table-wrap mt-3">
@@ -52,15 +51,13 @@
                                     <th>Nombre</th>
                                     <th>Chofer</th>
                                     <th>Documento</th>
-                                    <th>Contrato</th>
-                                    <th>Placa</th>
                                     <th>Estado</th>
                                     <th>Último login</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="usuariosMobileRows">
-                                <tr><td colspan="9" class="fleet-empty">Cargando usuarios mobile...</td></tr>
+                                <tr><td colspan="7" class="fleet-empty">Cargando usuarios mobile...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -83,10 +80,6 @@
                             <label>
                                 Chofer
                                 <select id="usuarioMobileChofer"></select>
-                            </label>
-                            <label>
-                                Contrato fijo opcional
-                                <select id="usuarioMobileContrato"></select>
                             </label>
                             <label>
                                 Estado inicial
@@ -116,7 +109,7 @@
                             </label>
                         </div>
 
-                        <div class="fleet-note">El usuario mobile pertenece al chofer. El contrato puede asignarse después. Si no tiene contrato fijo, no podrá operar en Estación Mobile hasta que administración lo asigne.</div>
+                        <div class="fleet-note">El usuario mobile pertenece al chofer. Los contratos se gestionan desde el módulo Contratos.</div>
 
                         <div class="fleet-admin-actions">
                             <button id="btnGuardarUsuarioMobile" type="submit" class="fleet-btn fleet-btn-primary">
@@ -134,7 +127,7 @@
                 <div class="fleet-panel-card__head">
                     <div>
                         <h2>Acciones administrativas</h2>
-                        <p>Selecciona un usuario del listado para cambiar contrato fijo, activar/inactivar o resetear el PIN.</p>
+                        <p>Selecciona un usuario del listado para activar/inactivar o resetear el PIN.</p>
                     </div>
                 </div>
                 <div class="fleet-panel-card__body">
@@ -147,8 +140,6 @@
                             <article class="fleet-detail-item"><span>Nombre</span><strong id="detalleUsuarioNombre">-</strong></article>
                             <article class="fleet-detail-item"><span>Chofer</span><strong id="detalleUsuarioChofer">-</strong></article>
                             <article class="fleet-detail-item"><span>Documento</span><strong id="detalleUsuarioDocumento">-</strong></article>
-                            <article class="fleet-detail-item"><span>Contrato fijo</span><strong id="detalleUsuarioContrato">-</strong></article>
-                            <article class="fleet-detail-item"><span>Placa</span><strong id="detalleUsuarioPlaca">-</strong></article>
                             <article class="fleet-detail-item"><span>Último login</span><strong id="detalleUsuarioUltimoLogin">-</strong></article>
                         </div>
 
@@ -160,19 +151,6 @@
                                 <i class="bi bi-pause-circle"></i> Cambiar estado
                             </button>
                         </div>
-
-                        <form id="formCambiarContratoMobile" class="fleet-inline-form">
-                            <label>
-                                Reasignar contrato fijo
-                                <select id="usuarioMobileContratoCambio"></select>
-                            </label>
-                            <button type="submit" class="fleet-btn fleet-btn-success">
-                                <i class="bi bi-arrow-repeat"></i> Cambiar contrato fijo
-                            </button>
-                        </form>
-                        <button id="btnQuitarContratoUsuarioMobile" type="button" class="fleet-btn fleet-btn-soft">
-                            <i class="bi bi-unlink"></i> Quitar contrato fijo
-                        </button>
 
                         <div class="fleet-note">El reset reactiva el usuario y reemplaza hash/salt desde backend usando <code>FlotaMobilePasswordHasher</code>.</div>
 

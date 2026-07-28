@@ -11,6 +11,7 @@
     const date = v => v ? new Date(String(v).substring(0, 10) + "T12:00:00").toLocaleDateString("es-PE") : "-";
     const dateTimeLocal = v => v ? String(v).replace("T", " ").substring(0, 16) : "-";
     const dateTimeInput = v => v ? String(v).substring(0, 16) : "";
+    const timeShort = v => v ? String(v).substring(11, 16) : "";
     const token = () => $("#faToken input[name='__RequestVerificationToken']").val();
     const notify = (ok, msg) => Swal.fire({ icon: ok ? "success" : "error", title: ok ? "Listo" : "No se pudo completar", text: msg, confirmButtonColor: ok ? "#087253" : "#b42318" });
     const jsonPost = (url, data) => $.ajax({ url: url, type: "POST", contentType: "application/json", data: JSON.stringify(data), headers: { RequestVerificationToken: token() } });
@@ -97,6 +98,65 @@
     function monthParts() {
         const p = $("#faMes").val().split("-");
         return { anio: Number(p[0]), mes: Number(p[1]) };
+    }
+
+    function isMobileIntervalDay(day) {
+        return !!day &&
+            day.trabajo === "S" &&
+            day.codMotivo === "TRA" &&
+            day.cobrable === "S" &&
+            day.tieneRecibo !== "S" &&
+            Number(day.importe || 0) === 0 &&
+            day.origen === "O";
+    }
+
+    function buildDayMeta(day) {
+        if (!day) {
+            return { badges: [], lines: [] };
+        }
+
+        if (day.tieneRecibo === "S") {
+            return { badges: [{ text: "Recibo", className: "receipt" }], lines: [] };
+        }
+
+        if (isMobileIntervalDay(day)) {
+            const lines = [];
+            const horaInicio = timeShort(day.fechaHoraInicio);
+            const horaFin = timeShort(day.fechaHoraFin);
+
+            if (horaInicio && horaFin) {
+                lines.push(horaInicio + " - " + horaFin);
+            }
+
+            if (day.kmInicial != null && day.kmFinal != null) {
+                const kmInicial = Number(day.kmInicial);
+                const kmFinal = Number(day.kmFinal);
+                const recorrido = day.km != null ? Number(day.km) : (kmFinal - kmInicial);
+                lines.push("Km: " + kmInicial.toLocaleString("en-US") + " \u2192 " + kmFinal.toLocaleString("en-US"));
+                lines.push(Number(recorrido).toLocaleString("en-US") + " km");
+            } else if (day.kmInicial != null) {
+                lines.push("Km inicio: " + Number(day.kmInicial).toLocaleString("en-US"));
+            }
+
+            const tarifa = Number($("#faTarifa").val() || 0);
+            if (tarifa > 0) {
+                lines.push(money(tarifa) + " estimado");
+            }
+
+            return {
+                badges: [
+                    { text: "Mobile", className: "mobile" },
+                    { text: "Pendiente recibo", className: "pending" }
+                ],
+                lines: lines
+            };
+        }
+
+        if (day.origen === "M") {
+            return { badges: [{ text: "Manual", className: "manual" }], lines: [] };
+        }
+
+        return { badges: [], lines: [] };
     }
 
     function loadAll() {
@@ -189,18 +249,20 @@
             const x = map.get(key);
             const locked = x?.tieneRecibo === "S" || d > today;
             const status = x ? (x.cobrable === "S" ? x.motivo : "No cobrable") : "Sin registro";
-            const tag = x?.tieneRecibo === "S" ? "Recibo" : x?.origen === "M" ? "Manual" : "";
+            const meta = buildDayMeta(x);
             const classes = ["fa-day"];
             if (locked) classes.push("locked");
             if (x?.tieneRecibo === "S") classes.push("has-receipt");
+            if ((meta.badges || []).some(b => b.className === "mobile")) classes.push("has-mobile");
             if (seleccion.has(key)) classes.push("selected");
             if (diaActual?.fecha === key) classes.push("active");
 
             const html = '<button type="button" class="' + classes.join(" ") + '" data-date="' + key + '" data-locked="' + (locked ? '1' : '0') + '">' +
                 '<span class="num">' + n + '</span>' +
-                (tag ? '<span class="tag">' + tag + '</span>' : '') +
+                '<span class="tag-stack">' + (meta.badges || []).map(b => '<span class="tag tag-' + b.className + '">' + b.text + '</span>').join("") + '</span>' +
                 '<span class="status">' + status + '</span>' +
-                '<span class="amount">' + (x?.importe ? money(x.importe) : '') + '</span>' +
+                '<span class="amount">' + (x && Number(x.importe || 0) > 0 ? money(x.importe) : '') + '</span>' +
+                (meta.lines || []).map(line => '<span class="meta-line">' + line + '</span>').join("") +
                 '</button>';
             box.append(html);
         }

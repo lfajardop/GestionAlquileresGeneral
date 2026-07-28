@@ -8,7 +8,38 @@ public class FlotaRepository:ClsConexion,IFlotaRepository
  public Task<FlotaResultadoDto> CrearChoferAsync(int e,string est,int u,FlotaChoferCrearDto x,CancellationToken ct)=>Exec("flota.p_chofer_crear",e,est,u,m=>{m.Parameters.AddWithValue("@Documento",Db(x.Documento));m.Parameters.AddWithValue("@Nombres",x.Nombres);m.Parameters.AddWithValue("@Telefono",Db(x.Telefono));m.Parameters.AddWithValue("@Licencia",Db(x.Licencia));},ct);
  public Task<FlotaResultadoDto> CrearContratoAsync(int e,string est,int u,FlotaContratoCrearDto x,CancellationToken ct)=>Exec("flota.p_contrato_crear",e,est,u,m=>{m.Parameters.AddWithValue("@IdVehiculo",x.IdVehiculo);m.Parameters.AddWithValue("@IdChofer",x.IdChofer);m.Parameters.AddWithValue("@Modalidad",x.Modalidad);m.Parameters.AddWithValue("@Periodicidad",x.Periodicidad);m.Parameters.AddWithValue("@FechaInicio",x.FechaInicio.Date);m.Parameters.AddWithValue("@FechaFin",Db(x.FechaFin?.Date));m.Parameters.AddWithValue("@TarifaDia",x.TarifaDia);m.Parameters.AddWithValue("@CobraDomingo",x.CobraDomingo);m.Parameters.AddWithValue("@ControlKm",x.ControlKm);m.Parameters.AddWithValue("@Observacion",Db(x.Observacion));},ct);
  public Task<FlotaResultadoDto> GuardarDiaAsync(int e,string est,int u,FlotaTrabajoDiaDto x,CancellationToken ct)=>Exec("flota.p_trabajo_dia_guardar",e,est,u,m=>{m.Parameters.AddWithValue("@IdContrato",x.IdContrato);m.Parameters.AddWithValue("@Fecha",x.Fecha.Date);m.Parameters.AddWithValue("@Trabajo",x.Trabajo);m.Parameters.AddWithValue("@CodMotivo",x.CodMotivo);m.Parameters.AddWithValue("@Cobrable",x.Cobrable);m.Parameters.AddWithValue("@KmInicial",Db(x.KmInicial));m.Parameters.AddWithValue("@KmFinal",Db(x.KmFinal));m.Parameters.AddWithValue("@ImporteCombustible",x.ImporteCombustible);m.Parameters.AddWithValue("@Galones",x.Galones);m.Parameters.AddWithValue("@PagoCombustible",Db(x.PagoCombustible));m.Parameters.AddWithValue("@Observacion",Db(x.Observacion));},ct);
- public async Task<List<FlotaContratoAdminDto>> ContratosAdminAsync(int e,string est,CancellationToken ct){var l=new List<FlotaContratoAdminDto>();await using var c=new SqlConnection(GetConnectionString());await using var m=Cmd(c,"flota.p_Contrato_Admin_Listar");Base(m,e,est);await c.OpenAsync(ct);await using var r=await m.ExecuteReaderAsync(ct);while(await r.ReadAsync(ct))l.Add(new(){IdContrato=I(r,"Id_Contrato"),Numero=S(r,"Numero"),Placa=S(r,"Placa"),Chofer=S(r,"Chofer"),ModalidadCodigo=S(r,"Cod_Modalidad"),Modalidad=S(r,"Modalidad"),TarifaDia=D(r,"TarifaDia"),Periodicidad=S(r,"Cod_Periodicidad"),FechaInicio=DT(r,"FechaInicio"),FechaFin=NDT(r,"FechaFin"),Estado=S(r,"Flg_Estado"),TotalRecibos=D(r,"TotalRecibos"),TotalPagado=D(r,"TotalPagado"),Saldo=D(r,"Saldo")});return l;}
+ public async Task<List<FlotaContratoAdminDto>> ContratosAdminAsync(int e,string est,CancellationToken ct){var l=new List<FlotaContratoAdminDto>();await using var c=new SqlConnection(GetConnectionString());await using var m=Cmd(c,"flota.p_Contrato_Admin_Listar");Base(m,e,est);await c.OpenAsync(ct);await using var r=await m.ExecuteReaderAsync(ct);while(await r.ReadAsync(ct))l.Add(new(){IdContrato=I(r,"Id_Contrato"),Numero=S(r,"Numero"),Placa=S(r,"Placa"),Chofer=S(r,"Chofer"),IdVehiculo=Has(r,"Id_Vehiculo")?I(r,"Id_Vehiculo"):0,IdChofer=Has(r,"Id_Chofer")?I(r,"Id_Chofer"):0,ModalidadCodigo=S(r,"Cod_Modalidad"),Modalidad=S(r,"Modalidad"),TarifaDia=D(r,"TarifaDia"),Periodicidad=S(r,"Cod_Periodicidad"),FechaInicio=DT(r,"FechaInicio"),FechaFin=NDT(r,"FechaFin"),Estado=S(r,"Flg_Estado"),TotalRecibos=D(r,"TotalRecibos"),TotalPagado=D(r,"TotalPagado"),Saldo=D(r,"Saldo")});return l;}
+ public async Task<List<FlotaContratoAdminDto>> ListarContratosActivosPorChoferAsync(int e,string est,int idChofer,CancellationToken ct){var l=new List<FlotaContratoAdminDto>();const string sql=@"
+SELECT
+    c.Id_Contrato,
+    c.Numero,
+    ISNULL(v.Placa,'') AS Placa,
+    ISNULL(ch.Nombres,'') AS Chofer,
+    c.Cod_Modalidad,
+    ISNULL(c.Cod_Periodicidad,'') AS Cod_Periodicidad,
+    c.TarifaDia,
+    c.FechaInicio,
+    c.FechaFin,
+    c.Flg_Estado,
+    CAST(0 AS DECIMAL(18,2)) AS TotalRecibos,
+    CAST(0 AS DECIMAL(18,2)) AS TotalPagado,
+    CAST(0 AS DECIMAL(18,2)) AS Saldo,
+    c.Id_Vehiculo,
+    c.Id_Chofer
+FROM flota.contrato c
+LEFT JOIN flota.vehiculo v
+    ON v.Id_Vehiculo = c.Id_Vehiculo
+   AND v.id_empresa = c.id_empresa
+   AND v.id_est = c.id_est
+LEFT JOIN flota.chofer ch
+    ON ch.Id_Chofer = c.Id_Chofer
+   AND ch.id_empresa = c.id_empresa
+   AND ch.id_est = c.id_est
+WHERE c.id_empresa = @IdEmpresa
+  AND c.id_est = @IdEst
+  AND c.Id_Chofer = @IdChofer
+  AND ISNULL(c.Flg_Estado,'A') = 'A'
+ORDER BY c.Id_Contrato DESC;";await using var c=new SqlConnection(GetConnectionString());await using var m=new SqlCommand(sql,c);m.Parameters.AddWithValue("@IdEmpresa",e);m.Parameters.AddWithValue("@IdEst",est);m.Parameters.AddWithValue("@IdChofer",idChofer);await c.OpenAsync(ct);await using var r=await m.ExecuteReaderAsync(ct);while(await r.ReadAsync(ct))l.Add(new(){IdContrato=I(r,"Id_Contrato"),Numero=S(r,"Numero"),Placa=S(r,"Placa"),Chofer=S(r,"Chofer"),ModalidadCodigo=S(r,"Cod_Modalidad"),Modalidad=S(r,"Cod_Modalidad"),TarifaDia=D(r,"TarifaDia"),Periodicidad=S(r,"Cod_Periodicidad"),FechaInicio=DT(r,"FechaInicio"),FechaFin=NDT(r,"FechaFin"),Estado=S(r,"Flg_Estado"),TotalRecibos=D(r,"TotalRecibos"),TotalPagado=D(r,"TotalPagado"),Saldo=D(r,"Saldo"),IdVehiculo=Has(r,"Id_Vehiculo")?I(r,"Id_Vehiculo"):0,IdChofer=Has(r,"Id_Chofer")?I(r,"Id_Chofer"):0});return l;}
  public async Task<List<FlotaChoferDeudaResumenDto>> ListarDeudaChoferesAsync(int e,string est,int? idChofer,CancellationToken ct){var l=new List<FlotaChoferDeudaResumenDto>();await using var c=new SqlConnection(GetConnectionString());await using var m=Cmd(c,"flota.p_Chofer_DeudaResumen");m.Parameters.AddWithValue("@IdEmpresa",e);m.Parameters.AddWithValue("@IdEst",est);m.Parameters.AddWithValue("@IdChofer",Db(idChofer));await c.OpenAsync(ct);await using var r=await m.ExecuteReaderAsync(ct);while(await r.ReadAsync(ct))l.Add(new(){IdChofer=I(r,"IdChofer"),Chofer=S(r,"Chofer"),Documento=S(r,"Documento"),Telefono=S(r,"Telefono"),TotalContratos=I(r,"TotalContratos"),ContratosActivos=I(r,"ContratosActivos"),ContratosCerrados=I(r,"ContratosCerrados"),TotalGeneradoRecibos=D(r,"TotalGeneradoRecibos"),TotalPagadoRecibos=D(r,"TotalPagadoRecibos"),SaldoRecibos=D(r,"SaldoRecibos"),PagoDeclaradoPendiente=D(r,"PagoDeclaradoPendiente"),PagoDeclaradoValidadoNoAplicado=D(r,"PagoDeclaradoValidadoNoAplicado"),UltimaFechaDeuda=NDT(r,"UltimaFechaDeuda")});return l;}
  public async Task<FlotaContratoDetalleDto?> ObtenerContratoDetalleAsync(int e,string est,int idContrato,CancellationToken ct){await using var c=new SqlConnection(GetConnectionString());const string sql=@"
 SELECT TOP 1
@@ -37,12 +68,155 @@ WHERE c.id_empresa = @IdEmpresa
   AND c.Id_Contrato = @IdContrato;";
 await using var m=new SqlCommand(sql,c);m.Parameters.AddWithValue("@IdEmpresa",e);m.Parameters.AddWithValue("@IdEst",est);m.Parameters.AddWithValue("@IdContrato",idContrato);await c.OpenAsync(ct);await using var r=await m.ExecuteReaderAsync(ct);if(!await r.ReadAsync(ct))return null;return new(){IdContrato=I(r,"Id_Contrato"),Numero=S(r,"Numero"),Placa=S(r,"Placa"),Chofer=S(r,"Chofer"),IdVehiculo=I(r,"Id_Vehiculo"),IdChofer=I(r,"Id_Chofer"),Modalidad=S(r,"Cod_Modalidad"),Periodicidad=S(r,"Cod_Periodicidad"),FechaInicio=DT(r,"FechaInicio"),FechaFin=NDT(r,"FechaFin"),TarifaDia=D(r,"TarifaDia"),Estado=S(r,"Flg_Estado"),CobraDomingo=S(r,"Flg_CobraDomingo"),ControlKm=S(r,"Flg_ControlKm"),Observacion=S(r,"Observacion")};}
  public async Task<FlotaResultadoDto> FinalizarContratoAsync(int e,string est,int u,FlotaContratoFinalizarDto x,CancellationToken ct){await using var c=new SqlConnection(GetConnectionString());await using var m=Cmd(c,"flota.p_contrato_finalizar");m.Parameters.AddWithValue("@IdEmpresa",e);m.Parameters.AddWithValue("@IdEst",est);m.Parameters.AddWithValue("@IdContrato",x.IdContrato);m.Parameters.AddWithValue("@FechaFin",x.FechaFin.Date);m.Parameters.AddWithValue("@MotivoCierre",x.MotivoCierre);m.Parameters.AddWithValue("@Observacion",Db(x.Observacion));m.Parameters.AddWithValue("@Usuario",u);await c.OpenAsync(ct);await using var r=await m.ExecuteReaderAsync(ct);if(!await r.ReadAsync(ct))return new(){Ok=false,Mensaje="No se obtuvo respuesta al cerrar el contrato."};return new(){Ok=string.Equals(S(r,"Flg_Estado"),"C",StringComparison.OrdinalIgnoreCase),Id=I(r,"IdContrato"),Mensaje=S(r,"Mensaje")};}
- public async Task<List<FlotaUsuarioMobileAdminDto>> ListarUsuariosMobileAdminAsync(int e,string est,CancellationToken ct){var l=new List<FlotaUsuarioMobileAdminDto>();await using var c=new SqlConnection(GetConnectionString());await using var m=Cmd(c,"flota.p_UsuarioMobile_ListarAdmin");BaseFase2(m,e,est);await c.OpenAsync(ct);await using var r=await m.ExecuteReaderAsync(ct);while(await r.ReadAsync(ct))l.Add(new(){IdUsuarioMobile=I(r,"IdUsuarioMobile"),Telefono=S(r,"Telefono"),Nombre=S(r,"Nombre"),IdChofer=NI(r,"Id_Chofer"),ChoferNombre=S(r,"ChoferNombre"),DocumentoChofer=Has(r,"DocumentoChofer")?S(r,"DocumentoChofer"):"",IdContrato=NI(r,"Id_Contrato"),NumeroContrato=S(r,"NumeroContrato"),Placa=S(r,"Placa"),FlgEstado=S(r,"FlgEstado"),FecCreacion=NDT(r,"Fec_Creacion"),FecUltimoLogin=NDT(r,"Fec_UltimoLogin")});return l;}
- public async Task<FlotaResultadoDto> CrearUsuarioMobileAsync(int e,string est,int u,string passwordHash,string passwordSalt,FlotaUsuarioMobileCrearDto x,CancellationToken ct){await using var c=new SqlConnection(GetConnectionString());await using var m=Cmd(c,"flota.p_UsuarioMobile_CrearAdmin");BaseFase2(m,e,est);m.Parameters.AddWithValue("@IdChofer",x.IdChofer);m.Parameters.AddWithValue("@IdContrato",Db(x.IdContrato));m.Parameters.AddWithValue("@Telefono",x.Telefono);m.Parameters.AddWithValue("@Nombre",x.Nombre);m.Parameters.AddWithValue("@PasswordHash",passwordHash);m.Parameters.AddWithValue("@PasswordSalt",passwordSalt);m.Parameters.AddWithValue("@FlgEstado",x.FlgEstado);m.Parameters.AddWithValue("@Usuario",u);await c.OpenAsync(ct);await using var r=await m.ExecuteReaderAsync(ct);if(!await r.ReadAsync(ct))return new(){Ok=false,Mensaje="No se obtuvo respuesta al crear el usuario mobile."};return new(){Ok=string.Equals(S(r,"FlgEstado"),"A",StringComparison.OrdinalIgnoreCase)||string.Equals(S(r,"FlgEstado"),"X",StringComparison.OrdinalIgnoreCase),Id=I(r,"IdUsuarioMobile"),Mensaje=S(r,"Mensaje")};}
- public async Task<FlotaResultadoDto> ActualizarUsuarioMobileAsync(int e,string est,int u,FlotaUsuarioMobileActualizarDto x,CancellationToken ct){await using var c=new SqlConnection(GetConnectionString());await using var m=Cmd(c,"flota.p_UsuarioMobile_ActualizarAdmin");BaseFase2(m,e,est);m.Parameters.AddWithValue("@IdUsuarioMobile",x.IdUsuarioMobile);m.Parameters.AddWithValue("@IdChofer",x.IdChofer);m.Parameters.AddWithValue("@IdContrato",Db(x.IdContrato));m.Parameters.AddWithValue("@Telefono",x.Telefono);m.Parameters.AddWithValue("@Nombre",x.Nombre);m.Parameters.AddWithValue("@Usuario",u);await c.OpenAsync(ct);await using var r=await m.ExecuteReaderAsync(ct);if(!await r.ReadAsync(ct))return new(){Ok=false,Mensaje="No se obtuvo respuesta al actualizar el usuario mobile."};return new(){Ok=I(r,"IdUsuarioMobile")>0,Id=I(r,"IdUsuarioMobile"),Mensaje=S(r,"Mensaje")};}
- public async Task<FlotaResultadoDto> CambiarEstadoUsuarioMobileAsync(int e,string est,int u,FlotaUsuarioMobileCambiarEstadoDto x,CancellationToken ct){await using var c=new SqlConnection(GetConnectionString());await using var m=Cmd(c,"flota.p_UsuarioMobile_CambiarEstado");BaseFase2(m,e,est);m.Parameters.AddWithValue("@IdUsuarioMobile",x.IdUsuarioMobile);m.Parameters.AddWithValue("@FlgEstado",x.FlgEstado);m.Parameters.AddWithValue("@Usuario",u);await c.OpenAsync(ct);await using var r=await m.ExecuteReaderAsync(ct);if(!await r.ReadAsync(ct))return new(){Ok=false,Mensaje="No se obtuvo respuesta al cambiar el estado."};return new(){Ok=string.Equals(S(r,"FlgEstado"),x.FlgEstado,StringComparison.OrdinalIgnoreCase),Id=I(r,"IdUsuarioMobile"),Mensaje=S(r,"Mensaje")};}
- public async Task<FlotaResultadoDto> CambiarContratoUsuarioMobileAsync(int e,string est,int u,FlotaUsuarioMobileCambiarContratoDto x,CancellationToken ct){await using var c=new SqlConnection(GetConnectionString());await using var m=Cmd(c,"flota.p_UsuarioMobile_CambiarContrato");BaseFase2(m,e,est);m.Parameters.AddWithValue("@IdUsuarioMobile",x.IdUsuarioMobile);m.Parameters.AddWithValue("@IdContrato",Db(x.IdContrato));m.Parameters.AddWithValue("@Usuario",u);await c.OpenAsync(ct);await using var r=await m.ExecuteReaderAsync(ct);if(!await r.ReadAsync(ct))return new(){Ok=false,Mensaje="No se obtuvo respuesta al cambiar el contrato fijo."};return new(){Ok=I(r,"IdUsuarioMobile")>0,Id=I(r,"IdUsuarioMobile"),Mensaje=S(r,"Mensaje")};}
- public async Task<FlotaResultadoDto> ResetPinUsuarioMobileAsync(int e,string est,int u,int idUsuarioMobile,string passwordHash,string passwordSalt,CancellationToken ct){await using var c=new SqlConnection(GetConnectionString());await using var m=Cmd(c,"flota.p_UsuarioMobile_ResetPin");BaseFase2(m,e,est);m.Parameters.AddWithValue("@IdUsuarioMobile",idUsuarioMobile);m.Parameters.AddWithValue("@PasswordHash",passwordHash);m.Parameters.AddWithValue("@PasswordSalt",passwordSalt);m.Parameters.AddWithValue("@Usuario",u);await c.OpenAsync(ct);await using var r=await m.ExecuteReaderAsync(ct);if(!await r.ReadAsync(ct))return new(){Ok=false,Mensaje="No se obtuvo respuesta al resetear el PIN."};return new(){Ok=string.Equals(S(r,"FlgEstado"),"A",StringComparison.OrdinalIgnoreCase),Id=I(r,"IdUsuarioMobile"),Mensaje=S(r,"Mensaje")};}
+ public async Task<List<FlotaUsuarioMobileAdminDto>> ListarUsuariosMobileAdminAsync(int e,string est,CancellationToken ct)
+ {
+     var list = new List<FlotaUsuarioMobileAdminDto>();
+     await using var connection = new SqlConnection(GetConnectionString());
+     await using var command = Cmd(connection,"flota.p_UsuarioMobile_ListarAdmin");
+     BaseFase2(command,e,est);
+     await connection.OpenAsync(ct);
+     await using var reader = await command.ExecuteReaderAsync(ct);
+
+     while(await reader.ReadAsync(ct))
+     {
+         list.Add(new FlotaUsuarioMobileAdminDto
+         {
+             IdUsuarioMobile = I(reader,"IdUsuarioMobile"),
+             Telefono = S(reader,"Telefono"),
+             Nombre = S(reader,"Nombre"),
+             IdChofer = NI(reader,"Id_Chofer"),
+             ChoferNombre = S(reader,"ChoferNombre"),
+            DocumentoChofer = Has(reader,"DocumentoChofer") ? S(reader,"DocumentoChofer") : "",
+            FlgEstado = S(reader,"FlgEstado"),
+            FecCreacion = NDT(reader,"Fec_Creacion"),
+            FecUltimoLogin = NDT(reader,"Fec_UltimoLogin")
+         });
+     }
+
+     return list;
+ }
+
+ public async Task<FlotaResultadoDto> CrearUsuarioMobileAsync(int e,string est,int u,string passwordHash,string passwordSalt,FlotaUsuarioMobileCrearDto x,CancellationToken ct)
+ {
+     await using var connection = new SqlConnection(GetConnectionString());
+     await using var command = Cmd(connection,"flota.p_UsuarioMobile_CrearAdmin");
+     BaseFase2(command,e,est);
+     command.Parameters.AddWithValue("@IdChofer",x.IdChofer);
+     command.Parameters.AddWithValue("@Telefono",x.Telefono);
+     command.Parameters.AddWithValue("@Nombre",x.Nombre);
+     command.Parameters.AddWithValue("@PasswordHash",passwordHash);
+     command.Parameters.AddWithValue("@PasswordSalt",passwordSalt);
+     command.Parameters.AddWithValue("@FlgEstado",x.FlgEstado);
+     command.Parameters.AddWithValue("@Usuario",u);
+     await connection.OpenAsync(ct);
+     await using var reader = await command.ExecuteReaderAsync(ct);
+
+     if(!await reader.ReadAsync(ct))
+     {
+         return new FlotaResultadoDto
+         {
+             Ok = false,
+             Mensaje = "No se obtuvo respuesta al crear el usuario mobile."
+         };
+     }
+
+     var flgEstado = S(reader,"FlgEstado");
+     return new FlotaResultadoDto
+     {
+         Ok = string.Equals(flgEstado,"A",StringComparison.OrdinalIgnoreCase)
+             || string.Equals(flgEstado,"X",StringComparison.OrdinalIgnoreCase),
+         Id = I(reader,"IdUsuarioMobile"),
+         Mensaje = S(reader,"Mensaje")
+     };
+ }
+
+ public async Task<FlotaResultadoDto> ActualizarUsuarioMobileAsync(int e,string est,int u,FlotaUsuarioMobileActualizarDto x,CancellationToken ct)
+ {
+     await using var connection = new SqlConnection(GetConnectionString());
+     await using var command = Cmd(connection,"flota.p_UsuarioMobile_ActualizarAdmin");
+     BaseFase2(command,e,est);
+     command.Parameters.AddWithValue("@IdUsuarioMobile",x.IdUsuarioMobile);
+     command.Parameters.AddWithValue("@IdChofer",x.IdChofer);
+     command.Parameters.AddWithValue("@Telefono",x.Telefono);
+     command.Parameters.AddWithValue("@Nombre",x.Nombre);
+     command.Parameters.AddWithValue("@FlgEstado",x.FlgEstado);
+     command.Parameters.AddWithValue("@Usuario",u);
+     await connection.OpenAsync(ct);
+     await using var reader = await command.ExecuteReaderAsync(ct);
+
+     if(!await reader.ReadAsync(ct))
+     {
+         return new FlotaResultadoDto
+         {
+             Ok = false,
+             Mensaje = "No se obtuvo respuesta al actualizar el usuario mobile."
+         };
+     }
+
+     return new FlotaResultadoDto
+     {
+         Ok = I(reader,"IdUsuarioMobile") > 0,
+         Id = I(reader,"IdUsuarioMobile"),
+         Mensaje = S(reader,"Mensaje")
+     };
+ }
+
+ public async Task<FlotaResultadoDto> CambiarEstadoUsuarioMobileAsync(int e,string est,int u,FlotaUsuarioMobileCambiarEstadoDto x,CancellationToken ct)
+ {
+     await using var connection = new SqlConnection(GetConnectionString());
+     await using var command = Cmd(connection,"flota.p_UsuarioMobile_CambiarEstado");
+     BaseFase2(command,e,est);
+     command.Parameters.AddWithValue("@IdUsuarioMobile",x.IdUsuarioMobile);
+     command.Parameters.AddWithValue("@FlgEstado",x.FlgEstado);
+     command.Parameters.AddWithValue("@Usuario",u);
+     await connection.OpenAsync(ct);
+     await using var reader = await command.ExecuteReaderAsync(ct);
+
+     if(!await reader.ReadAsync(ct))
+     {
+         return new FlotaResultadoDto
+         {
+             Ok = false,
+             Mensaje = "No se obtuvo respuesta al cambiar el estado."
+         };
+     }
+
+     return new FlotaResultadoDto
+     {
+         Ok = string.Equals(S(reader,"FlgEstado"),x.FlgEstado,StringComparison.OrdinalIgnoreCase),
+         Id = I(reader,"IdUsuarioMobile"),
+         Mensaje = S(reader,"Mensaje")
+     };
+ }
+
+ public async Task<FlotaResultadoDto> ResetPinUsuarioMobileAsync(int e,string est,int u,int idUsuarioMobile,string passwordHash,string passwordSalt,CancellationToken ct)
+ {
+     await using var connection = new SqlConnection(GetConnectionString());
+     await using var command = Cmd(connection,"flota.p_UsuarioMobile_ResetPin");
+     BaseFase2(command,e,est);
+     command.Parameters.AddWithValue("@IdUsuarioMobile",idUsuarioMobile);
+     command.Parameters.AddWithValue("@PasswordHash",passwordHash);
+     command.Parameters.AddWithValue("@PasswordSalt",passwordSalt);
+     command.Parameters.AddWithValue("@Usuario",u);
+     await connection.OpenAsync(ct);
+     await using var reader = await command.ExecuteReaderAsync(ct);
+
+     if(!await reader.ReadAsync(ct))
+     {
+         return new FlotaResultadoDto
+         {
+             Ok = false,
+             Mensaje = "No se obtuvo respuesta al resetear el PIN."
+         };
+     }
+
+     return new FlotaResultadoDto
+     {
+         Ok = string.Equals(S(reader,"FlgEstado"),"A",StringComparison.OrdinalIgnoreCase),
+         Id = I(reader,"IdUsuarioMobile"),
+         Mensaje = S(reader,"Mensaje")
+     };
+ }
  public async Task<FlotaCalendarioDto> CalendarioAsync(int e,string est,int id,int anio,int mes,CancellationToken ct){var d=new FlotaCalendarioDto();await using var c=new SqlConnection(GetConnectionString());await using var m=Cmd(c,"flota.p_AdminCalendario_Obtener");Base(m,e,est);m.Parameters.AddWithValue("@IdContrato",id);m.Parameters.AddWithValue("@Anio",anio);m.Parameters.AddWithValue("@Mes",mes);await c.OpenAsync(ct);await using var r=await m.ExecuteReaderAsync(ct);if(await r.ReadAsync(ct))d.Contrato=new(){IdContrato=I(r,"Id_Contrato"),Numero=S(r,"Numero"),Placa=S(r,"Placa"),Vehiculo=S(r,"Vehiculo"),Chofer=S(r,"Chofer"),Modalidad=S(r,"Cod_Modalidad"),TarifaDia=D(r,"TarifaDia"),Periodicidad=S(r,"Cod_Periodicidad")};if(await r.NextResultAsync(ct))while(await r.ReadAsync(ct))d.Dias.Add(new(){IdOperacionDia=I(r,"Id_OperacionDia"),Fecha=DT(r,"Fecha"),FechaHoraInicio=Has(r,"FechaHoraInicio")?NDT(r,"FechaHoraInicio"):null,FechaHoraFin=Has(r,"FechaHoraFin")?NDT(r,"FechaHoraFin"):null,Trabajo=S(r,"Flg_Trabajo"),CodMotivo=S(r,"Cod_Motivo"),Motivo=S(r,"Motivo"),Cobrable=S(r,"Flg_Cobrable"),Importe=D(r,"ImporteGenerado"),Km=D(r,"KmRecorrido"),KmInicial=Has(r,"KmInicial")?ND(r,"KmInicial"):null,KmFinal=Has(r,"KmFinal")?ND(r,"KmFinal"):null,Observacion=Has(r,"Observacion")?S(r,"Observacion"):"",Origen=S(r,"FlgOrigen"),TieneRecibo=S(r,"TieneRecibo")});if(await r.NextResultAsync(ct))while(await r.ReadAsync(ct))d.MediosPago.Add(new(){Codigo=S(r,"Codigo"),Nombre=S(r,"Nombre")});return d;}
  public async Task<FlotaReciboResultadoDto> GenerarReciboAsync(int e,string est,int u,FlotaReciboGenerarDto x,CancellationToken ct){await using var c=new SqlConnection(GetConnectionString());await using var m=Cmd(c,"flota.p_ReciboAlquiler_Generar");Base(m,e,est);m.Parameters.AddWithValue("@IdContrato",x.IdContrato);m.Parameters.AddWithValue("@FechaInicio",x.FechaInicio.Date);m.Parameters.AddWithValue("@FechaFin",x.FechaFin.Date);m.Parameters.AddWithValue("@Observacion",Db(x.Observacion));m.Parameters.AddWithValue("@Usuario",u);var id=Out(m,"@IdRecibo");var msg=OutText(m);await c.OpenAsync(ct);await m.ExecuteNonQueryAsync(ct);return Result(id,msg);}
  public async Task<FlotaReciboResultadoDto> GenerarManualAsync(int e,string est,int u,FlotaReciboManualDto x,CancellationToken ct){var fechas=new DataTable();fechas.Columns.Add("Fecha",typeof(DateTime));foreach(var f in x.Fechas.Select(f=>f.Date).Distinct().OrderBy(f=>f))fechas.Rows.Add(f);await using var c=new SqlConnection(GetConnectionString());await using var m=Cmd(c,"flota.p_ReciboAlquiler_GenerarManual");Base(m,e,est);m.Parameters.AddWithValue("@IdContrato",x.IdContrato);var p=m.Parameters.AddWithValue("@Fechas",fechas);p.SqlDbType=SqlDbType.Structured;p.TypeName="flota.FechaSeleccionadaType";m.Parameters.AddWithValue("@TarifaDia",x.TarifaDia);m.Parameters.AddWithValue("@ModoAgrupacion",x.ModoAgrupacion);m.Parameters.AddWithValue("@Observacion",Db(x.Observacion));m.Parameters.AddWithValue("@Usuario",u);var count=Out(m,"@CantidadRecibos");var msg=OutText(m);await c.OpenAsync(ct);await m.ExecuteNonQueryAsync(ct);var n=count.Value==DBNull.Value?0:Convert.ToInt32(count.Value);return new(){Ok=n>0,Cantidad=n,Id=0,Mensaje=msg.Value?.ToString()??""};}
@@ -55,6 +229,11 @@ await using var m=new SqlCommand(sql,c);m.Parameters.AddWithValue("@IdEmpresa",e
  public async Task<FlotaResultadoDto> CorregirOperacionDiaAsync(int e,string est,int u,FlotaOperacionDiaCorregirDto x,CancellationToken ct){await using var c=new SqlConnection(GetConnectionString());await using var m=Cmd(c,"flota.p_OperacionDia_Corregir");Base(m,e,est);m.Parameters.AddWithValue("@IdOperacionDia",x.IdOperacionDia);m.Parameters.AddWithValue("@FlgTrabajo",x.FlgTrabajo);m.Parameters.AddWithValue("@CodMotivo",x.CodMotivo);m.Parameters.AddWithValue("@FlgCobrable",x.FlgCobrable);m.Parameters.AddWithValue("@KmInicial",Db(x.KmInicial));m.Parameters.AddWithValue("@KmFinal",Db(x.KmFinal));m.Parameters.AddWithValue("@FechaHoraInicio",Db(x.FechaHoraInicio));m.Parameters.AddWithValue("@FechaHoraFin",Db(x.FechaHoraFin));m.Parameters.AddWithValue("@Observacion",Db(x.Observacion));m.Parameters.AddWithValue("@Motivo",x.Motivo);m.Parameters.AddWithValue("@Usuario",u);var msg=OutText(m);await c.OpenAsync(ct);await m.ExecuteNonQueryAsync(ct);return ResultByMessage(msg,"Operacion del dia corregida correctamente.");}
  public async Task<FlotaOperacionMobileDetalleDto> ObtenerOperacionMobileAsync(int e,string est,FlotaOperacionMobileConsultaDto x,CancellationToken ct){var d=new FlotaOperacionMobileDetalleDto();await using var c=new SqlConnection(GetConnectionString());await using var m=Cmd(c,"flota.p_OperacionDia_Mobile_Obtener");BaseFase2(m,e,est);m.Parameters.AddWithValue("@IdContrato",x.IdContrato);m.Parameters.AddWithValue("@Fecha",x.Fecha.Date);await c.OpenAsync(ct);await using var r=await m.ExecuteReaderAsync(ct);if(await r.ReadAsync(ct))d.Contrato=new(){IdContrato=I(r,"Id_Contrato"),Numero=S(r,"Numero"),Modalidad=S(r,"Cod_Modalidad"),Periodicidad=S(r,"Cod_Periodicidad"),FechaInicio=DT(r,"FechaInicio"),FechaFin=NDT(r,"FechaFin"),TarifaDia=D(r,"TarifaDia"),FlgControlKm=S(r,"Flg_ControlKm"),FlgCobraDomingo=S(r,"Flg_CobraDomingo"),Observacion=S(r,"Observacion"),IdVehiculo=I(r,"Id_Vehiculo"),Placa=S(r,"Placa"),Marca=S(r,"Marca"),Modelo=S(r,"Modelo"),GalonesTanque=D(r,"GalonesTanque"),PrecioGalon=D(r,"PrecioGalon"),RendimientoTanqueKm=D(r,"RendimientoTanqueKm"),IdChofer=I(r,"Id_Chofer"),Chofer=S(r,"Chofer")};if(await r.NextResultAsync(ct)&&await r.ReadAsync(ct))d.Operacion=new(){IdOperacionDia=I(r,"Id_OperacionDia"),Fecha=DT(r,"Fecha"),FechaHoraInicio=Has(r,"FechaHoraInicio")?NDT(r,"FechaHoraInicio"):null,FechaHoraFin=Has(r,"FechaHoraFin")?NDT(r,"FechaHoraFin"):null,FlgTrabajo=S(r,"Flg_Trabajo"),CodMotivo=S(r,"Cod_Motivo"),FlgCobrable=S(r,"Flg_Cobrable"),ImporteGenerado=D(r,"ImporteGenerado"),KmInicial=ND(r,"KmInicial"),KmFinal=ND(r,"KmFinal"),KmRecorrido=D(r,"KmRecorrido"),ImporteCombustible=D(r,"ImporteCombustible"),GalonesCargados=D(r,"GalonesCargados"),FlgPagoCombustible=S(r,"Flg_PagoCombustible"),CostoConsumoEstimado=D(r,"CostoConsumoEstimado"),Observacion=S(r,"Observacion"),FecCreacion=NDT(r,"Fec_Creacion"),FecModif=NDT(r,"Fec_Modif")};if(await r.NextResultAsync(ct))while(await r.ReadAsync(ct))d.Adjuntos.Add(MapAdjunto(r,"OPERACION_DIA",d.Operacion?.IdOperacionDia));if(await r.NextResultAsync(ct))while(await r.ReadAsync(ct))d.FormasPago.Add(new(){IdFormaPago=I(r,"IdFormaPago"),Tipo=S(r,"tipo"),Abrev=S(r,"abrev"),Descripcion=S(r,"descripcion")});return d;}
  public async Task<FlotaResultadoDto> GuardarOperacionMobileAsync(int e,string est,int u,FlotaOperacionMobileGuardarDto x,CancellationToken ct){await using var c=new SqlConnection(GetConnectionString());await using var m=Cmd(c,"flota.p_OperacionDia_Mobile_Guardar");BaseFase2(m,e,est);m.Parameters.AddWithValue("@IdContrato",x.IdContrato);m.Parameters.AddWithValue("@Fecha",x.Fecha.Date);m.Parameters.AddWithValue("@ModoRegistro",Db(x.ModoRegistro));m.Parameters.AddWithValue("@FlgTrabajo",x.FlgTrabajo);m.Parameters.AddWithValue("@CodMotivo",x.CodMotivo);m.Parameters.AddWithValue("@FlgCobrable",x.FlgCobrable);m.Parameters.AddWithValue("@KmInicial",Db(x.KmInicial));m.Parameters.AddWithValue("@KmFinal",Db(x.KmFinal));m.Parameters.AddWithValue("@GalonesCargados",x.GalonesCargados);m.Parameters.AddWithValue("@ImporteCombustible",x.ImporteCombustible);m.Parameters.AddWithValue("@FlgPagoCombustible",Db(x.FlgPagoCombustible));m.Parameters.AddWithValue("@FechaHoraInicio",Db(x.FechaHoraInicio));m.Parameters.AddWithValue("@FechaHoraFin",Db(x.FechaHoraFin));m.Parameters.AddWithValue("@Observacion",Db(x.Observacion));m.Parameters.AddWithValue("@Usuario",u);var id=Out(m,"@IdOperacionDia");var msg=OutText(m);await c.OpenAsync(ct);await m.ExecuteNonQueryAsync(ct);var text=msg.Value?.ToString()?.Trim()??"";var n=id.Value==DBNull.Value?0:Convert.ToInt32(id.Value);return new(){Ok=n>0,Id=n,Mensaje=text};}
+ public async Task<FlotaResultadoDto> AbrirIntervaloMobileAsync(int e,string est,int u,FlotaIntervaloAbrirRequestDto x,CancellationToken ct){await using var c=new SqlConnection(GetConnectionString());await using var m=Cmd(c,"flota.p_OperacionDiaIntervalo_Abrir");BaseFase2(m,e,est);m.Parameters.AddWithValue("@IdContrato",x.IdContrato);m.Parameters.AddWithValue("@IdChofer",x.IdChofer);m.Parameters.AddWithValue("@IdVehiculo",x.IdVehiculo);m.Parameters.AddWithValue("@FechaHoraInicio",x.FechaHoraInicio);m.Parameters.AddWithValue("@KmInicio",Db(x.KmInicio));m.Parameters.AddWithValue("@Observacion",Db(x.Observacion));m.Parameters.AddWithValue("@Usuario",u);var id=Out(m,"@IdIntervalo");var msg=OutText(m);await c.OpenAsync(ct);await m.ExecuteNonQueryAsync(ct);var text=msg.Value?.ToString()?.Trim()??"";var n=id.Value==DBNull.Value?0:Convert.ToInt32(id.Value);return new(){Ok=n>0,Id=n,Mensaje=text};}
+ public async Task<FlotaResultadoDto> CerrarIntervaloMobileAsync(int e,string est,int u,FlotaIntervaloCerrarRequestDto x,CancellationToken ct){await using var c=new SqlConnection(GetConnectionString());await using var m=Cmd(c,"flota.p_OperacionDiaIntervalo_Cerrar");BaseFase2(m,e,est);m.Parameters.AddWithValue("@IdContrato",x.IdContrato);m.Parameters.AddWithValue("@IdChofer",x.IdChofer);m.Parameters.AddWithValue("@IdVehiculo",x.IdVehiculo);m.Parameters.AddWithValue("@FechaHoraFin",x.FechaHoraFin);m.Parameters.AddWithValue("@KmFin",Db(x.KmFin));m.Parameters.AddWithValue("@Observacion",Db(x.Observacion));m.Parameters.AddWithValue("@Usuario",u);var id=Out(m,"@IdIntervalo");var msg=OutText(m);await c.OpenAsync(ct);await m.ExecuteNonQueryAsync(ct);var text=msg.Value?.ToString()?.Trim()??"";var n=id.Value==DBNull.Value?0:Convert.ToInt32(id.Value);return new(){Ok=n>0,Id=n,Mensaje=text};}
+ public async Task<List<FlotaIntervaloDto>> ListarIntervalosDiaMobileAsync(int e,string est,int idContrato,int idChofer,int idVehiculo,DateTime fechaOperativa,CancellationToken ct){var l=new List<FlotaIntervaloDto>();await using var c=new SqlConnection(GetConnectionString());await using var m=Cmd(c,"flota.p_OperacionDiaIntervalo_ListarPorDia");BaseFase2(m,e,est);m.Parameters.AddWithValue("@IdContrato",idContrato);m.Parameters.AddWithValue("@IdChofer",idChofer);m.Parameters.AddWithValue("@IdVehiculo",idVehiculo);m.Parameters.AddWithValue("@FechaOperativa",fechaOperativa.Date);await c.OpenAsync(ct);await using var r=await m.ExecuteReaderAsync(ct);while(await r.ReadAsync(ct))l.Add(new(){IdIntervalo=I(r,"IdIntervalo"),IdOperacionDia=I(r,"IdOperacionDia"),IdContrato=I(r,"IdContrato"),IdChofer=I(r,"IdChofer"),IdVehiculo=I(r,"IdVehiculo"),FechaOperativa=DT(r,"FechaOperativa"),FechaHoraInicio=DT(r,"FechaHoraInicio"),FechaHoraFin=NDT(r,"FechaHoraFin"),KmInicio=ND(r,"KmInicio"),KmFin=ND(r,"KmFin"),HorasCalculadas=Has(r,"HorasCalculadas")?ND(r,"HorasCalculadas"):null,Observacion=S(r,"Observacion"),FlgEstado=S(r,"FlgEstado"),FecCreacion=NDT(r,"Fec_Creacion"),FecModif=NDT(r,"Fec_Modif")});return l;}
+ public async Task<FlotaIntervaloResumenDto?> ObtenerResumenHorasMobileAsync(int e,string est,int idContrato,int idChofer,int idVehiculo,DateTime fechaOperativa,CancellationToken ct){await using var c=new SqlConnection(GetConnectionString());await using var m=Cmd(c,"flota.p_OperacionDiaIntervalo_ResumenHoras");BaseFase2(m,e,est);m.Parameters.AddWithValue("@IdContrato",idContrato);m.Parameters.AddWithValue("@IdChofer",idChofer);m.Parameters.AddWithValue("@IdVehiculo",idVehiculo);m.Parameters.AddWithValue("@FechaOperativa",fechaOperativa.Date);await c.OpenAsync(ct);await using var r=await m.ExecuteReaderAsync(ct);if(!await r.ReadAsync(ct))return null;return new(){IdOperacionDia=Has(r,"IdOperacionDia")?I(r,"IdOperacionDia"):0,IdContrato=Has(r,"IdContrato")?I(r,"IdContrato"):idContrato,IdChofer=Has(r,"IdChofer")?I(r,"IdChofer"):idChofer,IdVehiculo=Has(r,"IdVehiculo")?I(r,"IdVehiculo"):idVehiculo,FechaOperativa=Has(r,"FechaOperativa")?DT(r,"FechaOperativa"):fechaOperativa.Date,TotalHorasDia=D(r,"TotalHorasDia"),TieneIntervaloAbierto=string.Equals(S(r,"TieneIntervaloAbierto"),"S",StringComparison.OrdinalIgnoreCase),AlertaExcesoHoras=S(r,"AlertaExcesoHoras"),Mensaje=S(r,"Mensaje"),CantidadIntervalos=Has(r,"CantidadIntervalos")?I(r,"CantidadIntervalos"):0};}
+ public async Task<FlotaResultadoDto> AnularIntervaloMobileAsync(int e,string est,int u,FlotaIntervaloAnularRequestDto x,CancellationToken ct){await using var c=new SqlConnection(GetConnectionString());await using var m=Cmd(c,"flota.p_OperacionDiaIntervalo_Anular");BaseFase2(m,e,est);m.Parameters.AddWithValue("@IdIntervalo",x.IdIntervalo);m.Parameters.AddWithValue("@IdContrato",x.IdContrato);m.Parameters.AddWithValue("@Motivo",x.Motivo);m.Parameters.AddWithValue("@Usuario",u);var msg=OutText(m);await c.OpenAsync(ct);await m.ExecuteNonQueryAsync(ct);return ResultByMessage(msg,"Intervalo anulado correctamente.");}
  public async Task<FlotaResultadoDto> RegistrarCombustibleOperacionAsync(int e,string est,int u,FlotaCombustibleRegistrarDto x,CancellationToken ct){await using var c=new SqlConnection(GetConnectionString());await using var m=Cmd(c,"flota.p_CombustibleOperacion_Registrar");BaseFase2(m,e,est);m.Parameters.AddWithValue("@IdContrato",x.IdContrato);m.Parameters.AddWithValue("@IdChofer",x.IdChofer);m.Parameters.AddWithValue("@IdVehiculo",x.IdVehiculo);m.Parameters.AddWithValue("@Fecha",x.Fecha.Date);m.Parameters.AddWithValue("@IdOperacionDia",Db(x.IdOperacionDia));m.Parameters.AddWithValue("@Galones",x.Galones);m.Parameters.AddWithValue("@Importe",x.Importe);m.Parameters.AddWithValue("@FlgPagoCombustible",Db(x.FlgPagoCombustible));m.Parameters.AddWithValue("@Observacion",Db(x.Observacion));m.Parameters.AddWithValue("@Usuario",u);var id=Out(m,"@IdCombustibleOperacion");var msg=OutText(m);await c.OpenAsync(ct);await m.ExecuteNonQueryAsync(ct);var text=msg.Value?.ToString()?.Trim()??"";var n=id.Value==DBNull.Value?0:Convert.ToInt32(id.Value);return new(){Ok=n>0,Id=n,Mensaje=text};}
  public async Task<FlotaCombustibleListadoDto> ListarCombustiblePorContratoFechaAsync(int e,string est,int idContrato,DateTime fecha,CancellationToken ct){var d=new FlotaCombustibleListadoDto{Resumen=new(){Fecha=fecha.Date}};await using var c=new SqlConnection(GetConnectionString());await using var m=Cmd(c,"flota.p_CombustibleOperacion_ListarPorContratoFecha");BaseFase2(m,e,est);m.Parameters.AddWithValue("@IdContrato",idContrato);m.Parameters.AddWithValue("@Fecha",fecha.Date);await c.OpenAsync(ct);await using var r=await m.ExecuteReaderAsync(ct);while(await r.ReadAsync(ct))d.Cargas.Add(new(){IdCombustibleOperacion=I(r,"IdCombustibleOperacion"),IdContrato=I(r,"Id_Contrato"),IdChofer=I(r,"Id_Chofer"),IdVehiculo=I(r,"Id_Vehiculo"),IdOperacionDia=NI(r,"Id_OperacionDia"),Fecha=DT(r,"Fecha"),FechaRegistro=NDT(r,"FechaRegistro"),Galones=D(r,"Galones"),Importe=D(r,"Importe"),FlgPagoCombustible=S(r,"FlgPagoCombustible"),FlgPagoCombustibleTexto=PagoCombustibleTexto(S(r,"FlgPagoCombustible")),Observacion=S(r,"Observacion"),FlgEstado=S(r,"FlgEstado"),FecCreacion=NDT(r,"Fec_Creacion"),Chofer=S(r,"Chofer"),Placa=S(r,"Placa")});if(await r.NextResultAsync(ct)&&await r.ReadAsync(ct))d.Resumen=new(){Fecha=fecha.Date,TotalGalones=D(r,"TotalGalones"),TotalImporte=D(r,"TotalImporte"),TotalCargas=I(r,"TotalCargas")};foreach(var item in d.Cargas)item.Adjuntos=await ListarAdjuntosFlotaAsync(e,est,"COMBUSTIBLE",item.IdCombustibleOperacion,ct);return d;}
  public async Task<FlotaResultadoDto> AnularCombustibleOperacionAsync(int e,string est,int u,FlotaCombustibleAnularDto x,CancellationToken ct){await using var c=new SqlConnection(GetConnectionString());await using var m=Cmd(c,"flota.p_CombustibleOperacion_Anular");BaseFase2(m,e,est);m.Parameters.AddWithValue("@IdCombustibleOperacion",x.IdCombustibleOperacion);m.Parameters.AddWithValue("@Motivo",x.Motivo);m.Parameters.AddWithValue("@Usuario",u);var msg=OutText(m);await c.OpenAsync(ct);await m.ExecuteNonQueryAsync(ct);return ResultByMessage(msg,"Carga de combustible anulada correctamente.");}
@@ -63,7 +242,7 @@ await using var m=new SqlCommand(sql,c);m.Parameters.AddWithValue("@IdEmpresa",e
  public async Task<FlotaPagoContratoDto?> ObtenerPagoContratoAsync(int e,string est,int idPagoContrato,CancellationToken ct){var d=(FlotaPagoContratoDto?)null;await using var c=new SqlConnection(GetConnectionString());await using var m=Cmd(c,"flota.p_PagoContrato_Obtener");BaseFase2(m,e,est);m.Parameters.AddWithValue("@IdPagoContrato",idPagoContrato);await c.OpenAsync(ct);await using var r=await m.ExecuteReaderAsync(ct);if(await r.ReadAsync(ct))d=new(){IdPagoContrato=I(r,"IdPagoContrato"),IdContrato=I(r,"Id_Contrato"),IdChofer=I(r,"Id_Chofer"),IdVehiculo=I(r,"Id_Vehiculo"),IdOperacionDia=NI(r,"Id_OperacionDia"),FechaPago=DT(r,"FechaPago"),Importe=D(r,"Importe"),IdFormaPago=I(r,"IdFormaPago"),FormaPago=S(r,"FormaPago"),FormaPagoTexto=Has(r,"FormaPagoTexto")?S(r,"FormaPagoTexto"):S(r,"FormaPago"),FormaPagoAbrev=S(r,"FormaPagoAbrev"),OperacionReferencia=S(r,"OperacionReferencia"),Observacion=S(r,"Observacion"),FlgValidado=S(r,"FlgValidado"),FlgEstado=S(r,"FlgEstado"),ImporteAplicado=D(r,"ImporteAplicado"),ImporteDisponible=D(r,"ImporteDisponible"),FecCreacion=NDT(r,"Fec_Creacion"),FecValida=NDT(r,"Fec_Valida"),MotivoValidacion=S(r,"MotivoValidacion"),FecAnula=NDT(r,"Fec_Anula"),MotivoAnula=S(r,"MotivoAnula"),ContratoNumero=S(r,"ContratoNumero"),Placa=S(r,"Placa"),Chofer=S(r,"Chofer")};if(d!=null&&await r.NextResultAsync(ct))while(await r.ReadAsync(ct))d.Adjuntos.Add(MapAdjunto(r,"PAGO_CONTRATO",idPagoContrato));return d;}
  public async Task<List<FlotaPagoContratoListItemDto>> ListarPagosContratoAsync(int e,string est,int idContrato,string? flgValidado,string? flgEstado,CancellationToken ct){var l=new List<FlotaPagoContratoListItemDto>();await using var c=new SqlConnection(GetConnectionString());await using var m=Cmd(c,"flota.p_PagoContrato_ListarPorContrato");BaseFase2(m,e,est);m.Parameters.AddWithValue("@IdContrato",idContrato);m.Parameters.AddWithValue("@FlgValidado",Db(flgValidado));m.Parameters.AddWithValue("@FlgEstado",Db(flgEstado));await c.OpenAsync(ct);await using var r=await m.ExecuteReaderAsync(ct);while(await r.ReadAsync(ct))l.Add(new(){IdPagoContrato=I(r,"IdPagoContrato"),IdContrato=I(r,"Id_Contrato"),ContratoNumero=S(r,"ContratoNumero"),IdChofer=I(r,"Id_Chofer"),Chofer=S(r,"Chofer"),IdVehiculo=I(r,"Id_Vehiculo"),Placa=S(r,"Placa"),IdOperacionDia=NI(r,"Id_OperacionDia"),FechaPago=DT(r,"FechaPago"),Importe=D(r,"Importe"),ImporteAplicado=D(r,"ImporteAplicado"),ImporteDisponible=D(r,"ImporteDisponible"),IdFormaPago=I(r,"IdFormaPago"),FormaPago=S(r,"FormaPago"),FormaPagoTexto=Has(r,"FormaPagoTexto")?S(r,"FormaPagoTexto"):S(r,"FormaPago"),OperacionReferencia=S(r,"OperacionReferencia"),Observacion=S(r,"Observacion"),FlgValidado=S(r,"FlgValidado"),FlgEstado=S(r,"FlgEstado"),FecCreacion=NDT(r,"Fec_Creacion"),FecValida=NDT(r,"Fec_Valida")});return l;}
  public async Task<List<FlotaPagoContratoListItemDto>> ListarPagosContratoPendientesAsync(int e,string est,int? idContrato,DateTime? fechaDesde,DateTime? fechaHasta,string? texto,CancellationToken ct){var l=new List<FlotaPagoContratoListItemDto>();await using var c=new SqlConnection(GetConnectionString());await using var m=Cmd(c,"flota.p_PagoContrato_ListarPendientes");BaseFase2(m,e,est);m.Parameters.AddWithValue("@IdContrato",Db(idContrato));m.Parameters.AddWithValue("@FechaDesde",Db(fechaDesde?.Date));m.Parameters.AddWithValue("@FechaHasta",Db(fechaHasta?.Date));m.Parameters.AddWithValue("@Texto",Db(texto));await c.OpenAsync(ct);await using var r=await m.ExecuteReaderAsync(ct);while(await r.ReadAsync(ct))l.Add(new(){IdPagoContrato=I(r,"IdPagoContrato"),IdContrato=I(r,"Id_Contrato"),ContratoNumero=S(r,"ContratoNumero"),IdChofer=I(r,"Id_Chofer"),Chofer=S(r,"Chofer"),IdVehiculo=I(r,"Id_Vehiculo"),Placa=S(r,"Placa"),IdOperacionDia=NI(r,"Id_OperacionDia"),FechaPago=DT(r,"FechaPago"),Importe=D(r,"Importe"),ImporteAplicado=D(r,"ImporteAplicado"),ImporteDisponible=D(r,"ImporteDisponible"),IdFormaPago=I(r,"IdFormaPago"),FormaPago=S(r,"FormaPago"),FormaPagoTexto=Has(r,"FormaPagoTexto")?S(r,"FormaPagoTexto"):S(r,"FormaPago"),OperacionReferencia=S(r,"OperacionReferencia"),Observacion=S(r,"Observacion"),FlgValidado=S(r,"FlgValidado"),FlgEstado=S(r,"FlgEstado"),FecCreacion=NDT(r,"Fec_Creacion")});return l;}
- public async Task<FlotaMobileLoginResultDto?> ObtenerUsuarioMobileLoginAsync(int e,string est,string telefono,CancellationToken ct){FlotaMobileLoginResultDto? d=null;await using var c=new SqlConnection(GetConnectionString());await using var m=Cmd(c,"flota.p_UsuarioMobile_Login");BaseFase2(m,e,est);m.Parameters.AddWithValue("@Telefono",telefono);OutText(m);await c.OpenAsync(ct);await using(var r=await m.ExecuteReaderAsync(ct)){if(await r.ReadAsync(ct))d=new(){IdUsuarioMobile=I(r,"IdUsuarioMobile"),IdChofer=NI(r,"Id_Chofer"),IdContrato=NI(r,"Id_Contrato"),Telefono=S(r,"Telefono"),Nombre=S(r,"Nombre"),PasswordHash=S(r,"PasswordHash"),PasswordSalt=S(r,"PasswordSalt"),FlgEstado=Has(r,"FlgEstado")?S(r,"FlgEstado"):"A",FecUltimoLogin=Has(r,"Fec_UltimoLogin")?NDT(r,"Fec_UltimoLogin"):null};}return d;}
+ public async Task<FlotaMobileLoginResultDto?> ObtenerUsuarioMobileLoginAsync(int e,string est,string telefono,CancellationToken ct){FlotaMobileLoginResultDto? d=null;await using var c=new SqlConnection(GetConnectionString());await using var m=Cmd(c,"flota.p_UsuarioMobile_Login");BaseFase2(m,e,est);m.Parameters.AddWithValue("@Telefono",telefono);OutText(m);await c.OpenAsync(ct);await using(var r=await m.ExecuteReaderAsync(ct)){if(await r.ReadAsync(ct))d=new(){IdUsuarioMobile=I(r,"IdUsuarioMobile"),IdChofer=NI(r,"Id_Chofer"),IdContrato=null,Telefono=S(r,"Telefono"),Nombre=S(r,"Nombre"),PasswordHash=S(r,"PasswordHash"),PasswordSalt=S(r,"PasswordSalt"),FlgEstado=Has(r,"FlgEstado")?S(r,"FlgEstado"):"A",FecUltimoLogin=Has(r,"Fec_UltimoLogin")?NDT(r,"Fec_UltimoLogin"):null};}return d;}
  public async Task<int?> ObtenerContratoPorOperacionDiaAsync(int e,string est,int idOperacionDia,CancellationToken ct){await using var c=new SqlConnection(GetConnectionString());await using var m=new SqlCommand("SELECT Id_Contrato FROM flota.operacion_dia WHERE Id_OperacionDia=@IdOperacionDia AND id_empresa=@IdEmpresa AND id_est=@IdEst;",c);m.Parameters.AddWithValue("@IdOperacionDia",idOperacionDia);m.Parameters.AddWithValue("@IdEmpresa",e);m.Parameters.AddWithValue("@IdEst",est);await c.OpenAsync(ct);var v=await m.ExecuteScalarAsync(ct);return v==null||v==DBNull.Value?null:Convert.ToInt32(v);}
  public async Task<int?> ObtenerContratoPorPagoContratoAsync(int e,string est,int idPagoContrato,CancellationToken ct){await using var c=new SqlConnection(GetConnectionString());await using var m=new SqlCommand("SELECT Id_Contrato FROM flota.PagoContrato WHERE IdPagoContrato=@IdPagoContrato AND id_empresa=@IdEmpresa AND id_est=@IdEst;",c);m.Parameters.AddWithValue("@IdPagoContrato",idPagoContrato);m.Parameters.AddWithValue("@IdEmpresa",e);m.Parameters.AddWithValue("@IdEst",est);await c.OpenAsync(ct);var v=await m.ExecuteScalarAsync(ct);return v==null||v==DBNull.Value?null:Convert.ToInt32(v);}
  public async Task<int?> ObtenerContratoPorCombustibleAsync(int e,string est,int idCombustibleOperacion,CancellationToken ct){await using var c=new SqlConnection(GetConnectionString());await using var m=new SqlCommand("SELECT Id_Contrato FROM flota.CombustibleOperacion WHERE IdCombustibleOperacion=@IdCombustibleOperacion AND id_empresa=@IdEmpresa AND id_est=@IdEst;",c);m.Parameters.AddWithValue("@IdCombustibleOperacion",idCombustibleOperacion);m.Parameters.AddWithValue("@IdEmpresa",e);m.Parameters.AddWithValue("@IdEst",est);await c.OpenAsync(ct);var v=await m.ExecuteScalarAsync(ct);return v==null||v==DBNull.Value?null:Convert.ToInt32(v);}

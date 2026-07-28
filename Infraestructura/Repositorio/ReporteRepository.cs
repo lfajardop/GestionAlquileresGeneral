@@ -258,17 +258,23 @@ WHERE Cod_TipAnex = @CodTipAnex
                 }
 
                 using (var cmd = new SqlCommand(@"
-SELECT c.Id_Compensacion,c.Numero,c.Fecha,co.Nombre AS Concepto,
-       c.ImporteAplicado,c.Flg_Estado,
-       CASE c.Flg_Estado WHEN 'A' THEN 'Aplicada' WHEN 'R' THEN 'Revertida' ELSE 'Anulada' END AS Estado,
-       ISNULL(o.Referencia,'') AS Referencia,ISNULL(c.Observacion,'') AS Observacion,d.Id_Prestamo,d.NumCuota,d.ImporteAplicado AS ImporteDetalle
-FROM comp.compensacion c
-JOIN comp.obligacion o ON o.Id_Obligacion=c.Id_Obligacion
-JOIN comp.concepto_obligacion co ON co.Cod_Concepto=o.Cod_Concepto
-JOIN comp.compensacion_detalle d ON d.Id_Compensacion=c.Id_Compensacion
-WHERE c.id_empresa=@IdEmpresa AND c.id_est=@IdEst
-  AND c.Cod_TipAnex=@CodTipAnex AND c.Cod_Anxo=@CodAnxo
-ORDER BY c.Fecha DESC,c.Id_Compensacion DESC,d.OrdenAplicacion;", cn))
+IF OBJECT_ID('comp.compensacion','U') IS NOT NULL
+   AND OBJECT_ID('comp.obligacion','U') IS NOT NULL
+   AND OBJECT_ID('comp.concepto_obligacion','U') IS NOT NULL
+   AND OBJECT_ID('comp.compensacion_detalle','U') IS NOT NULL
+BEGIN
+    SELECT c.Id_Compensacion,c.Numero,c.Fecha,co.Nombre AS Concepto,
+           c.ImporteAplicado,c.Flg_Estado,
+           CASE c.Flg_Estado WHEN 'A' THEN 'Aplicada' WHEN 'R' THEN 'Revertida' ELSE 'Anulada' END AS Estado,
+           ISNULL(o.Referencia,'') AS Referencia,ISNULL(c.Observacion,'') AS Observacion,d.Id_Prestamo,d.NumCuota,d.ImporteAplicado AS ImporteDetalle
+    FROM comp.compensacion c
+    JOIN comp.obligacion o ON o.Id_Obligacion=c.Id_Obligacion
+    JOIN comp.concepto_obligacion co ON co.Cod_Concepto=o.Cod_Concepto
+    JOIN comp.compensacion_detalle d ON d.Id_Compensacion=c.Id_Compensacion
+    WHERE c.id_empresa=@IdEmpresa AND c.id_est=@IdEst
+      AND c.Cod_TipAnex=@CodTipAnex AND c.Cod_Anxo=@CodAnxo
+    ORDER BY c.Fecha DESC,c.Id_Compensacion DESC,d.OrdenAplicacion;
+END;", cn))
                 {
                     cmd.Parameters.Add("@IdEmpresa", SqlDbType.Int).Value = 6;
                     cmd.Parameters.Add("@IdEst", SqlDbType.Char, 2).Value = "4";

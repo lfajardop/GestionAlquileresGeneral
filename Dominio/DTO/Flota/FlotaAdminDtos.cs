@@ -35,9 +35,6 @@ public class FlotaUsuarioMobileAdminDto
     public int? IdChofer{get;set;}
     public string ChoferNombre{get;set;}="";
     public string DocumentoChofer{get;set;}="";
-    public int? IdContrato{get;set;}
-    public string NumeroContrato{get;set;}="";
-    public string Placa{get;set;}="";
     public string FlgEstado{get;set;}="A";
     public DateTime? FecCreacion{get;set;}
     public DateTime? FecUltimoLogin{get;set;}
@@ -46,7 +43,6 @@ public class FlotaUsuarioMobileAdminDto
 public class FlotaUsuarioMobileCrearDto
 {
     public int IdChofer{get;set;}
-    public int? IdContrato{get;set;}
     public string Telefono{get;set;}="";
     public string Nombre{get;set;}="";
     public string Pin{get;set;}="";
@@ -58,7 +54,7 @@ public class FlotaUsuarioMobileActualizarDto
 {
     public int IdUsuarioMobile{get;set;}
     public int IdChofer{get;set;}
-    public int? IdContrato{get;set;}
+    public string FlgEstado{get;set;}="A";
     public string Telefono{get;set;}="";
     public string Nombre{get;set;}="";
 }
@@ -69,6 +65,7 @@ public class FlotaUsuarioMobileCambiarEstadoDto
     public string FlgEstado{get;set;}="";
 }
 
+// Obsoleto: UsuarioMobile ya no depende de contrato fijo.
 public class FlotaUsuarioMobileCambiarContratoDto
 {
     public int IdUsuarioMobile{get;set;}

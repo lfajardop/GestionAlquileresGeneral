@@ -26,7 +26,9 @@
                     <div>@Model.TelefonoSesion</div>
                 }
             </div>
-            <button id="fmLogout" type="button" class="fm-btn fm-btn-danger">Cerrar sesion</button>
+            <button id="fmLogout" type="button" class="fm-icon-btn fm-icon-btn-danger" title="Cerrar sesión" data-bs-toggle="tooltip" data-bs-placement="left" aria-label="Cerrar sesión">
+                <i class="bi bi-box-arrow-right"></i>
+            </button>
         </div>
     </section>
 
@@ -40,7 +42,7 @@
     }
 
     <section class="fm-card">
-        <h3>Contrato asignado</h3>
+        <h3>Contrato activo</h3>
         @if (Model.PuedeCambiarContrato)
         {
             <div class="fm-field">
@@ -52,16 +54,22 @@
         }
         else
         {
-            <div class="fm-lock">@(Model.PuedeOperar ? "Tu sesion mobile esta asignada a un solo contrato. No puedes cambiarlo desde esta pantalla." : "Tu sesion mobile todavia no tiene contrato fijo asignado.")</div>
+            @if (!Model.PuedeOperar)
+            {
+                <div class="fm-lock">No tiene contrato activo asignado. Comuniquese con administracion.</div>
+            }
             <select id="fmContrato" hidden>
-                <option value="">Contrato fijo</option>
+                <option value="">Contrato activo</option>
             </select>
         }
         <div id="fmContratoResumen" class="fm-readonly-strip fm-contract-summary" style="display:none;">
             <div class="fm-section-title">
                 <div>
-                    <strong id="fmContratoCompacto">Placa - | Contrato -</strong>
-                    <div class="fm-muted">Contrato operativo asignado</div>
+                    <div class="fm-chip-row">
+                        <span id="fmPlacaChip" class="fm-chip" title="Vehículo del contrato activo" data-bs-toggle="tooltip">Placa -</span>
+                        <span id="fmContratoChip" class="fm-chip fm-chip-accent" title="Contrato operativo activo" data-bs-toggle="tooltip">Contrato -</span>
+                    </div>
+                    <div class="fm-muted fm-contract-caption" id="fmContratoCompacto">Chofer y modalidad del contrato activo</div>
                 </div>
                 <button id="fmToggleContratoResumen" type="button" class="fm-btn fm-btn-soft">Ver datos</button>
             </div>
@@ -86,51 +94,116 @@
         </div>
     </section>
 
-    <section id="fmPanelInicio" class="fm-panel active">
+    <section class="fm-card">
+        <div class="fm-section-title">
+            <div>
+                <h3>Resumen global</h3>
+                <div class="fm-help">Estado acumulado del chofer considerando todos sus contratos.</div>
+            </div>
+            <button id="fmRefrescarResumenGlobal" type="button" class="fm-btn fm-btn-soft fm-btn-inline">Actualizar</button>
+        </div>
+        <div id="fmResumenGlobal" class="fm-summary-band fm-summary-band-2">
+            <div class="fm-summary-box">
+                <span>Deuda real</span>
+                <strong id="fmResumenDeuda">S/.0.00</strong>
+            </div>
+            <div class="fm-summary-box">
+                <span>Pagado real</span>
+                <strong id="fmResumenPagado">S/.0.00</strong>
+            </div>
+            <div class="fm-summary-box">
+                <span>Saldo real</span>
+                <strong id="fmResumenSaldo">S/.0.00</strong>
+            </div>
+            <div class="fm-summary-box">
+                <span>Pago declarado pendiente</span>
+                <strong id="fmResumenPendiente">S/.0.00</strong>
+            </div>
+            <div class="fm-summary-box">
+                <span>Validado no aplicado</span>
+                <strong id="fmResumenValidado">S/.0.00</strong>
+            </div>
+        </div>
+        <div class="fm-inline-message">Los pagos declarados se muestran separados y todavía no descuentan recibos.</div>
+    </section>
+
+    <section id="fmPanelIntervalos" class="fm-panel active">
         <div class="fm-card">
-            <h3>Inicio</h3>
+            <div class="fm-section-title">
+                <div>
+                    <h3>Intervalos del dia operativo</h3>
+                    <div class="fm-help">Puedes abrir y cerrar varios intervalos en el mismo dia. Si cruzas medianoche, el intervalo sigue perteneciendo al dia de inicio.</div>
+                </div>
+                <span id="fmBadgeIntervaloAbierto" class="fm-state fm-state-info" style="display:none;">Uso abierto</span>
+            </div>
+            <div id="fmResumenHorasDia" class="fm-summary-band fm-summary-band-2">
+                <div class="fm-summary-box">
+                    <span>Total horas acumuladas</span>
+                    <strong id="fmTotalHorasDia">0.00 h</strong>
+                </div>
+                <div class="fm-summary-box">
+                    <span>Intervalos cerrados</span>
+                    <strong id="fmCantidadIntervalos">0</strong>
+                </div>
+            </div>
+            <div id="fmAlertaHoras" class="fm-lock" style="display:none;"></div>
+        </div>
+
+        <div class="fm-card">
+            <h3>Iniciar uso</h3>
             <div class="fm-grid">
                 <div class="fm-field">
-                    <label for="fmFechaOperacion">Fecha</label>
+                    <label for="fmFechaOperacion">Fecha operativa</label>
                     <input id="fmFechaOperacion" type="date" value="@Model.FechaOperacionInicial.ToString("yyyy-MM-dd")" max="@Model.FechaOperacionMaxima.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="fm-field">
+                    <label for="fmHoraInicioIntervalo">Hora inicio</label>
+                    <input id="fmHoraInicioIntervalo" type="time" />
                 </div>
                 <div class="fm-field">
                     <label for="fmKmInicial">Km inicial</label>
                     <input id="fmKmInicial" type="number" step="0.01" inputmode="decimal" />
                 </div>
                 <div class="fm-field">
-                    <label for="fmObservacionInicio">Observacion inicial</label>
-                    <textarea id="fmObservacionInicio" placeholder="Opcional"></textarea>
+                    <label for="fmObservacionIntervaloInicio">Observacion de inicio</label>
+                    <textarea id="fmObservacionIntervaloInicio" placeholder="Opcional"></textarea>
                 </div>
             </div>
-            <div class="fm-help">Administracion revisara el estado final del dia, cobrabilidad y motivo administrativo.</div>
+            <div class="fm-help">Solo puede existir un intervalo abierto a la vez para el mismo contrato, chofer y vehiculo.</div>
             <div class="fm-sticky">
-                <button id="fmGuardarInicio" type="button" class="fm-btn fm-btn-primary">Guardar inicio</button>
+                <button id="fmAbrirIntervalo" type="button" class="fm-btn fm-btn-primary">Iniciar uso</button>
             </div>
         </div>
-    </section>
 
-    <section id="fmPanelFin" class="fm-panel">
         <div class="fm-card">
-            <h3>Fin</h3>
+            <h3>Cerrar uso</h3>
             <div class="fm-grid">
                 <div class="fm-field">
-                    <label for="fmFechaFin">Fecha</label>
-                    <input id="fmFechaFin" type="date" value="@Model.FechaOperacionInicial.ToString("yyyy-MM-dd")" max="@Model.FechaOperacionMaxima.ToString("yyyy-MM-dd")" />
+                    <label for="fmFechaFinIntervalo">Fecha cierre</label>
+                    <input id="fmFechaFinIntervalo" type="date" value="@Model.FechaOperacionInicial.ToString("yyyy-MM-dd")" max="@Model.FechaOperacionMaxima.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="fm-field">
+                    <label for="fmHoraFinIntervalo">Hora cierre</label>
+                    <input id="fmHoraFinIntervalo" type="time" />
                 </div>
                 <div class="fm-field">
                     <label for="fmKmFinal">Km final</label>
                     <input id="fmKmFinal" type="number" step="0.01" inputmode="decimal" />
                 </div>
                 <div class="fm-field">
-                    <label for="fmObservacionFin">Observacion final</label>
-                    <textarea id="fmObservacionFin" placeholder="Opcional"></textarea>
+                    <label for="fmObservacionIntervaloFin">Observacion de cierre</label>
+                    <textarea id="fmObservacionIntervaloFin" placeholder="Opcional"></textarea>
                 </div>
             </div>
-            <div class="fm-help">Primero registra el km inicial y luego completa el cierre del dia.</div>
+            <div class="fm-help">Puedes cerrar al dia siguiente. El sistema calcula las horas sobre la fecha de inicio del intervalo.</div>
             <div class="fm-sticky">
-                <button id="fmGuardarFin" type="button" class="fm-btn fm-btn-primary">Guardar fin</button>
+                <button id="fmCerrarIntervalo" type="button" class="fm-btn fm-btn-primary">Cerrar uso</button>
             </div>
+        </div>
+
+        <div class="fm-card">
+            <h3>Historial de intervalos del dia</h3>
+            <div id="fmIntervalosLista" class="fm-list"></div>
         </div>
     </section>
 
@@ -279,6 +352,25 @@
 
     <section id="fmPanelHistorial" class="fm-panel">
         <div class="fm-card">
+            <div class="fm-section-title">
+                <div>
+                    <h3>Detalle global del chofer</h3>
+                    <div class="fm-help">Todos los contratos, recibos y pagos declarados visibles sin mezclar saldo real con pagos aún no aplicados.</div>
+                </div>
+                <button id="fmToggleDetalleGlobal" type="button" class="fm-btn fm-btn-soft fm-btn-inline">Ver detalle</button>
+            </div>
+            <div id="fmDetalleGlobalBody" style="display:none;">
+                <div class="fm-subsection">
+                    <h4>Recibos reales</h4>
+                    <div id="fmDetalleGlobalRecibos" class="fm-list"></div>
+                </div>
+                <div class="fm-subsection">
+                    <h4>Pagos declarados</h4>
+                    <div id="fmDetalleGlobalPagos" class="fm-list"></div>
+                </div>
+            </div>
+        </div>
+        <div class="fm-card">
             <h3>Resumen del dia</h3>
             <div id="fmHistorialResumen" class="fm-list"></div>
         </div>
@@ -297,8 +389,7 @@
     </section>
 
     <nav class="fm-bottom-nav" aria-label="Navegacion mobile">
-        <button type="button" class="fm-tab active" data-tab="inicio"><i class="bi bi-play-circle"></i><span>Inicio</span></button>
-        <button type="button" class="fm-tab" data-tab="fin"><i class="bi bi-stop-circle"></i><span>Fin</span></button>
+        <button type="button" class="fm-tab active" data-tab="intervalos"><i class="bi bi-hourglass-split"></i><span>Intervalos</span></button>
         <button type="button" class="fm-tab" data-tab="combustible"><i class="bi bi-fuel-pump"></i><span>Combustible</span></button>
         <button type="button" class="fm-tab" data-tab="pagos"><i class="bi bi-wallet2"></i><span>Pagos</span></button>
         <button type="button" class="fm-tab" data-tab="historial"><i class="bi bi-clock-history"></i><span>Historial</span></button>

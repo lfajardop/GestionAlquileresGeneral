@@ -204,3 +204,53 @@
         width:100%;
     }
 }
+.fa-day .meta-line{
+    display:block;
+    font-size:.6rem;
+    line-height:1.25;
+    color:#526176;
+    margin-top:3px;
+}
+.fa-day .tag-stack{
+    position:absolute;
+    right:6px;
+    top:6px;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    gap:3px;
+}
+.fa-day .tag-stack .tag{
+    position:static;
+}
+.fa-day .tag.tag-receipt{
+    background:#e7f8f0;
+    color:var(--fa-green);
+}
+.fa-day .tag.tag-manual{
+    background:#f2edff;
+    color:var(--fa-purple);
+}
+.fa-day .tag.tag-mobile{
+    background:#e8f1ff;
+    color:var(--fa-blue);
+}
+.fa-day .tag.tag-pending{
+    background:#fff3d6;
+    color:#a15c00;
+}
+.fa-day.has-mobile{
+    border-left:4px solid var(--fa-blue);
+    background:linear-gradient(180deg,#f8fbff 0%,#ffffff 100%);
+}
+@media(max-width:650px){
+    .fa-day{
+        min-height:88px;
+    }
+    .fa-day .meta-line{
+        font-size:.52rem;
+    }
+    .fa-day .tag-stack{
+        display:none;
+    }
+}

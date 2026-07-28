@@ -8,12 +8,15 @@ Incluye:
 - flota.p_UsuarioMobile_ActualizarAdmin
 - flota.p_UsuarioMobile_CambiarEstado
 - flota.p_UsuarioMobile_CambiarContrato
+- flota.p_UsuarioMobile_ResetPin
 
 Reglas:
 - No toca dbo.Usuarios ni dbo.SEG_Usuarios
 - No toca caja/cobranza
 - No aplica PagoContrato a recibos
 - No liquida combustible
+- UsuarioMobile pertenece al chofer y ya no depende de contrato fijo
+- La columna flota.UsuarioMobile.Id_Contrato queda obsoleta y sin uso
 */
 
 IF DB_NAME() <> 'DB_9FA64E_bdgas'
@@ -26,13 +29,6 @@ GO
 IF OBJECT_ID('flota.UsuarioMobile','U') IS NULL
 BEGIN
     RAISERROR('No existe flota.UsuarioMobile.',16,1);
-    SET NOEXEC ON;
-END;
-GO
-
-IF OBJECT_ID('flota.contrato','U') IS NULL
-BEGIN
-    RAISERROR('No existe flota.contrato.',16,1);
     SET NOEXEC ON;
 END;
 GO
@@ -62,11 +58,9 @@ SET ANSI_NULLS ON;
 GO
 SET QUOTED_IDENTIFIER ON;
 GO
-
 IF OBJECT_ID('flota.p_UsuarioMobile_ListarAdmin','P') IS NULL
     EXEC('CREATE PROCEDURE flota.p_UsuarioMobile_ListarAdmin AS BEGIN SET NOCOUNT ON; END');
 GO
-
 ALTER PROCEDURE flota.p_UsuarioMobile_ListarAdmin
     @IdEmpresa INT,
     @IdEst CHAR(2)
@@ -81,10 +75,7 @@ BEGIN
         u.Id_Chofer,
         ISNULL(ch.Nombres,'') AS ChoferNombre,
         ISNULL(ch.Documento,'') AS DocumentoChofer,
-        u.Id_Contrato,
-        CASE WHEN u.Id_Contrato IS NULL THEN 'Sin contrato fijo' ELSE ISNULL(c.Numero,'') END AS NumeroContrato,
-        ISNULL(v.Placa,'') AS Placa,
-        u.FlgEstado,
+        ISNULL(u.FlgEstado,'A') AS FlgEstado,
         u.Fec_Creacion,
         u.Fec_UltimoLogin
     FROM flota.UsuarioMobile u
@@ -92,14 +83,6 @@ BEGIN
         ON ch.Id_Chofer = u.Id_Chofer
        AND ch.id_empresa = u.id_empresa
        AND ch.id_est = u.id_est
-    LEFT JOIN flota.contrato c
-        ON c.Id_Contrato = u.Id_Contrato
-       AND c.id_empresa = u.id_empresa
-       AND c.id_est = u.id_est
-    LEFT JOIN flota.vehiculo v
-        ON v.Id_Vehiculo = c.Id_Vehiculo
-       AND v.id_empresa = c.id_empresa
-       AND v.id_est = c.id_est
     WHERE u.id_empresa = @IdEmpresa
       AND u.id_est = @IdEst
     ORDER BY u.IdUsuarioMobile DESC;
@@ -110,21 +93,18 @@ SET ANSI_NULLS ON;
 GO
 SET QUOTED_IDENTIFIER ON;
 GO
-
 IF OBJECT_ID('flota.p_UsuarioMobile_CrearAdmin','P') IS NULL
     EXEC('CREATE PROCEDURE flota.p_UsuarioMobile_CrearAdmin AS BEGIN SET NOCOUNT ON; END');
 GO
-
 ALTER PROCEDURE flota.p_UsuarioMobile_CrearAdmin
     @IdEmpresa INT,
     @IdEst CHAR(2),
     @IdChofer INT,
-    @IdContrato INT = NULL,
     @Telefono VARCHAR(20),
     @Nombre VARCHAR(150),
     @PasswordHash VARCHAR(300),
     @PasswordSalt VARCHAR(100),
-    @FlgEstado VARCHAR(1) = 'A',
+    @FlgEstado VARCHAR(1),
     @Usuario INT
 AS
 BEGIN
@@ -168,7 +148,8 @@ BEGIN
         RETURN;
     END;
 
-    IF NOT EXISTS(
+    IF NOT EXISTS
+    (
         SELECT 1
         FROM flota.chofer ch
         WHERE ch.Id_Chofer = @IdChofer
@@ -180,21 +161,8 @@ BEGIN
         RETURN;
     END;
 
-    IF @IdContrato IS NOT NULL
-       AND NOT EXISTS(
-            SELECT 1
-            FROM flota.contrato c
-            WHERE c.Id_Contrato = @IdContrato
-              AND c.id_empresa = @IdEmpresa
-              AND c.id_est = @IdEst
-              AND c.Id_Chofer = @IdChofer
-        )
-    BEGIN
-        SELECT 0 AS IdUsuarioMobile,'' AS Telefono,'' AS FlgEstado,'Contrato no encontrado o no pertenece al chofer.' AS Mensaje;
-        RETURN;
-    END;
-
-    IF EXISTS(
+    IF EXISTS
+    (
         SELECT 1
         FROM flota.UsuarioMobile u
         WHERE u.id_empresa = @IdEmpresa
@@ -207,12 +175,25 @@ BEGIN
         RETURN;
     END;
 
+    IF EXISTS
+    (
+        SELECT 1
+        FROM flota.UsuarioMobile u
+        WHERE u.id_empresa = @IdEmpresa
+          AND u.id_est = @IdEst
+          AND u.Id_Chofer = @IdChofer
+          AND ISNULL(u.FlgEstado,'A') = 'A'
+    )
+    BEGIN
+        SELECT 0 AS IdUsuarioMobile,@Telefono AS Telefono,'' AS FlgEstado,'Ya existe un usuario mobile activo para ese chofer.' AS Mensaje;
+        RETURN;
+    END;
+
     INSERT INTO flota.UsuarioMobile
     (
         id_empresa,
         id_est,
         Id_Chofer,
-        Id_Contrato,
         Telefono,
         Nombre,
         PasswordHash,
@@ -226,7 +207,6 @@ BEGIN
         @IdEmpresa,
         @IdEst,
         @IdChofer,
-        @IdContrato,
         @Telefono,
         @Nombre,
         @PasswordHash,
@@ -241,7 +221,7 @@ BEGIN
     SELECT
         u.IdUsuarioMobile,
         u.Telefono,
-        u.FlgEstado,
+        ISNULL(u.FlgEstado,'A') AS FlgEstado,
         'Usuario mobile creado correctamente.' AS Mensaje
     FROM flota.UsuarioMobile u
     WHERE u.IdUsuarioMobile = @IdUsuarioMobile
@@ -254,19 +234,17 @@ SET ANSI_NULLS ON;
 GO
 SET QUOTED_IDENTIFIER ON;
 GO
-
 IF OBJECT_ID('flota.p_UsuarioMobile_ActualizarAdmin','P') IS NULL
     EXEC('CREATE PROCEDURE flota.p_UsuarioMobile_ActualizarAdmin AS BEGIN SET NOCOUNT ON; END');
 GO
-
 ALTER PROCEDURE flota.p_UsuarioMobile_ActualizarAdmin
     @IdEmpresa INT,
     @IdEst CHAR(2),
     @IdUsuarioMobile INT,
     @IdChofer INT,
-    @IdContrato INT = NULL,
     @Telefono VARCHAR(20),
     @Nombre VARCHAR(150),
+    @FlgEstado VARCHAR(1),
     @Usuario INT
 AS
 BEGIN
@@ -274,6 +252,7 @@ BEGIN
 
     SET @Telefono = LTRIM(RTRIM(ISNULL(@Telefono,'')));
     SET @Nombre = LTRIM(RTRIM(ISNULL(@Nombre,'')));
+    SET @FlgEstado = UPPER(LTRIM(RTRIM(ISNULL(@FlgEstado,'A'))));
 
     IF @IdUsuarioMobile <= 0
     BEGIN
@@ -299,7 +278,14 @@ BEGIN
         RETURN;
     END;
 
-    IF NOT EXISTS(
+    IF @FlgEstado NOT IN ('A','X')
+    BEGIN
+        SELECT @IdUsuarioMobile AS IdUsuarioMobile,'' AS Telefono,'' AS FlgEstado,'FlgEstado invalido. Usa A o X.' AS Mensaje;
+        RETURN;
+    END;
+
+    IF NOT EXISTS
+    (
         SELECT 1
         FROM flota.UsuarioMobile u
         WHERE u.IdUsuarioMobile = @IdUsuarioMobile
@@ -311,7 +297,8 @@ BEGIN
         RETURN;
     END;
 
-    IF NOT EXISTS(
+    IF NOT EXISTS
+    (
         SELECT 1
         FROM flota.chofer ch
         WHERE ch.Id_Chofer = @IdChofer
@@ -323,21 +310,8 @@ BEGIN
         RETURN;
     END;
 
-    IF @IdContrato IS NOT NULL
-       AND NOT EXISTS(
-            SELECT 1
-            FROM flota.contrato c
-            WHERE c.Id_Contrato = @IdContrato
-              AND c.id_empresa = @IdEmpresa
-              AND c.id_est = @IdEst
-              AND c.Id_Chofer = @IdChofer
-        )
-    BEGIN
-        SELECT @IdUsuarioMobile AS IdUsuarioMobile,'' AS Telefono,'' AS FlgEstado,'Contrato no encontrado o no pertenece al chofer.' AS Mensaje;
-        RETURN;
-    END;
-
-    IF EXISTS(
+    IF EXISTS
+    (
         SELECT 1
         FROM flota.UsuarioMobile u
         WHERE u.id_empresa = @IdEmpresa
@@ -351,11 +325,26 @@ BEGIN
         RETURN;
     END;
 
+    IF EXISTS
+    (
+        SELECT 1
+        FROM flota.UsuarioMobile u
+        WHERE u.id_empresa = @IdEmpresa
+          AND u.id_est = @IdEst
+          AND u.Id_Chofer = @IdChofer
+          AND u.IdUsuarioMobile <> @IdUsuarioMobile
+          AND ISNULL(u.FlgEstado,'A') = 'A'
+    )
+    BEGIN
+        SELECT @IdUsuarioMobile AS IdUsuarioMobile,@Telefono AS Telefono,'' AS FlgEstado,'Ya existe otro usuario mobile activo para ese chofer.' AS Mensaje;
+        RETURN;
+    END;
+
     UPDATE flota.UsuarioMobile
     SET Id_Chofer = @IdChofer,
-        Id_Contrato = @IdContrato,
         Telefono = @Telefono,
-        Nombre = @Nombre
+        Nombre = @Nombre,
+        FlgEstado = @FlgEstado
     WHERE IdUsuarioMobile = @IdUsuarioMobile
       AND id_empresa = @IdEmpresa
       AND id_est = @IdEst;
@@ -363,7 +352,7 @@ BEGIN
     SELECT
         u.IdUsuarioMobile,
         u.Telefono,
-        u.FlgEstado,
+        ISNULL(u.FlgEstado,'A') AS FlgEstado,
         'Usuario mobile actualizado correctamente.' AS Mensaje
     FROM flota.UsuarioMobile u
     WHERE u.IdUsuarioMobile = @IdUsuarioMobile
@@ -376,11 +365,9 @@ SET ANSI_NULLS ON;
 GO
 SET QUOTED_IDENTIFIER ON;
 GO
-
 IF OBJECT_ID('flota.p_UsuarioMobile_CambiarEstado','P') IS NULL
     EXEC('CREATE PROCEDURE flota.p_UsuarioMobile_CambiarEstado AS BEGIN SET NOCOUNT ON; END');
 GO
-
 ALTER PROCEDURE flota.p_UsuarioMobile_CambiarEstado
     @IdEmpresa INT,
     @IdEst CHAR(2),
@@ -405,7 +392,8 @@ BEGIN
         RETURN;
     END;
 
-    IF NOT EXISTS(
+    IF NOT EXISTS
+    (
         SELECT 1
         FROM flota.UsuarioMobile u
         WHERE u.IdUsuarioMobile = @IdUsuarioMobile
@@ -426,7 +414,7 @@ BEGIN
     SELECT
         u.IdUsuarioMobile,
         u.Telefono,
-        u.FlgEstado,
+        ISNULL(u.FlgEstado,'A') AS FlgEstado,
         CASE WHEN @FlgEstado = 'A'
              THEN 'Usuario mobile activado correctamente.'
              ELSE 'Usuario mobile inactivado correctamente.'
@@ -442,11 +430,9 @@ SET ANSI_NULLS ON;
 GO
 SET QUOTED_IDENTIFIER ON;
 GO
-
 IF OBJECT_ID('flota.p_UsuarioMobile_CambiarContrato','P') IS NULL
     EXEC('CREATE PROCEDURE flota.p_UsuarioMobile_CambiarContrato AS BEGIN SET NOCOUNT ON; END');
 GO
-
 ALTER PROCEDURE flota.p_UsuarioMobile_CambiarContrato
     @IdEmpresa INT,
     @IdEst CHAR(2),
@@ -457,7 +443,34 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    DECLARE @IdChofer INT;
+    SELECT
+        @IdUsuarioMobile AS IdUsuarioMobile,
+        '' AS Telefono,
+        '' AS FlgEstado,
+        'Operacion obsoleta. Usuario mobile ya no maneja contrato fijo.' AS Mensaje;
+END;
+GO
+
+SET ANSI_NULLS ON;
+GO
+SET QUOTED_IDENTIFIER ON;
+GO
+IF OBJECT_ID('flota.p_UsuarioMobile_ResetPin','P') IS NULL
+    EXEC('CREATE PROCEDURE flota.p_UsuarioMobile_ResetPin AS BEGIN SET NOCOUNT ON; END');
+GO
+ALTER PROCEDURE flota.p_UsuarioMobile_ResetPin
+    @IdEmpresa INT,
+    @IdEst CHAR(2),
+    @IdUsuarioMobile INT,
+    @PasswordHash VARCHAR(300),
+    @PasswordSalt VARCHAR(100),
+    @Usuario INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SET @PasswordHash = LTRIM(RTRIM(ISNULL(@PasswordHash,'')));
+    SET @PasswordSalt = LTRIM(RTRIM(ISNULL(@PasswordSalt,'')));
 
     IF @IdUsuarioMobile <= 0
     BEGIN
@@ -465,34 +478,29 @@ BEGIN
         RETURN;
     END;
 
-    SELECT @IdChofer = u.Id_Chofer
-    FROM flota.UsuarioMobile u
-    WHERE u.IdUsuarioMobile = @IdUsuarioMobile
-      AND u.id_empresa = @IdEmpresa
-      AND u.id_est = @IdEst;
+    IF @PasswordHash = '' OR @PasswordSalt = ''
+    BEGIN
+        SELECT @IdUsuarioMobile AS IdUsuarioMobile,'' AS Telefono,'' AS FlgEstado,'PasswordHash y PasswordSalt son obligatorios.' AS Mensaje;
+        RETURN;
+    END;
 
-    IF ISNULL(@IdChofer,0) <= 0
+    IF NOT EXISTS
+    (
+        SELECT 1
+        FROM flota.UsuarioMobile u
+        WHERE u.IdUsuarioMobile = @IdUsuarioMobile
+          AND u.id_empresa = @IdEmpresa
+          AND u.id_est = @IdEst
+    )
     BEGIN
         SELECT @IdUsuarioMobile AS IdUsuarioMobile,'' AS Telefono,'' AS FlgEstado,'Usuario mobile no encontrado.' AS Mensaje;
         RETURN;
     END;
 
-    IF @IdContrato IS NOT NULL
-       AND NOT EXISTS(
-            SELECT 1
-            FROM flota.contrato c
-            WHERE c.Id_Contrato = @IdContrato
-              AND c.id_empresa = @IdEmpresa
-              AND c.id_est = @IdEst
-              AND c.Id_Chofer = @IdChofer
-        )
-    BEGIN
-        SELECT @IdUsuarioMobile AS IdUsuarioMobile,'' AS Telefono,'' AS FlgEstado,'Contrato no encontrado o no pertenece al chofer.' AS Mensaje;
-        RETURN;
-    END;
-
     UPDATE flota.UsuarioMobile
-    SET Id_Contrato = @IdContrato
+    SET PasswordHash = @PasswordHash,
+        PasswordSalt = @PasswordSalt,
+        FlgEstado = 'A'
     WHERE IdUsuarioMobile = @IdUsuarioMobile
       AND id_empresa = @IdEmpresa
       AND id_est = @IdEst;
@@ -500,14 +508,14 @@ BEGIN
     SELECT
         u.IdUsuarioMobile,
         u.Telefono,
-        u.FlgEstado,
-        CASE WHEN @IdContrato IS NULL
-             THEN 'Contrato fijo quitado correctamente.'
-             ELSE 'Contrato fijo actualizado correctamente.'
-        END AS Mensaje
+        ISNULL(u.FlgEstado,'A') AS FlgEstado,
+        'PIN mobile reseteado correctamente.' AS Mensaje
     FROM flota.UsuarioMobile u
     WHERE u.IdUsuarioMobile = @IdUsuarioMobile
       AND u.id_empresa = @IdEmpresa
       AND u.id_est = @IdEst;
 END;
+GO
+
+SET NOEXEC OFF;
 GO
